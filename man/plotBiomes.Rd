@@ -2,13 +2,14 @@
 % Please edit documentation in R/MECO.R
 \name{plotBiomes}
 \alias{plotBiomes}
-\title{Plot radial gamma plot to file with 4/16 biomes}
+\title{Plot biomes to file}
 \usage{
 plotBiomes(
   biome_ids,
-  biome_class_names,
+  biomeNameLength = 1,
+  orderLegend = "plants",
   file,
-  title,
+  title = "",
   titleSize = 2,
   legYes = T,
   leg_scale = 1,
@@ -16,20 +17,32 @@ plotBiomes(
 )
 }
 \arguments{
+\item{biome_ids}{biome id as given by classify_biomes}
+
+\item{biomeNameLength}{length of biome names in legend: 1 - abbreviation, 
+2 - short name, 3 - full biome name}
+
+\item{orderLegend}{legend order: either "plants" to first have forests, then 
+grasslands, then tundra ..., or "zones" to go from north to south
+(default: "plants")}
+
 \item{file}{to write into}
 
-\item{title}{character string title for plot}
+\item{title}{character string title for plot, default empty}
 
-\item{eps}{write as eps or png}
+\item{titleSize}{size of title in cex units (defaukt: 2)}
 
-\item{data}{gamma data array c(4[biomes],[ngammacomponents],3[min,median,max])}
+\item{legYes}{whether to plot legend (default: True)}
+
+\item{leg_scale}{size of legend in cex units (default 0.5)}
+
+\item{eps}{write as eps, replacing png in filename (default: True)}
 }
 \value{
 None
 }
 \description{
-Function to plot an aggregated radial status of gamma values [0-1]
-for the different sub-categories to file
+Function to plot biome classification to file
 }
 \examples{
 \dontrun{

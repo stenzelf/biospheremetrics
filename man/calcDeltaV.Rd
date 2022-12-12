@@ -26,7 +26,7 @@ deltaV array of size ncells with the deltaV value [0,1] for each cell
 }
 \description{
 Utility function to calculate changes in vegetation structure (deltaV)
-for calculation of gamma
+for calculation of MECO
 }
 \examples{
 \dontrun{

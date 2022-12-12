@@ -14,7 +14,8 @@ plotMCOLovertime(
   maxVal = 100,
   legendpos = "topleft",
   ext = FALSE,
-  eps = FALSE
+  eps = FALSE,
+  ref = "pi"
 )
 }
 \arguments{
@@ -37,15 +38,15 @@ mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, ynpp}
 
 \item{eps}{write plots as eps, instead of png (default = FALSE)}
 
+\item{ref}{reference period for mcol ("pi" or "act"), to either use
+mcolData$mcol_overtime_perc_piref or mcolData$mcol_overtime}
+
 \item{plotyears}{range of years to plot over time}
 
 \item{mapyear}{year to plot mcol map for}
 
 \item{mapyear_buffer}{+- years around mapyear to average mcol
 (make sure these years exist in mcol data)}
-
-\item{ref}{reference period for mcol ("pi" or "act"), to either use
-mcolData$mcol_overtime_perc_piref or mcolData$mcol_overtime}
 }
 \value{
 none

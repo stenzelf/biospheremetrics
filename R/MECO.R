@@ -1,64 +1,86 @@
 # written by Fabian Stenzel, based on work by Sebastian Ostberg
 # 2022 - stenzel@pik-potsdam.de
 
-#requirements:
-require(lpjmliotools)
+################# MECO calc functions  ###################
 
-################# gamma calc functions  ###################
-
-#' Calculate the ecosystem change metric gamma between 2 simulations/timesteps
+#' Calculate the ecosystem change metric MECO between 2 simulations/timesteps
 #'
-#' Function to calculate the ecosystem change metric gamma according
-#' to Sykes (1999), Heyder (2011), and Ostberg (2015,2018).
+#' Function to calculate the ecosystem change metric MECO, based on gamma/deltaV
+#' work from Sykes (1999), Heyder (2011), and Ostberg (2015,2018).
 #' This is a reformulated version in R, not producing 100% similar values
-#' than the C/bash version from Ostberg 2018, but following their methodology.
+#' than the C/bash version from Ostberg et al. 2018, but similar the methodology
 #'
 #' @param folderRef folder of reference run
-#' @param folderRef2 2nd folder of reference run, if split (default NULL -- no split)
+#' @param folderRef2 optional 2nd reference run folder (default NULL - no split)
 #' @param folderScen folder of scenario run
+#' @param readPreviouslySavedData whether to read in previously saved data 
+#'        (default: FALSE)
 #' @param saveFileData file to save read in data to (default NULL)
-#' @param saveFileGamma file to save gamma data to (default NULL)
-#' @param exportGamma flag whether to export gamma data to global environment (default F)
-#' @param combined read in soilc+litc, evap+interc, rh+harvestc separate or as combined outputs (default F -- separate)
-#' @param nitrogen include nitrogen outputs for pools and fluxes into gamma calculation (default F)
-#' @param weighting apply "old" (Ostberg-like), "new", or "equal" weighting of deltaV weights (default "old")
-#' @param varnames data.frame with names of output files -- can be specified to account for variable file names (default NULL -- standard names are used)
-#' @param headerout headersize of the output files (default 0)
+#' @param saveFileMECO file to save MECO data to (default NULL)
+#' @param combined read in soilc+litc, evap+interc, rh+harvestc separate or as 
+#'        combined outputs (default F -- separate)
+#' @param nitrogen include nitrogen outputs for pools and fluxes into MECO 
+#'        calculation (default F)
+#' @param weighting apply "old" (Ostberg-like), "new", or "equal" weighting of 
+#'        deltaV weights (default "old")
+#' @param varnames data.frame with names of output files (outname) and time res.
+#'        (timestep) -- can be specified to account for variable file names 
+#'        (default NULL -- standard names as below)
+#'        varnames <- data.frame(row.names = c("grid",    "fpc",    "fpc_bft",    "cftfrac",    "firec",    "rh_harvest",    "npp",    "evapinterc",    "runoff",    "transp",    "soillitc",    "vegc",    "swcsum",    "firef",    "rh",    "harvestc",    "evap",    "interc",    "soilc",    "litc",    "swc",    "vegn",    "soilnh4",    "soilno3",    "leaching",    "n2o_denit",    "n2o_nit",    "n2o_denit",    "n2_emis",    "bnf",    "n_volatilization"),
+#'        outname = c("grid.bin","fpc.bin","fpc_bft.bin","cftfrac.bin","firec.bin","rh_harvest.bin","npp.bin","evapinterc.bin","runoff.bin","transp.bin","soillitc.bin","vegc.bin","swcsum.bin","firef.bin","rh.bin","harvestc.bin","evap.bin","interc.bin","soilc.bin","litc.bin","swc.bin","vegn.bin","soilnh4.bin","soilno3.bin","leaching.bin","n2o_denit.bin","n2o_nit.bin","n2o_denit.bin","n2_emis.bin","bnf.bin","n_volatilization.bin"),
+#'        timestep = c("Y",       "Y",      "Y",          "Y",          "Y",        "Y",             "Y",      "Y",             "Y",         "Y",         "Y",           "Y",       "Y",         "Y",        "Y",     "Y",           "Y",       "Y",         "Y",        "Y",       "Y",      ,"Y",      "Y",          "Y",          "Y",           "Y",            "Y",          "Y",            "Y",          "Y",      "Y"))
+#' @param headerout headersize of the output files (default: 0 bytes)
 #' @param timespan_full_ref full timespan of output files in reference period
 #' @param timespan_full_scen full timespan of output files in scenario period
 #' @param timespan_focus_ref specific years to use as reference period
-#' @param timespan_focus_ref2 specific years to use as 2nd part of reference period in case this is split (default NULL)
+#' @param timespan_focus_ref2 specific years to use as 2nd part of reference 
+#'        period in case this is split (default NULL)
 #' @param timespan_focus_scen specific years to use as scenario period
 #' @param npfts number of natural plant functional types (== bands in fpc - 1)
-#' @param ncfts number of crop functional types
-#' @param nbfts number of bfts (bioenergy functional types)
+#' @param ncfts number of crop bands (rainfed+irrigated)
+#' @param nbfts number of bands in fpc_bft (bioenergy functional types)
 #' @param ncells number of cells in lpjml grid
+#' @param soillayers number of soil layers (default: 6)
+#' @param dimensionsOnlyLocal flag whether to use only local change component
+#'        for water/carbon/nitrogen fluxes and pools, or use an average of
+#'        local change, global change and ecosystem balance (default F)
 #'
 #' @return list data object containing arrays of deltaV, local_change,
 #'         global_change, ecosystem_balance, carbon_fluxes, carbon_stocks,
-#'         water_fluxes, gamma_total (+ nitrogen_fluxes and nitrogen_stocks if used)
+#'         water_fluxes, meco_total (+ nitrogen_fluxes and nitrogen_stocks)
 #'
 #' @examples
 #' \dontrun{
-#' gamma_today <- calcGamma(folderRef = "/p/projects/elis/ostberg/biome_shift/archive_Ostberg2018/simulations/scenario_PNV_trunkupdate_noCC/HadGEM2-ES/r1i1p1/",
-#'                folderScen = "/p/projects/elis/ostberg/biome_shift/archive_Ostberg2018/simulations/scenario_LUC_trunkupdate/rcp26/HadGEM2-ES/r1i1p1/luc_rcp26_50bg50btflexi/",
-#'                readPreviouslySavedData = TRUE, saveFileData = "/media/All/Gamma/Gamma_today_data.RData",
-#'                saveFileGamma = "/media/All/Gamma/Gamma_today_gamma.RData",
-#'                timespan_full_ref = c(1991,2099), timespan_full_scen = c(1991,2099),
-#'                timespan_focus_ref = c(2000,2029), timespan_focus_scen = c(2000,2029),
-#'                npfts = 9, ncfts = 32, nbfts = 12, ncells = 64240,
-#'                combined = TRUE, weighting = "old")
 #' }
 #' @export
-calcGamma <- function(folderRef, folderRef2 = NULL, folderScen, readPreviouslySavedData = TRUE,
-                      saveFileData = NULL, saveFileGamma = NULL, combined = FALSE, nitrogen = FALSE,
-                      weighting = "old", varnames = NULL, headerout = 0, timespan_full_ref,
-                      timespan_full_scen, timespan_focus_ref, timespan_focus_ref2 = NULL,
-                      timespan_focus_scen, npfts, ncfts, nbfts, ncells,dimensionsOnlyLocal=T) {
+calcMECO <- function(folderRef, 
+                     folderRef2 = NULL, 
+                     folderScen, 
+                     readPreviouslySavedData = FALSE,
+                     saveFileData = NULL, 
+                     saveFileMECO = NULL, 
+                     combined = FALSE, 
+                     nitrogen = FALSE,
+                     weighting = "old", 
+                     varnames = NULL, 
+                     headerout = 0, 
+                     timespan_full_ref,
+                     timespan_full_scen, 
+                     timespan_focus_ref, 
+                     timespan_focus_ref2 = NULL,
+                     timespan_focus_scen, 
+                     npfts, 
+                     ncfts, 
+                     nbfts, 
+                     ncells, 
+                     soillayers = 6, 
+                     dimensionsOnlyLocal = F
+                     ) {
    require(lpjmliotools)
 
    if (is.null(varnames)) {
-     print("variable name list not provided, using standard list, which might not be applicable for this case ...")
+     print("variable name list not provided, using standard list, which might 
+           not be applicable for this case ...")
      varnames <- data.frame(row.names = c("grid",    "fpc",    "fpc_bft",    "cftfrac",    "firec",    "rh_harvest",    "npp",    "evapinterc",    "runoff",    "transp",    "soillitc",    "vegc",    "swcsum",    "firef",    "rh",    "harvestc",    "evap",    "interc",    "soilc",    "litc",    "swc",    "vegn",    "soilnh4",    "soilno3",    "leaching",    "n2o_denit",    "n2o_nit",    "n2o_denit",    "n2_emis",    "bnf",    "n_volatilization"),
                               outname = c("grid.bin","fpc.bin","fpc_bft.bin","cftfrac.bin","firec.bin","rh_harvest.bin","npp.bin","evapinterc.bin","runoff.bin","transp.bin","soillitc.bin","vegc.bin","swcsum.bin","firef.bin","rh.bin","harvestc.bin","evap.bin","interc.bin","soilc.bin","litc.bin","swc.bin","vegn.bin","soilnh4.bin","soilno3.bin","leaching.bin","n2o_denit.bin","n2o_nit.bin","n2o_denit.bin","n2_emis.bin","bnf.bin","n_volatilization.bin"),
                              timestep = c("Y",       "Y",      "Y",          "Y",          "Y",        "Y",             "Y",      "Y",             "Y",         "Y",         "Y",           "Y",       "Y",         "Y",        "Y",     "Y",           "Y",       "Y",         "Y",        "Y",       "Y",      ,"Y",      "Y",          "Y",          "Y",           "Y",            "Y",          "Y",            "Y",          "Y",      "Y"))
@@ -82,12 +104,27 @@ calcGamma <- function(folderRef, folderRef2 = NULL, folderScen, readPreviouslySa
      }
 
    }else{
-     #first read in all lpjml output files required for computing gamma from reference and scenario folder
-     returned_vars <- readGammaData(folderRef = folderRef, folderRef2 = folderRef2, folderScen = folderScen, saveFile = saveFileData, export = F,
-                   combined = combined, nitrogen = nitrogen, varnames = varnames, headerout = headerout,
-                   timespan_full_ref = timespan_full_ref, timespan_full_scen = timespan_full_scen,
-                   timespan_focus_ref = timespan_focus_ref, timespan_focus_ref2 = timespan_focus_ref2, timespan_focus_scen = timespan_focus_scen,
-                   npfts = npfts, ncfts = ncfts, nbfts = nbfts, ncells = ncells)
+     #first read in all lpjml output files required for computing MECO
+     returned_vars <- readMECOData(folderRef = folderRef, 
+                                   folderRef2 = folderRef2, 
+                                   folderScen = folderScen, 
+                                   saveFile = saveFileData, 
+                                   export = F,
+                                   combined = combined, 
+                                   nitrogen = nitrogen, 
+                                   varnames = varnames, 
+                                   headerout = headerout,
+                                   timespan_full_ref = timespan_full_ref, 
+                                   timespan_full_scen = timespan_full_scen,
+                                   timespan_focus_ref = timespan_focus_ref, 
+                                   timespan_focus_ref2 = timespan_focus_ref2, 
+                                   timespan_focus_scen = timespan_focus_scen,
+                                   npfts = npfts, 
+                                   ncfts = ncfts, 
+                                   nbfts = nbfts, 
+                                   ncells = ncells, 
+                                   soillayers = soillayers)
+     # extract variables from return list object and give them proper names
      state_ref <- returned_vars$state_ref
      mean_state_ref <- returned_vars$mean_state_ref
      state_scen <- returned_vars$state_scen
@@ -105,27 +142,38 @@ calcGamma <- function(folderRef, folderRef2 = NULL, folderScen, readPreviouslySa
    }
 
 
-   ############## calc deltaV and variability of deltaV within reference period S(deltaV,sigma_deltaV) ##########
+   ######### calc deltaV and variability of deltaV within      ##########
+   ######### reference period S(deltaV,sigma_deltaV)           ##########
    fpc_ref_mean <- apply(fpc_ref, c(1,2), mean)
    bft_ref_mean <- apply(bft_ref, c(1,2), mean)
    cft_ref_mean <- apply(cft_ref, c(1,2), mean)
    sigma_deltaV_ref_list <- array(0, dim = c(ncells, nyears))
-   # calculate for every year of the reference period, deltaV between that year and the average reference period year
-   # this gives the variability of deltaV within the reference period
+   # calculate for every year of the reference period, deltaV between 
+   # that year and the average reference period year
+   # -> this gives the variability of deltaV within the reference period
    for (y in 1:nyears) {
-      sigma_deltaV_ref_list[,y] <- calcDeltaV(fpcRef = fpc_ref_mean,fpcScen = fpc_ref[,,y],
-                                              bftRef = bft_ref_mean,bftScen = bft_ref[,,y],cftRef = cft_ref_mean,
-                                              cftScen = cft_ref[,,y], weighting = weighting)
+      sigma_deltaV_ref_list[,y] <- calcDeltaV(fpcRef = fpc_ref_mean,
+                                              fpcScen = fpc_ref[,,y],
+                                              bftRef = bft_ref_mean,
+                                              bftScen = bft_ref[,,y],
+                                              cftRef = cft_ref_mean,
+                                              cftScen = cft_ref[,,y], 
+                                              weighting = weighting
+                                              )
    }
-   deltaVsd <- apply(sigma_deltaV_ref_list,c(1),sd)# calculate the standard deviation over the reference period for each gridcell
+   # calculate the std deviation over the reference period for each gridcell
+   deltaVsd <- apply(sigma_deltaV_ref_list,c(1),sd)
    # calculate deltaV between average reference and average scenario period
-   deltaV <- calcDeltaV(fpcRef = fpc_ref_mean, fpcScen = apply(fpc_scen,c(1,2),mean),
-                        bftRef = bft_ref_mean, bftScen = apply(bft_scen,c(1,2),mean), cftRef = cft_ref_mean,
+   deltaV <- calcDeltaV(fpcRef = fpc_ref_mean, 
+                        fpcScen = apply(fpc_scen,c(1,2),mean),
+                        bftRef = bft_ref_mean, 
+                        bftScen = apply(bft_scen,c(1,2),mean), 
+                        cftRef = cft_ref_mean,
                         cftScen = apply(cft_scen,c(1,2),mean), weighting = weighting)
    #
    ####
 
-   ############## calc gamma components ################
+   ############## calc MECO components ################
    # variable names for the state vector
    # 1:3 carbon fluxes
    # 4:6 water fluxes
@@ -168,34 +216,31 @@ calcGamma <- function(folderRef, folderRef2 = NULL, folderScen, readPreviouslySa
     }
    }
 
-   # calc total gamma as the average of the 4 components
-   gammaFull <- (delta + lc + gc + eb)/4 #check for NAs
-   #
-   ### FS: 2022-11-09 removed
-   #gamma = expression(gamma, deltav, local, global, balance,
-   #                  cstocks, cfluxes, wfluxes, nstocks, nfluxes)
+   # calc total MECO as the average of the 4 components
+   mecoFull <- (delta + lc + gc + eb)/4 #check for NAs
+
    if (nitrogen) {
-     gamma <- list(gamma_total = gammaFull, deltaV = delta, local_change = lc, global_change = gc, ecosystem_balance = eb,
+     meco <- list(meco_total = mecoFull, deltaV = delta, local_change = lc, global_change = gc, ecosystem_balance = eb,
                    carbon_stocks = cs, carbon_fluxes = cf, water_fluxes = wf, nitrogen_stocks = ns, nitrogen_fluxes = nf)
    }else {
-     gamma <- list(gamma_total = gammaFull, deltaV = delta, local_change = lc, global_change = gc, ecosystem_balance = eb,
+     meco <- list(meco_total = mecoFull, deltaV = delta, local_change = lc, global_change = gc, ecosystem_balance = eb,
                    carbon_stocks = cs, carbon_fluxes = cf, water_fluxes = wf)
    }
 
 
    ############## export and save data if requested #############
-   if (!(is.null(saveFileGamma))) {
-      print(paste0("Saving gamma data to: ",saveFileGamma))
-      save( deltaV, deltaVsd, gamma, file = saveFileGamma)
+   if (!(is.null(saveFileMECO))) {
+      print(paste0("Saving MECO data to: ",saveFileMECO))
+      save( deltaV, deltaVsd, meco, file = saveFileMECO)
    }
    #
    ###
-   return(gamma)
+   return(meco)
 }
 
-#' Read in output data from LPJmL to calculate the ecosystem change metric gamma
+#' Read in output data from LPJmL to calculate the ecosystem change metric MECO
 #'
-#' Utility function to read in output data from LPJmL for calculation of gamma
+#' Utility function to read in output data from LPJmL for calculation of MECO
 #'
 #' @param folderRef folder of reference run
 #' @param folderRef2 2nd folder of reference run, if split (default NULL -- no split)
@@ -203,7 +248,7 @@ calcGamma <- function(folderRef, folderRef2 = NULL, folderScen, readPreviouslySa
 #' @param saveFile file to save read in data to (default NULL)
 #' @param export flag whether to export réad in data to global environment (default F)
 #' @param combined read in soilc+litc, evap+interc, rh+harvestc separate or as combined outputs (default F -- separate)
-#' @param nitrogen include nitrogen outputs for pools and fluxes into gamma calculation (default F)
+#' @param nitrogen include nitrogen outputs for pools and fluxes into MECO calculation (default F)
 #' @param varnames data.frame with names of output files -- can be specified to account for variable file names (default NULL -- standard names are used)
 #' @param headerout headersize of the output files (default 0)
 #' @param timespan_full_ref full timespan of output files in reference period
@@ -212,9 +257,10 @@ calcGamma <- function(folderRef, folderRef2 = NULL, folderScen, readPreviouslySa
 #' @param timespan_focus_ref2 specific years to use as 2nd part of reference period in case this is split (default NULL)
 #' @param timespan_focus_scen specific years to use as scenario period
 #' @param npfts number of natural plant functional types (== bands in fpc - 1)
-#' @param ncfts number of crop functional types
-#' @param nbfts number of bfts (bioenergy functional types)
+#' @param ncfts number of crop bands (rainfed+irrigated)
+#' @param nbfts number of bands in fpc_bft (bioenergy functional types)
 #' @param ncells number of cells in lpjml grid
+#' @param soillayers number of soil layers (default = 6)
 #'
 #' @return list data object containing arrays of state_ref, mean_state_ref,
 #'         state_scen, mean_state_scen, fpc_ref, fpc_scen, bft_ref, bft_scen,
@@ -222,22 +268,13 @@ calcGamma <- function(folderRef, folderRef2 = NULL, folderScen, readPreviouslySa
 #'
 #' @examples
 #' \dontrun{
-#' returned_vars <- readGammaData(folderRef = folderRef, folderRef2 = folderRef2,
-#'                  folderScen = folderScen, saveFile = saveFileData, export = F,
-#'                  combined = combined, nitrogen = nitrogen, varnames = varnames,
-#'                  headerout = headerout, timespan_full_ref = timespan_full_ref,
-#'                  timespan_full_scen = timespan_full_scen,
-#'                  timespan_focus_ref = timespan_focus_ref,
-#'                  timespan_focus_ref2 = timespan_focus_ref2,
-#'                  timespan_focus_scen = timespan_focus_scen,
-#'                  npfts = npfts, ncfts = ncfts, nbfts = nbfts, ncells = ncells)
 #' }
 #' @export
-readGammaData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = NULL,
+readMECOData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = NULL,
                           export = FALSE, combined = FALSE, varnames, headerout = 0,
                           timespan_full_ref, timespan_full_scen, timespan_focus_ref,
                           timespan_focus_ref2 = NULL, timespan_focus_scen, nitrogen,
-                          npfts, ncfts, nbfts, ncells) {
+                          npfts, ncfts, nbfts, ncells, soillayers = 6) {
    require(lpjmliotools)
 
    if (!(is.null(folderRef2) == is.null(timespan_focus_ref2))) {
@@ -259,396 +296,400 @@ readGammaData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = N
    ### read in lpjml output
    # for deltaV (fpc,fpc_bft,cftfrac)
    print("Reading in fpc,fpc_bft,cftfrac")
+   if (varnames["fpc","timestep"] == "M") stop("fpc is currently only supported as yearly output. Aborting.")
+   if (varnames["fpc_bft","timestep"] == "M") stop("fpc_bft is currently only supported as yearly output. Aborting.")
+   if (varnames["cftfrac","timestep"] == "M") stop("cftfrac is currently only supported as yearly output. Aborting.")
+   
    if (regular) {# reference period not split in two folders (folderRef2==NULL)
-      fpc_ref <- readCFToutput(inFile = paste0(folderRef,varnames["fpc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = (npfts + 1),
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      bft_ref <- readCFToutput(inFile = paste0(folderRef,varnames["fpc_bft","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = nbfts,
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      cft_ref <- readCFToutput(inFile = paste0(folderRef,varnames["cftfrac","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = ncfts,
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+      fpc_ref <- drop(readCFToutput(inFile = paste0(folderRef,varnames["fpc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = (npfts + 1),
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      bft_ref <- drop(readCFToutput(inFile = paste0(folderRef,varnames["fpc_bft","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = nbfts,
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      cft_ref <- drop(readCFToutput(inFile = paste0(folderRef,varnames["cftfrac","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = ncfts,
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
    }else {# reference period split in two folders
       fpc_ref <- array(0, dim = c(ncells,(npfts + 1), nyears))
-      fpc_ref[,,1:nyears1] <- readCFToutput(inFile = paste0(folderRef,varnames["fpc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = (npfts + 1),
-                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      fpc_ref[,,(nyears1 + 1):nyears] <- readCFToutput(inFile = paste0(folderRef2,varnames["fpc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = (npfts + 1),
-                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      fpc_ref[,,1:nyears1] <- drop(readCFToutput(inFile = paste0(folderRef,varnames["fpc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = (npfts + 1),
+                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      fpc_ref[,,(nyears1 + 1):nyears] <- drop(readCFToutput(inFile = paste0(folderRef2,varnames["fpc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = (npfts + 1),
+                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
       bft_ref <- array(0,dim = c(ncells, nbfts, nyears))
-      bft_ref[,,1:nyears1] <- readCFToutput(inFile = paste0(folderRef,varnames["fpc_bft","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = nbfts,
-                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      bft_ref[,,(nyears1 + 1):nyears] <- readCFToutput(inFile = paste0(folderRef2,varnames["fpc_bft","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = nbfts,
-                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      bft_ref[,,1:nyears1] <- drop(readCFToutput(inFile = paste0(folderRef,varnames["fpc_bft","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = nbfts,
+                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      bft_ref[,,(nyears1 + 1):nyears] <- drop(readCFToutput(inFile = paste0(folderRef2,varnames["fpc_bft","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = nbfts,
+                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
       cft_ref <- array(0,dim = c(ncells, ncfts, nyears))
-      cft_ref[,,1:nyears1] <- readCFToutput(inFile = paste0(folderRef,varnames["cftfrac","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = ncfts,
-                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      cft_ref[,,(nyears1 + 1):nyears] <- readCFToutput(inFile = paste0(folderRef2,varnames["cftfrac","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = ncfts,
-                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      cft_ref[,,1:nyears1] <- drop(readCFToutput(inFile = paste0(folderRef,varnames["cftfrac","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = ncfts,
+                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      cft_ref[,,(nyears1 + 1):nyears] <- drop(readCFToutput(inFile = paste0(folderRef2,varnames["cftfrac","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = ncfts,
+                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
    }
-   fpc_scen <- readCFToutput(inFile = paste0(folderScen,varnames["fpc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = (npfts + 1),
-                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
-   bft_scen <- readCFToutput(inFile = paste0(folderScen,varnames["fpc_bft","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = nbfts,
-                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
-   cft_scen <- readCFToutput(inFile = paste0(folderScen,varnames["cftfrac","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = ncfts,
-                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+   fpc_scen <- drop(readCFToutput(inFile = paste0(folderScen,varnames["fpc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = (npfts + 1),
+                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
+   bft_scen <- drop(readCFToutput(inFile = paste0(folderScen,varnames["fpc_bft","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = nbfts,
+                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
+   cft_scen <- drop(readCFToutput(inFile = paste0(folderScen,varnames["cftfrac","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,bands = ncfts,
+                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
 
    # cffiles = ( firec rh_harvest npp ) yearly carbon fluxes
    print("Reading in firec, rh_harvest, npp")
    if (regular) {
      if (varnames["firec","timestep"] == "Y") {
-       firec_ref <- readYearly(inFile = paste0(folderRef,varnames["firec","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       firec_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["firec","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["firec","timestep"] == "M") {
        firec_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["firec","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,4),sum,drop = T)
      }
       if (combined) {
-         rh_harvest_ref <- readYearly(inFile = paste0(folderRef,varnames["rh_harvest","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                      headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+         rh_harvest_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["rh_harvest","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                      headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
       }else{
         if (varnames["rh","timestep"] == "Y") {
-          rh_ref <- readYearly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+          rh_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
         }else if (varnames["rh","timestep"] == "M") {
           rh_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
         }
         if (varnames["harvestc","timestep"] == "Y") {
-          harvest_ref <- readYearly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                    headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+          harvest_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                    headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
         }else if (varnames["harvestc","timestep"] == "M") {
           harvest_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
         }
         rh_harvest_ref <- rh_ref + harvest_ref
       }
      if (varnames["npp","timestep"] == "Y") {
-       npp_ref <- readYearly(inFile = paste0(folderRef,varnames["npp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                             headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       npp_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["npp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                             headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["npp","timestep"] == "M") {
        npp_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["npp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                             headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                             headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
 
-   }else{ # regular == F
+   }else{ # regular == F - her no monthly data, as this is mainly for reading old outputs already written in this split, but yearly format
       firec_ref <- array(0,dim = c(ncells, nyears))
-      firec_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["firec","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                          headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      firec_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["firec","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                   headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      firec_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["firec","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                          headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      firec_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["firec","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                   headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
       if (combined) {
          rh_harvest_ref <- array(0,dim = c(ncells, nyears))
-         rh_harvest_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["rh_harvest","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                                  headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         rh_harvest_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["rh_harvest","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                           headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         rh_harvest_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["rh_harvest","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                                  headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         rh_harvest_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["rh_harvest","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                           headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
 
       }else{
          rh_ref <- array(0, dim = c(ncells, nyears))
-         rh_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                          headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         rh_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["rh","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                   headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         rh_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                          headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         rh_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["rh","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                   headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
          harvest_ref <- array(0, dim = c(ncells, nyears))
-         harvest_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         harvest_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                        headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         harvest_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         harvest_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                        headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
          rh_harvest_ref  <-  rh_ref + harvest_ref
       }
 
       npp_ref <- array(0, dim = c(ncells, nyears))
-      npp_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["npp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      npp_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["npp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                 headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      npp_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["npp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      npp_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["npp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                 headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
    }
 
    if (combined) {
-      rh_harvest_scen <- readYearly(inFile = paste0(folderScen,varnames["rh_harvest","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                    headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+      rh_harvest_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["rh_harvest","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                    headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else{
      if (varnames["rh","timestep"] == "Y") {
-       rh_scen <- readYearly(inFile = paste0(folderScen,varnames["rh","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       rh_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["rh","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["rh","timestep"] == "M") {
        rh_scen <- apply(readMonthly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                   headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                   headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["harvestc","timestep"] == "Y") {
-       harvest_scen <- readYearly(inFile = paste0(folderScen,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       harvest_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["harvestc","timestep"] == "M") {
        harvest_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      rh_harvest_scen  <-  rh_scen + harvest_scen
    }
    if (varnames["firec","timestep"] == "Y") {
-     firec_scen <- readYearly(inFile = paste0(folderScen,varnames["firec","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+     firec_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["firec","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else if (varnames["firec","timestep"] == "M") {
      firec_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["firec","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
    }
    if (varnames["npp","timestep"] == "Y") {
-     npp_scen <- readYearly(inFile = paste0(folderScen,varnames["npp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                            headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+     npp_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["npp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                            headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else if (varnames["npp","timestep"] == "M") {
      npp_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["npp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                            headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                            headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
    }
 
    # wffiles = (evapinterc runoff transp) - yearly water fluxes
    print("Reading in evapinterc, runoff, transp")
    if (regular) {
       if (combined) {
-         evapinterc_ref <- readYearly(inFile = paste0(folderRef,varnames["evapinterc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                      headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+         evapinterc_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["evapinterc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                      headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
       }else{
         if (varnames["evap","timestep"] == "Y") {
-          evap_ref <- readYearly(inFile = paste0(folderRef,varnames["evap","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+          evap_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["evap","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
         }else if (varnames["evap","timestep"] == "M") {
           evap_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["evap","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
         }
         if (varnames["interc","timestep"] == "Y") {
-          interc_ref <- readYearly(inFile = paste0(folderRef,varnames["interc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                   headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+          interc_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["interc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                   headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
         }else if (varnames["interc","timestep"] == "M") {
           interc_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["interc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                   headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                   headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
         }
         evapinterc_ref <- evap_ref + interc_ref
       }
 
      if (varnames["runoff","timestep"] == "Y") {
-       runoff_ref <- readYearly(inFile = paste0(folderRef,varnames["runoff","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       runoff_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["runoff","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["runoff","timestep"] == "M") {
        runoff_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["runoff","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["transp","timestep"] == "Y") {
-       transp_ref <- readYearly(inFile = paste0(folderRef,varnames["transp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       transp_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["transp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["transp","timestep"] == "M") {
        transp_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["transp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
     }else{ # regular == F
       if (combined) {
          evapinterc_ref <- array(0, dim = c(ncells, nyears))
-         evapinterc_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["evapinterc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                                  headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         evapinterc_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["evapinterc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                           headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         evapinterc_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["evapinterc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                                  headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         evapinterc_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["evapinterc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                           headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
       }else{
          evap_ref <- array(0, dim = c(ncells, nyears))
-         evap_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["evap","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         evap_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["evap","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         evap_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["evap","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         evap_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["evap","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
          interc_ref <- array(0, dim = c(ncells, nyears))
-         interc_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["interc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         interc_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["interc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                       headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         interc_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["interc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         interc_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["interc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                       headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
          evapinterc_ref <- evap_ref + interc_ref
       }
       runoff_ref <- array(0, dim = c(ncells, nyears))
-      runoff_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["runoff","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                           headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      runoff_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["runoff","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                    headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      runoff_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["runoff","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                           headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      runoff_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["runoff","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                    headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
       transp_ref <- array(0, dim = c(ncells, nyears))
-      transp_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["transp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                           headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      transp_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["transp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                    headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      transp_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["transp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                           headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      transp_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["transp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                    headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
    }
    if (combined) {
-      evapinterc_scen <- readYearly(inFile = paste0(folderScen,varnames["evapinterc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                    headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+      evapinterc_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["evapinterc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                    headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else{
      if (varnames["evap","timestep"] == "Y") {
-       evap_scen <- readYearly(inFile = paste0(folderScen,varnames["evap","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       evap_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["evap","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["evap","timestep"] == "M") {
        evap_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["evap","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["interc","timestep"] == "Y") {
-       interc_scen <- readYearly(inFile = paste0(folderScen,varnames["interc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       interc_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["interc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                 headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["interc","timestep"] == "M") {
        interc_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["interc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                 headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      evapinterc_scen <- evap_scen + interc_scen
 
    }
 
    if (varnames["runoff","timestep"] == "Y") {
-     runoff_scen <- readYearly(inFile = paste0(folderScen,varnames["runoff","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+     runoff_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["runoff","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else if (varnames["runoff","timestep"] == "M") {
      runoff_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["runoff","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
    }
    if (varnames["transp","timestep"] == "Y") {
-     transp_scen <- readYearly(inFile = paste0(folderScen,varnames["transp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+     transp_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["transp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else if (varnames["transp","timestep"] == "M") {
      transp_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["transp","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
    }
 
    # csfiles = ( soillitc vegc_avg ) #carbon pools
    print("Reading in soillitc, vegc_avg")
    if (regular) {
       if (combined) {
-         soillitc_ref <- readYearly(inFile = paste0(folderRef,varnames["soillitc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                    headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+         soillitc_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["soillitc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                    headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
       }else{
         if (varnames["soilc","timestep"] == "Y") {
-          soil_ref <- readYearly(inFile = paste0(folderRef,varnames["soilc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+          soil_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["soilc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
         }else if (varnames["soilc","timestep"] == "M") {
           soil_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["soilc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
         }
         if (varnames["litc","timestep"] == "Y") {
-          litc_ref <- readYearly(inFile = paste0(folderRef,varnames["litc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+          litc_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["litc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
         }else if (varnames["litc","timestep"] == "M") {
           litc_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["litc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
         }
         soillitc_ref <- soil_ref + litc_ref
       }
      if (varnames["vegc","timestep"] == "Y") {
-       vegc_ref <- readYearly(inFile = paste0(folderRef,varnames["vegc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       vegc_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["vegc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["vegc","timestep"] == "M") {
        vegc_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["vegc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
     }else{ # regular == F
       if (combined) {
          soillitc_ref <- array(0, dim = c(ncells, nyears))
-         soillitc_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["soillitc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         soillitc_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["soillitc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                         headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         soillitc_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["soillitc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         soillitc_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["soillitc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                         headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
       }else{
          soil_ref <- array(0, dim = c(ncells, nyears))
-         soil_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["soilc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         soil_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["soilc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         soil_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["soilc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         soil_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["soilc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
          litc_ref <- array(0, dim = c(ncells, nyears))
-         litc_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["litc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         litc_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["litc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         litc_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["litc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         litc_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["litc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                     headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
          soillitc_ref <- soil_ref + litc_ref
 
       }
       vegc_ref <- array(0, dim = c(ncells, nyears))
-      vegc_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["vegc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                         headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      vegc_ref[,(nyears1 + 1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["vegc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                  headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      vegc_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["vegc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                         headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      vegc_ref[,(nyears1 + 1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["vegc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                  headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
    }
    if (combined) {
-      soillitc_scen <- readYearly(inFile = paste0(folderScen,varnames["soillitc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+      soillitc_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["soillitc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else{
      if (varnames["soilc","timestep"] == "Y") {
-       soil_scen <- readYearly(inFile = paste0(folderScen,varnames["soilc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       soil_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["soilc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["soilc","timestep"] == "M") {
        soil_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["soilc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["litc","timestep"] == "Y") {
-       litc_scen <- readYearly(inFile = paste0(folderScen,varnames["litc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       litc_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["litc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["litc","timestep"] == "M") {
        litc_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["litc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      soillitc_scen <- soil_scen + litc_scen
    }
    if (varnames["litc","timestep"] == "Y") {
-     vegc_scen <- readYearly(inFile = paste0(folderScen,varnames["vegc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+     vegc_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["vegc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else if (varnames["litc","timestep"] == "M") {
      vegc_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["vegc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                             headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
    }
 
    # allfiles = (swcsum firef) # other system-internal processes
    print("Reading in swcsum, firef")
    if (regular) {
       if (combined) {
-         swcsum_ref <- readYearly(inFile = paste0(folderRef,varnames["swcsum","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                  headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+         swcsum_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["swcsum","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                  headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
       }else{
         if (varnames["swc","timestep"] == "Y") {
-          swcsum_ref <- apply(readCFToutput(inFile = paste0(folderRef,varnames["swc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4, bands = 6,
-                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+          swcsum_ref <- apply(readCFToutput(inFile = paste0(folderRef,varnames["swc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4, bands = soillayers,
+                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
         }else if (varnames["swc","timestep"] == "M") {
-          swcsum_ref <- apply(readMonthlyCFToutput(inFile = paste0(folderRef,varnames["swc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4, bands = 6,
+          swcsum_ref <- apply(readMonthlyCFToutput(inFile = paste0(folderRef,varnames["swc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4, bands = soillayers,
                                             headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,4),sum)
         }
                }
      if (varnames["firef","timestep"] == "Y") {
-       firef_ref <- readYearly(inFile = paste0(folderRef,varnames["firef","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       firef_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["firef","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["firef","timestep"] == "M") {
        firef_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["firef","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                               headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
    }else{ # regular == F
       if (combined) {
          swcsum_ref <- array(0, dim = c(ncells, nyears))
-         swcsum_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["swc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-         swcsum_ref[,(nyears1+1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["swc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                       headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+         swcsum_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["swc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+         swcsum_ref[,(nyears1+1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["swc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                       headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
       }else{
          swcsum_ref <- array(0, dim = c(ncells, nyears))
-         swcsum_ref[,1:nyears1] <- apply(readCFToutput(inFile = paste0(folderRef,varnames["swc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4, bands = 6,
-                                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
-         swcsum_ref[,(nyears1+1):nyears] <-  apply(readCFToutput(inFile = paste0(folderRef2,varnames["swc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4, bands = 6,
-                                                       headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells),c(1,3),sum)
+         swcsum_ref[,1:nyears1] <- apply(readCFToutput(inFile = paste0(folderRef,varnames["swc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4, bands = soillayers,
+                                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
+         swcsum_ref[,(nyears1+1):nyears] <-  apply(readCFToutput(inFile = paste0(folderRef2,varnames["swc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4, bands = soillayers,
+                                                       headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells), c(1,4), sum, drop = T)
 
       }
       firef_ref <- array(0, dim = c(ncells, nyears))
-      firef_ref[,1:nyears1] <- readYearly(inFile = paste0(folderRef,varnames["firef","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                          headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
-      firef_ref[,(nyears1+1):nyears] <- readYearly(inFile = paste0(folderRef2,varnames["firef","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                                   headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells)
+      firef_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["firef","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                          headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+      firef_ref[,(nyears1+1):nyears] <- drop(readYearly(inFile = paste0(folderRef2,varnames["firef","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                                   headersize = headerout,getyearstart = timespan_focus_ref2[1],getyearstop = timespan_focus_ref2[2],ncells = ncells))
    }
    if (combined) {
-      swcsum_scen <- readYearly(inFile = paste0(folderScen,varnames["swcsum","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+      swcsum_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["swcsum","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else{
      if (varnames["swc","timestep"] == "Y") {
        swcsum_scen <- apply(readCFToutput(inFile = paste0(folderScen,varnames["swc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                       headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells, bands = 6),c(1,3),sum)
+                                       headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells, bands = soillayers), c(1,4), sum, drop = T)
      }else if (varnames["swc","timestep"] == "M") {
        swcsum_scen <- apply(readMonthlyCFToutput(inFile = paste0(folderScen,varnames["swc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                       headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells, bands = 6),c(1,4),sum)
+                                       headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells, bands = soillayers), c(1,4), sum, drop = T)
      }
    }
    if (varnames["firef","timestep"] == "Y") {
-     firef_scen <- readYearly(inFile = paste0(folderScen,varnames["firef","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+     firef_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["firef","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
    }else if (varnames["firef","timestep"] == "M") {
      firef_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["firef","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
    }
 
    # nitrogen variables
@@ -661,135 +702,135 @@ readGammaData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = N
      # reference state
      # pools: soilnh4, soilno3
      if (varnames["soilnh4","timestep"] == "Y") {
-       soilnh4_ref <- readYearly(inFile = paste0(folderRef,varnames["soilnh4","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       soilnh4_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["soilnh4","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["soilnh4","timestep"] == "M") {
        soilnh4_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["soilnh4","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["soilno3","timestep"] == "Y") {
-       soilno3_ref <- readYearly(inFile = paste0(folderRef,varnames["soilno3","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       soilno3_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["soilno3","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["soilno3","timestep"] == "M") {
        soilno3_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["soilno3","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["vegn","timestep"] == "Y") {
-       vegn_ref <- readYearly(inFile = paste0(folderRef,varnames["vegn","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       vegn_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["vegn","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["vegn","timestep"] == "M") {
        vegn_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["vegn","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      # fluxes: leaching, n2o_nit, n2o_denit n2_emis, bnf, n_volatilization
      if (varnames["leaching","timestep"] == "Y") {
-       leaching_ref <- readYearly(inFile = paste0(folderRef,varnames["leaching","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       leaching_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["leaching","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["leaching","timestep"] == "M") {
        leaching_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["leaching","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["n2o_denit","timestep"] == "Y") {
-       n2o_denit_ref <- readYearly(inFile = paste0(folderRef,varnames["n2o_denit","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       n2o_denit_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["n2o_denit","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["n2o_denit","timestep"] == "M") {
        n2o_denit_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["n2o_denit","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["n2o_nit","timestep"] == "Y") {
-       n2o_nit_ref <- readYearly(inFile = paste0(folderRef,varnames["n2o_nit","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       n2o_nit_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["n2o_nit","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["n2o_nit","timestep"] == "M") {
        n2o_nit_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["n2o_nit","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["n2_emis","timestep"] == "Y") {
-       n2_emis_ref <- readYearly(inFile = paste0(folderRef,varnames["n2_emis","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       n2_emis_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["n2_emis","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["n2_emis","timestep"] == "M") {
        n2_emis_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["n2_emis","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["bnf","timestep"] == "Y") {
-       bnf_ref <- readYearly(inFile = paste0(folderRef,varnames["bnf","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       bnf_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["bnf","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["bnf","timestep"] == "M") {
        bnf_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["bnf","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["n_volatilization","timestep"] == "Y") {
-       n_volatilization_ref <- readYearly(inFile = paste0(folderRef,varnames["n_volatilization","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells)
+       n_volatilization_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["n_volatilization","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                 headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else if (varnames["n_volatilization","timestep"] == "M") {
        n_volatilization_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["n_volatilization","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells),c(1,3),sum)
+                                        headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }#
 
      # scenario state
      # pools
      if (varnames["soilnh4","timestep"] == "Y") {
-       soilnh4_scen <- readYearly(inFile = paste0(folderScen,varnames["soilnh4","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       soilnh4_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["soilnh4","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["soilnh4","timestep"] == "M") {
        soilnh4_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["soilnh4","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["soilno3","timestep"] == "Y") {
-       soilno3_scen <- readYearly(inFile = paste0(folderScen,varnames["soilno3","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       soilno3_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["soilno3","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["soilno3","timestep"] == "M") {
        soilno3_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["soilno3","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["vegn","timestep"] == "Y") {
-       vegn_scen <- readYearly(inFile = paste0(folderScen,varnames["vegn","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       vegn_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["vegn","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["vegn","timestep"] == "M") {
        vegn_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["vegn","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                         headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                         headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      # fluxes
      if (varnames["leaching","timestep"] == "Y") {
-       leaching_scen <- readYearly(inFile = paste0(folderScen,varnames["leaching","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       leaching_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["leaching","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["leaching","timestep"] == "M") {
        leaching_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["leaching","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["n2o_denit","timestep"] == "Y") {
-       n2o_denit_scen <- readYearly(inFile = paste0(folderScen,varnames["n2o_denit","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       n2o_denit_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["n2o_denit","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["n2o_denit","timestep"] == "M") {
        n2o_denit_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["n2o_denit","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["n2o_nit","timestep"] == "Y") {
-       n2o_nit_scen <- readYearly(inFile = paste0(folderScen,varnames["n2o_nit","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       n2o_nit_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["n2o_nit","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                               headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["n2o_nit","timestep"] == "M") {
        n2o_nit_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["n2o_nit","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                      headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["n2_emis","timestep"] == "Y") {
-       n2_emis_scen <- readYearly(inFile = paste0(folderScen,varnames["n2_emis","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                   headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       n2_emis_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["n2_emis","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                   headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["n2_emis","timestep"] == "M") {
        n2_emis_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["n2_emis","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                          headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                          headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["bnf","timestep"] == "Y") {
-       bnf_scen <- readYearly(inFile = paste0(folderScen,varnames["bnf","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                    headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       bnf_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["bnf","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                    headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["bnf","timestep"] == "M") {
        bnf_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["bnf","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                           headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                           headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      if (varnames["n_volatilization","timestep"] == "Y") {
-       n_volatilization_scen <- readYearly(inFile = paste0(folderScen,varnames["n_volatilization","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells)
+       n_volatilization_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["n_volatilization","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["n_volatilization","timestep"] == "M") {
        n_volatilization_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["n_volatilization","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                         headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells),c(1,3),sum)
+                                         headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
      # Calculating compound n emissions vector
      aggregated_n_emissions_scen <- n_volatilization_scen + n2o_nit_scen + n2o_denit_scen + n2_emis_scen
@@ -799,43 +840,96 @@ readGammaData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = N
 
    }
    if (nitrogen) {
-     mean_state_ref <- cbind(rowMeans(firec_ref),rowMeans(rh_harvest_ref),rowMeans(npp_ref),rowMeans(evapinterc_ref),rowMeans(runoff_ref),
-                             rowMeans(transp_ref),rowMeans(soillitc_ref),rowMeans(vegc_ref),rowMeans(swcsum_ref),rowMeans(firef_ref),
-                             rowMeans(soiln_ref), rowMeans(vegn_ref), rowMeans(leaching_ref), rowMeans(bnf_ref), rowMeans(aggregated_n_emissions_ref))
-     mean_state_scen <- cbind(rowMeans(firec_scen),rowMeans(rh_harvest_scen),rowMeans(npp_scen),rowMeans(evapinterc_scen),rowMeans(runoff_scen),
-                              rowMeans(transp_scen),rowMeans(soillitc_scen),rowMeans(vegc_scen),rowMeans(swcsum_scen),rowMeans(firef_scen),
-                              rowMeans(soiln_scen), rowMeans(vegn_scen), rowMeans(leaching_scen), rowMeans(bnf_scen), rowMeans(aggregated_n_emissions_scen))
-     require(abind) #       1           2             3          4                5          6          7             8          9           10        11             12            13            14           15
-     state_ref <- abind( firec_ref, rh_harvest_ref, npp_ref, evapinterc_ref, runoff_ref, transp_ref, soillitc_ref, vegc_ref, swcsum_ref, firef_ref, soiln_ref,  vegn_ref,  leaching_ref,  bnf_ref,  aggregated_n_emissions_ref,along = 3)
-     state_scen <- abind(firec_scen,rh_harvest_scen,npp_scen,evapinterc_scen,runoff_scen,transp_scen,soillitc_scen,vegc_scen,swcsum_scen,firef_scen,soiln_scen, vegn_scen, leaching_scen, bnf_scen, aggregated_n_emissions_scen,along = 3)
+     mean_state_ref <- cbind(rowMeans(firec_ref),    rowMeans(rh_harvest_ref),
+                             rowMeans(npp_ref),      rowMeans(evapinterc_ref),
+                             rowMeans(runoff_ref),   rowMeans(transp_ref),
+                             rowMeans(soillitc_ref), rowMeans(vegc_ref),
+                             rowMeans(swcsum_ref),   rowMeans(firef_ref),
+                             rowMeans(soiln_ref),    rowMeans(vegn_ref), 
+                             rowMeans(leaching_ref), rowMeans(bnf_ref), 
+                             rowMeans(aggregated_n_emissions_ref))
+     mean_state_scen <- cbind(rowMeans(firec_scen),  rowMeans(rh_harvest_scen),
+                              rowMeans(npp_scen),    rowMeans(evapinterc_scen),
+                              rowMeans(runoff_scen), rowMeans(transp_scen),
+                              rowMeans(soillitc_scen),rowMeans(vegc_scen),
+                              rowMeans(swcsum_scen), rowMeans(firef_scen),
+                              rowMeans(soiln_scen),  rowMeans(vegn_scen), 
+                              rowMeans(leaching_scen), rowMeans(bnf_scen), 
+                              rowMeans(aggregated_n_emissions_scen))
+     require(abind) 
+     state_ref <- abind( firec_ref,                  #  1
+                         rh_harvest_ref,             #  2
+                         npp_ref,                    #  3
+                         evapinterc_ref,             #  4
+                         runoff_ref,                 #  5
+                         transp_ref,                 #  6   
+                         soillitc_ref,               #  7
+                         vegc_ref,                   #  8
+                         swcsum_ref,                 #  9
+                         firef_ref,                  #  10
+                         soiln_ref,                  #  11
+                         vegn_ref,                   #  12
+                         leaching_ref,               #  13
+                         bnf_ref,                    #  14
+                         aggregated_n_emissions_ref, #  15
+                         along = 3)
+     state_scen <- abind(firec_scen,                  #  1
+                         rh_harvest_scen,             #  2
+                         npp_scen,                    #  3
+                         evapinterc_scen,             #  4
+                         runoff_scen,                 #  5
+                         transp_scen,                 #  6
+                         soillitc_scen,               #  7
+                         vegc_scen,                   #  8
+                         swcsum_scen,                 #  9
+                         firef_scen,                  #  10
+                         soiln_scen,                  #  11
+                         vegn_scen,                   #  12
+                         leaching_scen,               #  13
+                         bnf_scen,                    #  14
+                         aggregated_n_emissions_scen, #  15
+                         along = 3)
    }else{
-     mean_state_ref <- cbind(rowMeans(firec_ref),rowMeans(rh_harvest_ref),rowMeans(npp_ref),rowMeans(evapinterc_ref),rowMeans(runoff_ref),
-                             rowMeans(transp_ref),rowMeans(soillitc_ref),rowMeans(vegc_ref),rowMeans(swcsum_ref),rowMeans(firef_ref))
-     mean_state_scen <- cbind(rowMeans(firec_scen),rowMeans(rh_harvest_scen),rowMeans(npp_scen),rowMeans(evapinterc_scen),rowMeans(runoff_scen),
-                              rowMeans(transp_scen),rowMeans(soillitc_scen),rowMeans(vegc_scen),rowMeans(swcsum_scen),rowMeans(firef_scen))
+     mean_state_ref <- cbind(rowMeans(firec_ref),    rowMeans(rh_harvest_ref),
+                             rowMeans(npp_ref),      rowMeans(evapinterc_ref),
+                             rowMeans(runoff_ref),   rowMeans(transp_ref),
+                             rowMeans(soillitc_ref), rowMeans(vegc_ref),
+                             rowMeans(swcsum_ref),   rowMeans(firef_ref))
+     mean_state_scen <- cbind(rowMeans(firec_scen),  rowMeans(rh_harvest_scen),
+                              rowMeans(npp_scen),    rowMeans(evapinterc_scen),
+                              rowMeans(runoff_scen), rowMeans(transp_scen),
+                              rowMeans(soillitc_scen),rowMeans(vegc_scen),
+                              rowMeans(swcsum_scen), rowMeans(firef_scen))
      require(abind)
-     state_ref <- abind(firec_ref,rh_harvest_ref,npp_ref,evapinterc_ref,runoff_ref,transp_ref,soillitc_ref,vegc_ref,swcsum_ref,firef_ref,along = 3)
-     state_scen <- abind(firec_scen,rh_harvest_scen,npp_scen,evapinterc_scen,runoff_scen,transp_scen,soillitc_scen,vegc_scen,swcsum_scen,firef_scen,along = 3)
+     state_ref <- abind( firec_ref,       rh_harvest_ref,  npp_ref,
+                         evapinterc_ref,  runoff_ref,      transp_ref,
+                         soillitc_ref,    vegc_ref,        swcsum_ref,
+                         firef_ref,       along = 3)
+     state_scen <- abind(firec_scen,      rh_harvest_scen, npp_scen,
+                         evapinterc_scen, runoff_scen,     transp_scen,
+                         soillitc_scen,   vegc_scen,       swcsum_scen,
+                         firef_scen,      along = 3)
    }
 
    if (!(is.null(saveFile))) {
      print(paste0("Saving data to: ",saveFile))
-     save(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea,file = saveFile)
+     save(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,
+          bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea,file = saveFile
+          )
    }
-   if (export) {
-      print(paste0("Creating return data list object"))
-      exportVars2GlobalEnv(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea)
-   }
-  return(list(state_ref = state_ref, mean_state_ref = mean_state_ref,
-                 state_scen = state_scen, mean_state_scen = mean_state_scen,
-                 fpc_ref = fpc_ref, fpc_scen = fpc_scen, bft_ref = bft_ref,
-                 bft_scen = bft_scen, cft_ref = cft_ref, cft_scen = cft_scen,lat = lat, lon = lon, cellArea = cellArea))
+   return(list(state_ref = state_ref, mean_state_ref = mean_state_ref,
+               state_scen = state_scen, mean_state_scen = mean_state_scen,
+               fpc_ref = fpc_ref, fpc_scen = fpc_scen, bft_ref = bft_ref,
+               bft_scen = bft_scen, cft_ref = cft_ref, cft_scen = cft_scen,
+               lat = lat, lon = lon, cellArea = cellArea
+               )
+          )
 }
 
 #' Calculates changes in vegetation structure (deltaV)
 #'
 #' Utility function to calculate changes in vegetation structure (deltaV)
-#' for calculation of gamma
+#' for calculation of MECO
 #'
 #' @param fpcRef reference fpc array (dim: [ncells,npfts+1])
 #' @param fpcScen scenario fpc array (dim: [ncells,npfts+1])
@@ -1090,11 +1184,11 @@ calcDeltaV <- function(fpcRef, fpcScen, bftRef, bftScen, cftRef, cftScen,
    deltaV <- 1 - barrenV - treesV*(1 - innerSumTrees) - grassV*(1 - innerSumGrasses)
    deltaV[deltaV < 0] <- 0
    deltaV[!is.finite(deltaV)] <- 0
-   #plotGammaToScreen(data=deltaV,title = "deltaV")
+   #plotMECOtoScreen(data=deltaV,title = "deltaV")
    return(deltaV)
 }
 
-################# further gamma utility functions ##################
+################# further MECO utility functions ##################
 T_sigmoid_Trafo <- function(x) {
    return( -1/exp(3) + (1 + 1/exp(3))/(1 + exp(-6*(x - 0.5))) )
 }
@@ -1152,7 +1246,7 @@ state_Diff_global <- function(ref, scen, cellArea) { #c based on Heyder 2011 eq.
    global_mean_ref <- globally_weighted_mean_foreach_var(ref,cellArea)
    global_mean_scen <- globally_weighted_mean_foreach_var(scen,cellArea)
    global_mean_ref[global_mean_ref == 0 & !global_mean_scen == 0] <- global_mean_scen[global_mean_ref == 0 & !global_mean_scen == 0] # if global mean state in ref period is 0 (e.g. for landuse vars in pnv run?) take the mean scen state instead
-   global_mean_ref[global_mean_ref == 0 & global_mean_scen == 0] <- 1 # if both are 0 take 1, then the division is defined but 0 - 0 leads to no change, which is what gamma should show
+   global_mean_ref[global_mean_ref == 0 & global_mean_scen == 0] <- 1 # if both are 0 take 1, then the division is defined but 0 - 0 leads to no change, which is what MECO should show
    norm <- rep(global_mean_ref, each = ncells)
    dim(norm) <- dim(ref)
    s_scen <- scen/norm
@@ -1220,8 +1314,10 @@ balanceShift <- function(ref, scen, epsilon = 10^-4) {
    #b1[abs(abs_ref) < epsilon & abs(abs_scen) < epsilon] <- 0 # 1 - 1
    #b1[abs(abs_ref) < epsilon & abs(abs_scen) > epsilon] <- 1 # or 0.5? I do not see the b=b1*2 as described in E.11 in diss in the code
    #b1[abs(abs_ref) > epsilon & abs(abs_scen) < epsilon] <- 1 # similarly
-
-   angle <- acos(1 - b1)*360/2/pi
+   #if (length(which(abs(1 - b1)>1))>0) browser()
+   b1[b1<0] <- 0 # cut at the maximum range for the acos function
+   b1[b1>2] <- 2 # cut at the maximum range for the acos function
+   angle <- acos(1 - b1)*360/2/pi # here NaNs are produced
    angle[b1 == 1] <- 0
    b <- b1*2
    b[angle > 60] <- 1
@@ -1249,40 +1345,32 @@ calcEcosystemBalance <- function(ref, scen, export=FALSE) {
   return(b*S_change_to_var_ratio(b, sigma_b_ref))
 }
 
-#' Create modified gamma data
+#' Create modified MECO data file
 #'
-#' Function to create a modified gamma data file where each cell is compared
-#' to the average cell of the precribed reference biome refBiom
+#' Function to create a modified MECO data file where each reference cell is 
+#' compared to the average reference biome cell. The scenario period is
+#' overwritten with the original reference period and all reference cells are 
+#' set to the average cell of the prescribed reference biome refBiom
 #'
 #' @param dataFileIn path to input data
 #' @param dataFileOut path to save modified data to
-#' @param temperature yearly average temperature
-#' @param lat
-#' @param lon
-#' @param refBiom
+#' @param biome_classes_in biome classes object as returned from classify_biomes
+#' @param refBiom reference biome from biome classes that all cells should 
+#'        be compared to 
 #'
 #' @examples
 #' \dontrun{
-#' evaluateGamma(dataFileIn = "/media/All/Gamma/Gamma_today_data.RData",
-#'       dataFileOut = "/media/All/Gamma/Gamma_preind_compared_to_average_TrBD_data.RData",
-#'       temperature = temperature_1716, lat = lat64240, lon = lon64240, refBiom = 4)
 #' }
 #' @export
-evaluateGamma <- function(dataFileIn, dataFileOut, temperature, pft_lai, elevation, lat, lon, refBiom){
+replaceRefDataWithAverageRefBiomeCell <- function(dataFileIn, dataFileOut, biome_classes_in, refBiom){
   if (dataFileIn == dataFileOut) {
     stop("Same file for input and output of data, would overwrite original data. Aborting.")
   }
   load(dataFileIn)
 
-  # modify vars to compare all to the average cell in ref biom
-  data_bc <- list(lat = lat, lon = lon, fpc = apply(fpc_ref, c(1,2), mean),
-                  vegc = mean_state_ref[,8],temp = temperature,
-                  pft_lai = pft_lai, elevation = elevation)
+  ref_cells <- which(biome_classes_in$biome_id == refBiom)
 
-  biome_classes <- NULL # todo: replace with new cb function classify_biomes(data = data_bc, readOutput = F)
-  ref_cells <- which(biome_classes$biome_id == refBiom)
-
-  # first set all scen vars to the ref vars
+  # first set all scen vacrossrs to the ref vars
   state_scen <- state_ref # [1:64240, 1:30, 1:10]
   mean_state_scen <- mean_state_ref
   fpc_scen <- fpc_ref #
@@ -1294,15 +1382,25 @@ evaluateGamma <- function(dataFileIn, dataFileOut, temperature, pft_lai, elevati
   di_bft <- dim(bft_scen)
   di_cft <- dim(cft_scen)
   # now replace all ref cells with that of the mean ref biom cell
-  av_year_state <- apply(state_scen[ref_cells,,],c(2,3),mean) #FS 2022-08-10: keeping the year-to-year variation
-  state_ref <- rep(av_year_state, each = di_state[1]) #FS 2022-08-10: keeping the year-to-year variation
+  # FS 2022-08-10: keeping the year-to-year variation
+  if (length(ref_cells)==1) {
+    av_year_state <- state_scen[ref_cells,,]
+    fpc_ref <- rep(fpc_scen[ref_cells,,], each = di_fpc[1])
+    bft_ref <- rep(bft_scen[ref_cells,,], each = di_bft[1])
+    cft_ref <- rep(cft_scen[ref_cells,,], each = di_cft[1])
+  }else {
+    av_year_state <- apply(state_scen[ref_cells,,],c(2,3),mean)
+    fpc_ref <- rep(apply(fpc_scen[ref_cells,,],c(2,3),mean), each = di_fpc[1])
+    bft_ref <- rep(apply(bft_scen[ref_cells,,],c(2,3),mean), each = di_bft[1])
+    cft_ref <- rep(apply(cft_scen[ref_cells,,],c(2,3),mean), each = di_cft[1])
+  }
+  state_ref <- rep(av_year_state, each = di_state[1])
   dim(state_ref) <- di_state
-  mean_state_ref <- rep(colMeans(av_year_state), each = di_state[1]) # is the same for each year, thus for the mean just take one year
-  fpc_ref <- rep(apply(fpc_scen[ref_cells,,],c(2,3),mean), each = di_fpc[1])
+  # is the same for each year, thus for the mean just take one year
+  mean_state_ref <- rep(colMeans(av_year_state), each = di_state[1]) 
+  
   dim(fpc_ref) <- di_fpc
-  bft_ref <- rep(apply(bft_scen[ref_cells,,],c(2,3),mean), each = di_bft[1])
   dim(bft_ref) <- di_bft
-  cft_ref <- rep(apply(cft_scen[ref_cells,,],c(2,3),mean), each = di_cft[1])
   dim(cft_ref) <- di_cft
 
   # and write out the modified data
@@ -1310,49 +1408,37 @@ evaluateGamma <- function(dataFileIn, dataFileOut, temperature, pft_lai, elevati
 
 }
 
-#' Create modified gamma data for crosstable
+#' Create modified MECO data for crosstable
 #'
-#' Function to create a modified gamma data file where for each present day biome
-#' the average cell is compared to the average cell of all other biomes. This
-#' can then be used to compute a crosstable with the average difference between
-#' each of them as in the SI of Ostberg et al. 2013
+#' Function to create a modified MECO data file where for each biome
+#' the average scenario cell is compared to the average scenario cell of all 
+#' other biomes. This can then be used to compute a crosstable with the average 
+#' difference between each of them as in the SI of Ostberg et al. 2013
 #' (Critical impacts of global warming on land ecosystems)
 #'
 #' @param dataFileIn path to input data
 #' @param dataFileOut path to save modified data to
-#' @param temperature yearly average temperature
-#' @param pft_lai yearly pft_lai values for the biome classification
-#' @param elevation elevation input file for the biome classification
-#' @param lat
-#' @param lon
+#' @param biome_classes_in biome classes object as returned from classify_biomes
+#' @param pickCells pick one specific cell as representative for the biome 
+#'        instead of computing the average state 
 #'
 #' @examples
 #' \dontrun{
-#' gammaCrossTable(dataFileIn = "/media/All/Gamma/Gamma_today_data.RData",
-#'       dataFileOut = "/media/All/Gamma/Gamma_preind_compared_to_average_TrBD_data.RData",
-#'       temperature = temperature_1716, pft_lai = pft_lai_1996, elevation = elevation, lat = lat64240, lon = lon64240, refBiom = 4)
 #' }
 #' @export
-gammaCrossTable <- function(dataFileIn, dataFileOut, temperature, pft_lai, elevation, pickCells = NULL, lat, lon){
+mecoCrossTable <- function(dataFileIn, dataFileOut, biome_classes_in, pickCells = NULL){
   if (dataFileIn == dataFileOut) {
     stop("Same file for input and output of data, would overwrite original data. Aborting.")
   }
   load(dataFileIn)
-
-  # modify vars to compare all to the average cell in ref biom
-  data_bc <- list(lat = lat, lon = lon, fpc = apply(fpc_ref, c(1,2), mean),
-                  vegc = mean_state_ref[,8],temp = temperature,
-                  pft_lai = pft_lai, elevation = elevation)
-  biome_classes <- NULL # todo: replace with new cb function classify_biomes(data = data_bc, readOutput = F)
-
+  
   #save scenario state vectors, they contain relevant data (ref can go)
   state_scen_sav <- state_scen
   fpc_scen_sav <- fpc_scen
   bft_scen_sav <- bft_scen
   cft_scen_sav <- cft_scen
 
-
-  nbiomes <- max(biome_classes$biome_id) # by default 19
+  nbiomes <- max(biome_classes_in$biome_id) # by default 19
   state_ref <- array(0,dim = c(nbiomes,nbiomes,dim(state_scen_sav)[2:3]))
   state_scen <- state_ref
   fpc_ref <- array(0,dim = c(nbiomes,nbiomes,dim(fpc_scen_sav)[2:3]))
@@ -1363,16 +1449,25 @@ gammaCrossTable <- function(dataFileIn, dataFileOut, temperature, pft_lai, eleva
   cft_scen <- cft_ref
 
   # now replace all ref cells with that of the mean ref biome cell
-  for (b in sort(unique(biome_classes$biome_id))) {
-    ref_cells <- which(biome_classes$biome_id == b)
+  for (b in sort(unique(biome_classes_in$biome_id))) {
+    ref_cells <- which(biome_classes_in$biome_id == b)
 
     if (is.null(pickCells)) {
-      av_state <- apply(state_scen_sav[ref_cells,,],c(2,3),mean) # average over cells, keeping the average year-to-year variation
-      av_fpc <- apply(fpc_scen_sav[ref_cells,,],c(2,3),mean)
-      av_bft <- apply(bft_scen_sav[ref_cells,,],c(2,3),mean)
-      av_cft <- apply(cft_scen_sav[ref_cells,,],c(2,3),mean)
+      if (length(ref_cells)==1) {
+        # average over cells, keeping the average year-to-year variation
+        av_state <- state_scen_sav[ref_cells,,]
+        av_fpc <- fpc_scen_sav[ref_cells,,]
+        av_bft <- bft_scen_sav[ref_cells,,]
+        av_cft <- cft_scen_sav[ref_cells,,]
+      }else {
+        # average over cells, keeping the average year-to-year variation
+        av_state <- apply(state_scen_sav[ref_cells,,],c(2,3),mean) 
+        av_fpc <- apply(fpc_scen_sav[ref_cells,,],c(2,3),mean)
+        av_bft <- apply(bft_scen_sav[ref_cells,,],c(2,3),mean)
+        av_cft <- apply(cft_scen_sav[ref_cells,,],c(2,3),mean)
+      }
     }else{
-      av_state <- state_scen_sav[pickCells[b],,] # average over cells, keeping the average year-to-year variation
+      av_state <- state_scen_sav[pickCells[b],,]
       av_fpc <- fpc_scen_sav[pickCells[b],,]
       av_bft <- bft_scen_sav[pickCells[b],,]
       av_cft <- cft_scen_sav[pickCells[b],,]
@@ -1411,24 +1506,52 @@ gammaCrossTable <- function(dataFileIn, dataFileOut, temperature, pft_lai, eleva
 
 }
 ################# biome (dis-)aggregation functions ##################
-#' Returns the average gamma values across regions
+
+#' Get biome names
 #'
-#' Returns the average value across either 4 regions or 19 biomes for gamma
-#' and each of the subcomponents for each
+#' Returns biome names with variable length (abbreviated, short, or full)
 #'
-#' @param gamma gamma data object with dimension c(regions/biomes[4/16],gamma_components[10/8],minmeanmax/quantiles[3])
-#' @param biome_class path to save modified data to
-#' @param type return minimum,mean,maximum or Q10,Q50,Q90
-#' @param classes into which regions should be disaggregated? "4biomes" or "allbiomes" default "4biomes"
+#' @param biomeNameLength integer chose from 1,2,3 for abbreviated, short, 
+#'                        or full biome names
 #'
 #' @examples
 #' \dontrun{
-#' disaggregateGammaIntoBiomes(gamma = gamma_historic_nitrogen_classic_bnf,
-#'                    biome_class = gamma_historic_withNitrogen_biome_classes,
+#' }
+#' @export
+get_biome_names <- function(biomeNameLength = 2) {
+  biome_mapping <- read.csv(file = system.file("extdata", "biomes.csv", package = "biospheremetrics"),sep = ";")
+  if (biomeNameLength == 1) biome_class_names <- biome_mapping$abbreviation
+  else if (biomeNameLength == 2) biome_class_names <- biome_mapping$short_name
+  else if (biomeNameLength == 3) biome_class_names <- biome_mapping$name
+  else stop(paste0("Value for parameter biomeNameLength out of range 1,2,3 - was given as: ",biomeNameLength))
+  
+  return(biome_class_names) 
+}
+
+#' Averages MECO values across regions
+#'
+#' Returns the average value across either 4 regions or all (19) biomes for MECO
+#' and each of the subcomponents for each
+#'
+#' @param meco MECO list object as returned by calcMECO
+#' @param biome_class biome class list object as returned by classify_biomes
+#' @param type string controlling whether to return  minimum,mean,maximum 
+#'        ("minmeanmax") or Q10,Q50,Q90 ("quantile") - default: "quantile"
+#' @param classes string for into how many regions should be disaggregated 
+#'        "4biomes" (tropics/temperate/boreal/arctic) or "allbiomes"
+#'
+#' @examples
+#' \dontrun{
+#' disaggregateMECOintoBiomes(meco = meco,
+#'                    biome_class = biome_classes,
 #'                    type = "quantile",classes = "4biomes")
 #' }
 #' @export
-disaggregateGammaIntoBiomes <- function(gamma, biome_class, type = "quantile", classes = "4biomes") {
+disaggregateMECOintoBiomes <- function(meco, 
+                                       biome_class, 
+                                       type = "quantile", 
+                                       classes = "4biomes"
+                                       ) {
   if (classes == "4biomes") {
     tropics <- c(1,2,9,10,11)
     temperate <- c(3,4,5,6,12,13,14)
@@ -1442,51 +1565,64 @@ disaggregateGammaIntoBiomes <- function(gamma, biome_class, type = "quantile", c
   }else if (classes == "allbiomes") {
     nclasses <- max(unique(biome_class$biome_id))
   }else{
-    stop(paste0("Unknown parameter classes: ",classes,", should be either '4biomes' or 'allbiomes'"))
+    stop(paste0("Unknown parameter classes: ",classes,
+                ", should be either '4biomes' or 'allbiomes'"))
   }
 
 
-  gamma_dims <- length(gamma)
-  gamma_biomes <- array(0,dim = c(nclasses,gamma_dims,3)) # c(biome,gamma_components,min/median/max)
+  meco_dims <- length(meco)
+  # c(biome,meco_components,min/median/max)
+  meco_biomes <- array(0,dim = c(nclasses,meco_dims,3)) 
   if (classes == "4biomes") { # aggregate to trop/temp/boreal/arctic
     for (b in 1:nclasses) {
-      for (c in 1:gamma_dims) {
+      for (c in 1:meco_dims) {
         if (type == "minmeanmax") {
-          gamma_biomes[b,c,] <- c( min(gamma[[c]][cell_list[[b]]],na.rm = T),
-                                   mean(gamma[[c]][cell_list[[b]]],na.rm = T),
-                                   max(gamma[[c]][cell_list[[b]]],na.rm = T) )
+          meco_biomes[b,c,] <- c( min(meco[[c]][cell_list[[b]]],na.rm = T),
+                                   mean(meco[[c]][cell_list[[b]]],na.rm = T),
+                                   max(meco[[c]][cell_list[[b]]],na.rm = T) )
         }else if (type == "quantile") {
-          gamma_biomes[b,c,] <- c( quantile(gamma[[c]][cell_list[[b]]], probs = c(0.1,0.5,0.9), na.rm = T) )
-        }else{stop(paste("type",type,"unknown. please choose either 'quantile' or 'minmeanmax'"))}
-      }
-    }
+          meco_biomes[b,c,] <- c( quantile(meco[[c]][cell_list[[b]]], 
+                                           probs = c(0.1,0.5,0.9), na.rm = T) )
+        }else{stop(paste("type",type,
+                  "unknown. please choose either 'quantile' or 'minmeanmax'"))
+        }# end if
+      }# end for
+    }# end for
   }else if (classes == "allbiomes") { #calculate all biomes separately
     for (b in 1:nclasses) {
-      for (c in 1:gamma_dims) {
+      for (c in 1:meco_dims) {
         if (type == "minmeanmax") {
-          gamma_biomes[b,c,] <- c( min(gamma[[c]][which(biome_class$biome_id == b)],na.rm = T),
-                                   mean(gamma[[c]][which(biome_class$biome_id == b)],na.rm = T),
-                                   max(gamma[[c]][which(biome_class$biome_id == b)],na.rm = T) )
+          meco_biomes[b,c,] <- c(
+                    min(meco[[c]][which(biome_class$biome_id == b)],na.rm = T),
+                    mean(meco[[c]][which(biome_class$biome_id == b)],na.rm = T),
+                    max(meco[[c]][which(biome_class$biome_id == b)],na.rm = T) )
         }else if (type == "quantile") {
-          gamma_biomes[b,c,] <- c( quantile(gamma[[c]][which(biome_class$biome_id == b)], probs = c(0.1,0.5,0.9), na.rm = T) )
-        }else{stop(paste("type",type,"unknown. please choose either 'quantile' or 'minmeanmax'"))}
-      }
-    }
+          meco_biomes[b,c,] <- c(
+                           quantile(meco[[c]][which(biome_class$biome_id == b)], 
+                                    probs = c(0.1,0.5,0.9), na.rm = T
+                                    ) 
+                                )
+        }else{stop(paste("type",type,
+                  "unknown. please choose either 'quantile' or 'minmeanmax'"))
+        }# end if
+      }# end for
+    }# end for
   }else{
-    stop(paste0("Unknown parameter classes: ",classes,", should be either '4biomes' or 'allbiomes'"))
+    stop(paste0("Unknown parameter classes: ",classes,
+                ", should be either '4biomes' or 'allbiomes'"))
   }
-
-  return(gamma_biomes)
+  return(meco_biomes)
 }
-################# gamma plotting functions ##################
-#' Plot gamma map to screen
+
+################# MECO plotting functions ##################
+#' Plot MECO map to screen
 #'
-#' Function to plot a global map of gamma values [0-1] per grid cell to screen
+#' Function to plot a global map of MECO values [0-1] per grid cell to screen
 #'
 #' @param data folder of reference run
 #' @param focusBiome highlight the biome with this id and desaturate all other (default NULL -- no highlight)
 #' @param biome_classes to mask the focusBiome from
-#' @param title character string title for plot
+#' @param title character string title for plot, default empty
 #' @param legendtitle character string legend title
 #' @param legYes logical. whether to plot legend or not. defaults to TRUE
 #' @param legScale scaling factor for legend. defaults to 1
@@ -1498,8 +1634,8 @@ disaggregateGammaIntoBiomes <- function(gamma, biome_class, type = "quantile", c
 #'
 #' }
 #' @export
-plotGammaMapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
-                                 title, legendtitle, titleSize = 1, legYes = T) {
+plotMECOmapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
+                                 title = "", legendtitle, titleSize = 1, legYes = T) {
    brks <- seq(0,1,0.1)
    data[data < brks[1]] <- brks[1]
    data[data > brks[length(brks)]] <- brks[length(brks)]
@@ -1529,15 +1665,15 @@ plotGammaMapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
                          legend.args = list(legendtitle, side = 3, font = 2, line = 1))
    }
 }
-#' Plot gamma map to file
+#' Plot MECO map to file
 #'
-#' Function to plot a global map of gamma values [0-1] per grid cell to file
+#' Function to plot a global map of MECO values [0-1] per grid cell to file
 #'
 #' @param data folder of reference run
 #' @param file to write into
 #' @param focusBiome highlight the biome with this id and desaturate all other (default NULL -- no highlight)
 #' @param biome_classes to mask the focusBiome from
-#' @param title character string title for plot
+#' @param title character string title for plot, default empty
 #' @param legendtitle character string legend title
 #' @param eps write as eps or png
 #' @param legYes logical. whether to plot legend or not. defaults to TRUE
@@ -1550,8 +1686,8 @@ plotGammaMapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
 #'
 #' }
 #' @export
-plotGammaMap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
-                         title, legendtitle, eps = FALSE, titleSize = 1, legYes = T) {
+plotMECOmap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
+                         title = "", legendtitle, eps = FALSE, titleSize = 1, legYes = T) {
    if (eps) {
       file <- strsplit(file,".",fixed = TRUE)[[1]]
       file <- paste(c(file[1:(length(file) - 1)],"eps"),collapse = ".")
@@ -1560,20 +1696,20 @@ plotGammaMap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
    }else{
       png(file, width = 7.25, height = 3.5, units = "in", res = 300, pointsize = 6,type = "cairo")
    }
-   plotGammaMapToScreen(data = data, focusBiome = focusBiome, biome_classes = biome_classes, title = title, legendtitle = legendtitle, titleSize = titleSize, legYes = legYes)
+   plotMECOmapToScreen(data = data, focusBiome = focusBiome, biome_classes = biome_classes, title = title, legendtitle = legendtitle, titleSize = titleSize, legYes = legYes)
    dev.off()
 }
-#' Plot radial gamma plot to screen
+#' Plot radial MECO plot to screen
 #'
-#' Function to plot an aggregated radial status of gamma values [0-1]
+#' Function to plot an aggregated radial status of MECO values [0-1]
 #' for the different sub-categories to screen
 #'
-#' @param data gamma data array c([ngammacomponents],3[min,median,max])
-#' @param title character string title for plot
+#' @param data MECO data array c(4/19[biomes],[nMECOcomponents],3[min,mean,max])
+#' @param title character string title for plot, default empty
 #' @param zoom scaling factor for circle plot. defaults to 1
 #' @param type plot type, 'legend1' for variable and color legend,
 #'             'legend2' for value legend, or 'regular' (default setting)
-#'             for the regular gamma plot
+#'             for the regular MECO plot
 #' @param titleSize scaling factor for tile. defaults to 1
 #'
 #' @return None
@@ -1583,12 +1719,12 @@ plotGammaMap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
 #'
 #' }
 #' @export
-plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", titleSize = 2, titleline=-2,quantile=T) {
+plotMECOradialToScreen <- function(data, title = "", zoom = 1.0, type = "regular", titleSize = 2, titleline=-2,quantile=T) {
    suppressPackageStartupMessages(require(circlize))
    require(RColorBrewer)
-   gamma_dims <- length(data[,1])
-   if (gamma_dims == 10) {
-     names <- c( gamma = "m-eco", deltav = "vegetation\nstructure",
+   meco_dims <- length(data[,1])
+   if (meco_dims == 10) {
+     names <- c( meco = "m-eco", deltav = "vegetation\nstructure",
                  local = "local\nchange", global = "global\nimportance",
                  balance =  "ecosystem\nbalance", cstocks = "carbon stocks", cfluxes = "carbon fluxes",
                  wfluxes = "water fluxes", nstocks = "nitrogen\nstocks", nfluxes = "nitrogen fluxes")
@@ -1597,10 +1733,10 @@ plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", t
      #set <- brewer.pal(9, "Set1") #c(red,blue,green,purple,orange,yellow,brown,pink,grey)
      #colz <- c("limegreen", "darkgreen", "maroon","orchid4","bisque4",
      #         "orangered","sienna",brewer.pal(6, "PuBu")[6], "yellow" , "orange")
-     #                  gamma    deltaV      lc       gc      eb          cs      cf       wf       ns      nf
+     #                  meco    deltaV      lc       gc      eb          cs      cf       wf       ns      nf
      angles <- matrix(c(90,270, 216,252,  180,216, 144,180, 108,144,  -18,18, -54,-18, -90,-54,  54,90, 18,54 ),byrow = T,nrow = length(colz))
-   }else if (gamma_dims == 8) {
-     names <- c( gamma = expression(paste(Gamma, " metric")), deltav = "vegetation\nstructure",
+   }else if (meco_dims == 8) {
+     names <- c( meco = expression(paste(meco, " metric")), deltav = "vegetation\nstructure",
                  local = "local\nchange", global = "global\nimportance",
                  balance =  "ecosystem\nbalance", cstocks = "carbon stocks",
                  cfluxes = "carbon fluxes", wfluxes = "water fluxes")
@@ -1608,7 +1744,7 @@ plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", t
                rev(brewer.pal(6, "Oranges")[c(4,5)]), brewer.pal(6, "PuBu")[6])
      angles <- matrix(c(234,270, 198,234, 162,198, 126,162, 90,126,     18,54, -18,18, -54,-18),byrow = T,nrow = length(colz))
    }else{
-     stop(paste("Unknown number of dimensions for gamma data:",gamma_dims))
+     stop(paste("Unknown number of dimensions for meco data:",meco_dims))
    }
    par(oma = c(0,0,0,0), mar = c(0,0,0,0))
    plot(c(-zoom, zoom), c(-zoom, zoom), type = "n", axes = FALSE, ann = FALSE, asp = 1, main = "")
@@ -1619,12 +1755,12 @@ plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", t
       for (i in 1:length(angles[,1])) {
          draw.sector(start.degree = angles[i,1] + 90, end.degree = angles[i,2] + 90, col = colz[i], clock.wise = F, rou1 = 0, rou2 = ro[i],border = "black")
       }
-     if (gamma_dims == 10) {
+     if (meco_dims == 10) {
        text(names,x = c(1.1,1.0,0.2,-0.8,-1.6, -0.4,0.7,1.05,   -1.7,-1.5),y = c(-0.15,-0.9,-1.3,-1.3,-0.9, 1.2,1,0.25,  0.3,1), adj = 0)
-     }else if (gamma_dims == 8) {
+     }else if (meco_dims == 8) {
        text(names,x = c(1.1,0.6,-0.2,-1.2,-1.7, -1.5,-0.4,0.7),y = c(-0.3,-1.1,-1.3,-1,-0.5, 1,1.2,1),adj = 0)
      }else{
-       stop(paste("Unknown number of dimensions for gamma data:",gamma_dims))
+       stop(paste("Unknown number of dimensions for meco data:",meco_dims))
      }
      draw.sector(start.degree = (angles[3,1]+angles[3,2])/2+90, end.degree = (angles[3,1]+angles[3,2])/2+90, rou1 = 0.7, rou2 = 1.1)# line lc
      draw.sector(start.degree = -9, end.degree = -9, rou1 = 0.9, rou2 = 1.05)# line m-eco
@@ -1666,21 +1802,21 @@ plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", t
 
    }else {
       stop(paste0("Unknown type ",type,". Please use 'legend1' for variable and color legend,
-                  'legend2' for value legend, or 'regular' (default setting) for the regular gamma plot."))
+                  'legend2' for value legend, or 'regular' (default setting) for the regular meco plot."))
    }
 }
 
-#' Plot radial gamma plot to file
+#' Plot radial MECO plot to file
 #'
-#' Function to plot an aggregated radial status of gamma values [0-1]
+#' Function to plot an aggregated radial status of MECO values [0-1]
 #' for the different sub-categories to file
 #'
-#' @param data gamma data array c([ngammacomponents],3[min,median,max])
+#' @param data MECO data array c(4/19[biomes],[nMECOcomponents],3[min,mean,max])
 #' @param file to write into
-#' @param title character string title for plot
+#' @param title character string title for plot, default empty
 #' @param type plot type, 'legend1' for variable and color legend,
 #'             'legend2' for value legend, or 'regular' (default setting)
-#'             for the regular gamma plot
+#'             for the regular MECO plot
 #' @param eps write as eps or png
 #' @param legYes logical. whether to plot legend or not. defaults to TRUE
 #'
@@ -1691,12 +1827,12 @@ plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", t
 #'
 #' }
 #' @export
-plotGammaRadial <- function(data, file, title, legYes = T, eps = FALSE,quantile=T) {
-   #param data gamma data array c(8[ncomponents],3[min,median,max])
+plotMECOradial <- function(data, file, title = "", legYes = T, eps = FALSE,quantile=T) {
+   #param data MECO data array c(8[ncomponents],3[min,median,max])
    #param title title for plot
-   #param type plot type, 'legend1' for variable and color legend, 'legend2' for value legend, or 'regular' (default setting) for the regular gamma plot
+   #param type plot type, 'legend1' for variable and color legend, 'legend2' for value legend, or 'regular' (default setting) for the regular MECO plot
 
-   if (length(which(data < 0 | data > 1)) > 0) print("Warning: there are values in data outside the expected gamma range [0..1].")
+   if (length(which(data < 0 | data > 1)) > 0) print("Warning: there are values in data outside the expected MECO range [0..1].")
    if (eps) {
       file <- strsplit(file,".",fixed = TRUE)[[1]]
       file <- paste(c(file[1:(length(file) - 1)],"eps"), collapse = ".")
@@ -1708,26 +1844,27 @@ plotGammaRadial <- function(data, file, title, legYes = T, eps = FALSE,quantile=
    # adjust the margins, dependent on whether a legend should be plotted or not
    par(fig = c(0,0.7,0,1))#, oma=c(0,0,0,0),mar=c(0,0,0,0))
 
-   #plot main gamma radial
-   plotGammaRadialToScreen(data = data, title = title,zoom=1.0, type = "regular")
+   #plot main MECO radial
+   plotMECOradialToScreen(data = data, title = title,zoom=1.0, type = "regular")
 
    if (legYes) {
       par(fig = c(0.7,1,0,0.5), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-      plotGammaRadialToScreen(data = data, title = "", zoom = 1.5, type = "legend1")
+      plotMECOradialToScreen(data = data, title = "", zoom = 1.5, type = "legend1")
       par(fig = c(0.7,1,0.5,1), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-      plotGammaRadialToScreen(data = data, title = "",zoom = 1.5, type = "legend2", quantile=quantile)
+      plotMECOradialToScreen(data = data, title = "",zoom = 1.5, type = "legend2", quantile=quantile)
    }
    dev.off()
 }
 
-#' Plot radial gamma plot to file with 4/16 biomes
+#' Plot radial MECO panel to file with 4/16 biomes
 #'
-#' Function to plot an aggregated radial status of gamma values [0-1]
+#' Function to plot an aggregated radial status of MECO values [0-1]
 #' for the different sub-categories to file
 #'
-#' @param data gamma data array c(4[biomes],[ngammacomponents],3[min,median,max])
+#' @param data MECO data array c(4/19[biomes],[nMECOcomponents],3[min,mean,max])
+#' @param biomeNames names of biomes
 #' @param file to write into
-#' @param title character string title for plot
+#' @param quantile is it quantiles or minmeanmax data? - text for whiskers
 #' @param eps write as eps or png
 #'
 #' @return None
@@ -1737,15 +1874,23 @@ plotGammaRadial <- function(data, file, title, legYes = T, eps = FALSE,quantile=
 #'
 #' }
 #' @export
-plotGammaRadial4 <- function(data, biomeNames, file, eps = FALSE, quantile=T) {
-  if (length(which(data < 0 | data > 1)) > 0) print("Warning: there are values in data outside the expected gamma range [0..1].")
+plotMECOradialPanel <- function(data, 
+                                biomeNames, 
+                                file, 
+                                quantile = T, 
+                                eps = FALSE) {
+  if (length(which(data < 0 | data > 1)) > 0) {
+    print("Warning: values in data outside the expected MECO range [0..1].")
+  } 
   if (eps) {
     file <- strsplit(file,".",fixed = TRUE)[[1]]
     file <- paste(c(file[1:(length(file) - 1)],"eps"), collapse = ".")
     ps.options(family = c("Helvetica"), pointsize = 18)
-    postscript(file, horizontal = FALSE, onefile = FALSE, width = 15, height = 10, paper = "special")
+    postscript(file, horizontal = FALSE, onefile = FALSE, width = 15, 
+               height = 10, paper = "special")
   }else {
-    png(file, width = 5.25, height = 3.5, units = "in", res = 300, pointsize = 6,type = "cairo")
+    png(file, width = 5.25, height = 3.5, units = "in", res = 300, 
+        pointsize = 6,type = "cairo")
   }
   d <- length(data[,1,1])
   if (d==16 | d==4){
@@ -1754,10 +1899,16 @@ plotGammaRadial4 <- function(data, biomeNames, file, eps = FALSE, quantile=T) {
     ys <- seq(0.98,0,length.out = k+1)
     for (x in 1:k){
       for (y in 1:k){
-        if (x==1 & y==1) par(fig = c(xs[x],xs[x+1],ys[y+1],ys[y]), xpd = T, oma=c(0,0,0,0),mar=c(0,0,0,0))
-        else             par(fig = c(xs[x],xs[x+1],ys[y+1],ys[y]), xpd = T, new=T)
-        plotGammaRadialToScreen(data = data[(x-1)*k+y,,], title = "",zoom=1.0, type = "regular")
-        mtext(text = biomeNames[(x-1)*k+y], side = 3, line = -0.5, cex = 1,font = 2)
+        if (x==1 & y==1) {
+          par(fig = c(xs[x],xs[x+1],ys[y+1],ys[y]), 
+              xpd = T, oma=c(0,0,0,0),mar=c(0,0,0,0))
+        } else {
+          par(fig = c(xs[x],xs[x+1],ys[y+1],ys[y]), xpd = T, new=T)
+        }
+        plotMECOradialToScreen(data = data[(x-1)*k+y,,], 
+                               title = "",zoom=1.0, type = "regular")
+        mtext(text = biomeNames[(x-1)*k+y], side = 3, 
+              line = -0.5, cex = 1,font = 2)
       }
     }
   }else{
@@ -1765,22 +1916,28 @@ plotGammaRadial4 <- function(data, biomeNames, file, eps = FALSE, quantile=T) {
   }
   #legend
   par(fig = c(0.6,1,0.1,0.6), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-  plotGammaRadialToScreen(data = data[1,,], title = "", zoom = 1.5, type = "legend1")
+  plotMECOradialToScreen(data = data[1,,], title = "", 
+                         zoom = 1.5, type = "legend1")
   par(fig = c(0.6,1,0.5,1.0), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-  plotGammaRadialToScreen(data = data[1,,], title = "legend",zoom = 1.5,
+  plotMECOradialToScreen(data = data[1,,], title = "legend",zoom = 1.5,
                           type = "legend2",titleSize = 1,quantile = quantile)
   dev.off()
 }
 
-#' Plot radial gamma plot to file with 4/16 biomes
+#' Plot biomes
 #'
-#' Function to plot an aggregated radial status of gamma values [0-1]
-#' for the different sub-categories to file
+#' Function to plot biome classification
 #'
-#' @param data gamma data array c(4[biomes],[ngammacomponents],3[min,median,max])
-#' @param file to write into
-#' @param title character string title for plot
-#' @param eps write as eps or png
+#' @param biome_ids biome id as given by classify_biomes
+#' @param biomeNameLength length of biome names in legend: 1 - abbreviation, 
+#'        2 - short name, 3 - full biome name
+#' @param order legend order: either "plants" to first have forests, then 
+#'        grasslands, then tundra ..., or "zones" to go from north to south
+#'        (default: "plants")
+#' @param title character string title for plot, default empty
+#' @param titleSize size of title in cex units (defaukt: 2)
+#' @param legYes whether to plot legend (default: True)
+#' @param leg_scale size of legend in cex units (default 0.5)
 #'
 #' @return None
 #'
@@ -1789,7 +1946,7 @@ plotGammaRadial4 <- function(data, biomeNames, file, eps = FALSE, quantile=T) {
 #'
 #' }
 #' @export
-plotBiomesToScreen <- function(biome_ids, biome_class_names, title,
+plotBiomesToScreen <- function(biome_ids, biomeNameLength = 1, orderLegend = "plants", title = "", 
                                titleSize = 2, legYes = T, leg_scale = 0.5) {
    require(raster)
    require(RColorBrewer)
@@ -1799,12 +1956,18 @@ plotBiomesToScreen <- function(biome_ids, biome_class_names, title,
                          rev(brewer.pal(9, "GnBu"))[c(2:4,6,8,9)], # cold below forest
                          "white", #"lightblue" # Water
                          "lightgrey", #Rocks & Ice
-                         "magenta" #montane Tundra/Grassland
+                         "pink3" #montane Tundra/Grassland
    )
+   if (orderLegend == "plants") order_legend <- 1:19
+   else if (orderLegend == "zones") order_legend <- c(1, 2, 9, 10, 11, 3, 4, 5, 6, 12, 13, 14, 7, 8, 15, 16, 17, 18, 19)
+   else stop(paste0("Unknown value for parameter orderLegend (plants or zones) - was given as: ",orderLegend))
    biome_class_cols <-  colz[c(1,2,7,8,9,10,13,12,3,4,5,14,15,16,19,11,6,17,18)]
+   biome_mapping <- read.csv(file = system.file("extdata", "biomes.csv", package = "biospheremetrics"),sep = ";")
+   biome_class_names <- get_biome_names(biomeNameLength)
+
    if (!(length(biome_class_names) == length(biome_class_cols))) stop("Size of biome class names and colors do not match -- should be 18.")
    #---- plotting ----------------------------------------------------------------#
-   brks <- seq(min(biome_ids) - 0.5, max(biome_ids) + 0.5, 1)
+   brks <- seq(min(biome_ids,na.rm = T) - 0.5, max(biome_ids,na.rm = T) + 0.5, 1)
    ra <- raster::raster(ncols = 720, nrows = 360)
    range <- range(biome_ids)
    ra[raster::cellFromXY(ra,cbind(lon,lat))] <-  biome_ids
@@ -1813,20 +1976,27 @@ plotBiomesToScreen <- function(biome_ids, biome_class_names, title,
    raster::plot(ra, ext = extent, breaks = brks, col = biome_class_cols, main = "", legend = FALSE, axes = FALSE)
    title(main = title, line = -2, cex.main = titleSize)
    if (legYes) {
-      legend(x = -180, y = 27, legend = biome_class_names, fill = biome_class_cols, col = biome_class_cols, cex = leg_scale, bg = "white", bty = "o")
+      legend(x = -180, y = 27, legend = biome_class_names[order_legend], fill = biome_class_cols[order_legend], col = biome_class_cols[order_legend], cex = leg_scale, bg = "white", bty = "o")
    }
    maps::map('world', add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60,90))
 }
 
-#' Plot radial gamma plot to file with 4/16 biomes
+#' Plot biomes to file
 #'
-#' Function to plot an aggregated radial status of gamma values [0-1]
-#' for the different sub-categories to file
+#' Function to plot biome classification to file
 #'
-#' @param data gamma data array c(4[biomes],[ngammacomponents],3[min,median,max])
+#' @param biome_ids biome id as given by classify_biomes
+#' @param biomeNameLength length of biome names in legend: 1 - abbreviation, 
+#'        2 - short name, 3 - full biome name
+#' @param orderLegend legend order: either "plants" to first have forests, then 
+#'        grasslands, then tundra ..., or "zones" to go from north to south
+#'        (default: "plants")
 #' @param file to write into
-#' @param title character string title for plot
-#' @param eps write as eps or png
+#' @param title character string title for plot, default empty
+#' @param titleSize size of title in cex units (defaukt: 2)
+#' @param legYes whether to plot legend (default: True)
+#' @param leg_scale size of legend in cex units (default 0.5)
+#' @param eps write as eps, replacing png in filename (default: True)
 #'
 #' @return None
 #'
@@ -1835,7 +2005,7 @@ plotBiomesToScreen <- function(biome_ids, biome_class_names, title,
 #'
 #' }
 #' @export
-plotBiomes <- function(biome_ids, biome_class_names, file, title, titleSize = 2,
+plotBiomes <- function(biome_ids, biomeNameLength = 1, orderLegend = "plants",file, title = "", titleSize = 2,
                        legYes = T, leg_scale = 1, eps = FALSE) {
    #---- plotting ----------------------------------------------------------------#
    if (eps) {
@@ -1846,18 +2016,18 @@ plotBiomes <- function(biome_ids, biome_class_names, file, title, titleSize = 2,
    }else{
       png(file, width = 7.25, height = 3.5, units = "in", res = 300, pointsize = 6,type = "cairo")
    }
-   plotBiomesToScreen(biome_ids = biome_ids, biome_class_names = biome_class_names, title = title, titleSize = titleSize, legYes = legYes, leg_scale = leg_scale)
+   plotBiomesToScreen(biome_ids = biome_ids, biomeNameLength = biomeNameLength, orderLegend = orderLegend, title = title, titleSize = titleSize, legYes = legYes, leg_scale = leg_scale)
    dev.off()
 }
 
-#' Plot radial gamma plot to file with 4/16 biomes
+#' Plot radial MECO plot to file with 4/16 biomes
 #'
-#' Function to plot an aggregated radial status of gamma values [0-1]
+#' Function to plot an aggregated radial status of MECO values [0-1]
 #' for the different sub-categories to file
 #'
 #' @param data input data with dimension c(nbiome_classes,3) -- Q10,Q50,Q90 each
 #' @param biome_class_names to write into
-#' @param title character string title for plot
+#' @param title character string title for plot, default empty
 #' @param titleSize character string title for plot
 #' @param leg_scale character string title for plot
 #'
@@ -1868,7 +2038,7 @@ plotBiomes <- function(biome_ids, biome_class_names, file, title, titleSize = 2,
 #'
 #' }
 #' @export
-plotBiomesAveragesToScreen <- function(data, biome_class_names, title,
+plotBiomeAveragesToScreen <- function(data, biome_class_names, title = "",
                                titleSize = 2, leg_scale = 0.5) {
   require(raster)
   require(RColorBrewer)
@@ -1884,18 +2054,18 @@ plotBiomesAveragesToScreen <- function(data, biome_class_names, title,
   legend(x = 0, y = 1, legend = biome_class_names, fill = palette[colIndex], col = palette[colIndex],border = palette[colIndex], cex = leg_scale, bg = "white", bty = "o")
 }
 
-#' Plot radial gamma plot to file with 4/16 biomes
+#' Plot radial MECO plot to file with 4/16 biomes
 #'
-#' Function to plot an aggregated radial status of gamma values [0-1]
+#' Function to plot an aggregated radial status of MECO values [0-1]
 #' for the different sub-categories to file
 #'
-#' @param data gamma data array c(4[biomes],[ngammacomponents],3[min,median,max])
+#' @param data MECO data array c(4[biomes],[nMECOcomponents],3[min,median,max])
 #' @param file to write into
 #' @param biome_class_names to write into
-#' @param title character string title for plot
+#' @param title character string title for plot, default empty
 #' @param titleSize character string title for plot
 #' @param leg_scale character string title for plot
-#' @param eps write as eps or png
+#' @param eps write as eps, replacing png in filename (default: True)
 #'
 #' @return None
 #'
@@ -1904,7 +2074,7 @@ plotBiomesAveragesToScreen <- function(data, biome_class_names, title,
 #'
 #' }
 #' @export
-plotBiomesAverage <- function(data, file, biome_class_names, title, titleSize = 2,
+plotBiomeAverages <- function(data, file, biome_class_names, title = "", titleSize = 2,
                       leg_scale = 1, eps = FALSE) {
   #---- plotting ----------------------------------------------------------------#
   if (eps) {
@@ -1915,14 +2085,14 @@ plotBiomesAverage <- function(data, file, biome_class_names, title, titleSize = 
   }else{
     png(file, width = 4, height = 3, units = "in", res = 300, pointsize = 6,type = "cairo")
   }
-  plotBiomesAveragesToScreen(data = data, biome_class_names = biome_class_names, title = title, titleSize = titleSize, leg_scale = leg_scale)
+  plotBiomeAveragesToScreen(data = data, biome_class_names = biome_class_names, title = title, titleSize = titleSize, leg_scale = leg_scale)
   dev.off()
 }
 
 #' Plot crosstable showing (dis-)similarity between average biome pixels
 #'
 #' Function to plot a crosstable showing (dis-)similarity between average
-#' biome pixels based on M-ECO (former Gamma) metric from LPJmL simulations
+#' biome pixels based on M-ECO (former gamma) metric from LPJmL simulations
 #'
 #' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
 #' @param lmar left margin for plot in lines (default: 3)
@@ -1934,7 +2104,7 @@ plotBiomesAverage <- function(data, file, biome_class_names, title, titleSize = 
 #'
 #' }
 #' @export
-plotGammaCrossTableToScreen <- function(data, lmar = 3) {
+plotMECOcrossTableToScreen <- function(data, lmar = 3) {
   #data prep
   data <- round(data,digits = 2)
   x = 1:ncol(data)
@@ -1988,7 +2158,7 @@ plotGammaCrossTableToScreen <- function(data, lmar = 3) {
 #'
 #' }
 #' @export
-plotGammaCrossTable <- function(data, file, lmar=3, eps = FALSE) {
+plotMECOcrossTable <- function(data, file, lmar=3, eps = FALSE) {
   #---- plotting ----------------------------------------------------------------#
   if (eps) {
     file <- strsplit(file,".",fixed = TRUE)[[1]]
@@ -1998,6 +2168,6 @@ plotGammaCrossTable <- function(data, file, lmar=3, eps = FALSE) {
   }else{
     png(file, width = 6, height = 3, units = "in", res = 300, pointsize = 6,type = "cairo")
   }
-  plotGammaCrossTableToScreen(data = data, lmar = lmar)
+  plotMECOcrossTableToScreen(data = data, lmar = lmar)
   dev.off()
 }
