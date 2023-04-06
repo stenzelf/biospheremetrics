@@ -81,9 +81,9 @@ mecoWrapper <- function(folderRef,
    if (is.null(varnames)) {
      print("variable name list not provided, using standard list, which might 
            not be applicable for this case ...")
-     varnames <- data.frame(row.names = c("grid",    "fpc",    "fpc_bft",    "cftfrac",    "firec",    "rh_harvest",    "npp",    "evapinterc",    "runoff",    "transp",    "soillitc",    "vegc",    "swcsum",    "firef",    "rh",    "harvestc",    "evap",    "interc",    "soilc",    "litc",    "swc",    "vegn",    "soilnh4",    "soilno3",    "leaching",    "n2o_denit",    "n2o_nit",    "n2o_denit",    "n2_emis",    "bnf",    "n_volatilization"),
-                              outname = c("grid.bin","fpc.bin","fpc_bft.bin","cftfrac.bin","firec.bin","rh_harvest.bin","npp.bin","evapinterc.bin","runoff.bin","transp.bin","soillitc.bin","vegc.bin","swcsum.bin","firef.bin","rh.bin","harvestc.bin","evap.bin","interc.bin","soilc.bin","litc.bin","swc.bin","vegn.bin","soilnh4.bin","soilno3.bin","leaching.bin","n2o_denit.bin","n2o_nit.bin","n2o_denit.bin","n2_emis.bin","bnf.bin","n_volatilization.bin"),
-                             timestep = c("Y",       "Y",      "Y",          "Y",          "Y",        "Y",             "Y",      "Y",             "Y",         "Y",         "Y",           "Y",       "Y",         "Y",        "Y",     "Y",           "Y",       "Y",         "Y",        "Y",       "Y",      ,"Y",      "Y",          "Y",          "Y",           "Y",            "Y",          "Y",            "Y",          "Y",      "Y"))
+     varnames <- data.frame(row.names = c("grid",    "fpc",    "fpc_bft",    "cftfrac",    "firec",    "rh_harvest",    "npp",    "evapinterc",    "runoff",    "transp",    "soillitc",    "vegc",    "swcsum",    "firef",    "rh",    "harvestc",        "rharvestc",        "pft_harvestc",       "pft_rharvestc",       "evap",    "interc",    "soilc",    "litc",    "swc",    "vegn",    "soilnh4",    "soilno3",    "leaching",    "n2o_denit",    "n2o_nit",    "n2o_denit",    "n2_emis",    "bnf",    "n_volatilization"),
+                              outname = c("grid.bin","fpc.bin","fpc_bft.bin","cftfrac.bin","firec.bin","rh_harvest.bin","npp.bin","evapinterc.bin","runoff.bin","transp.bin","soillitc.bin","vegc.bin","swcsum.bin","firef.bin","rh.bin","flux_harvest.bin","flux_rharvest.bin","pft_harvest.pft.bin","pft_rharvest.pft.bin","evap.bin","interc.bin","soilc.bin","litc.bin","swc.bin","vegn.bin","soilnh4.bin","soilno3.bin","leaching.bin","n2o_denit.bin","n2o_nit.bin","n2o_denit.bin","n2_emis.bin","bnf.bin","n_volatilization.bin"),
+                             timestep = c("Y",       "Y",      "Y",          "Y",          "Y",        "Y",             "Y",      "Y",             "Y",         "Y",         "Y",           "Y",       "Y",         "Y",        "Y",     "Y",               "Y",                "Y",                  "Y",                   "Y",       "Y",         "Y",        "Y",       "Y",      ,"Y",      "Y",          "Y",          "Y",           "Y",            "Y",          "Y",            "Y",          "Y",      "Y"))
    }
 
    if (is.null(folderRef2)) {
@@ -453,14 +453,42 @@ readMECOData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = NU
           rh_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
                                headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
         }
-        if (varnames["harvestc","timestep"] == "Y") {
-          harvest_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                    headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
-        }else if (varnames["harvestc","timestep"] == "M") {
-          harvest_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                     headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
+        if (file.exists(paste0(folderRef,varnames["harvestc","outname"]))){
+          if (varnames["harvestc","timestep"] == "Y") {
+            harvest_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                           headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+          }else if (varnames["harvestc","timestep"] == "M") {
+            harvest_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["harvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                             headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
+          }
+        }else{
+          if (varnames["pft_harvestc","timestep"] == "Y") {
+          harvest_ref <- apply(drop(lpjmliotools::readCFToutput(inFile = paste0(folderRef,varnames["pft_harvestc","outname"]),startyear = timespan_full_ref[1],
+                                                          stopyear = timespan_full_ref[2],size = 4, headersize = headerout,getyearstart = timespan_focus_ref[1],
+                                                          getyearstop = timespan_focus_ref[2],ncells = ncells, bands=ncfts)),c(1,3),sum)
+          }else if (varnames["pft_harvestc","timestep"] == "M") {
+            stop("Sub-yearly PFT output currently not supported.")
+          }
         }
-        rh_harvest_ref <- rh_ref + harvest_ref
+        if (file.exists(paste0(folderRef,varnames["rharvestc","outname"]))){
+          if (varnames["rharvestc","timestep"] == "Y") {
+            rharvest_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["rharvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                            headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
+          }else if (varnames["rharvestc","timestep"] == "M") {
+            rharvest_ref <- apply(readMonthly(inFile = paste0(folderRef,varnames["rharvestc","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
+                                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
+          }
+        }else{
+          if (varnames["pft_rharvestc","timestep"] == "Y") {
+            rharvest_ref <- apply(drop(lpjmliotools::readCFToutput(inFile = paste0(folderRef,varnames["pft_rharvestc","outname"]),startyear = timespan_full_ref[1],
+                                                                  stopyear = timespan_full_ref[2],size = 4, headersize = headerout,getyearstart = timespan_focus_ref[1],
+                                                                  getyearstop = timespan_focus_ref[2],ncells = ncells, bands=ncfts)),c(1,3),sum)
+          }else if (varnames["pft_rharvestc","timestep"] == "M") {
+            stop("Sub-yearly PFT output currently not supported.")
+          }
+        }
+        
+        rh_harvest_ref <- rh_ref + harvest_ref + rharvest_ref
       }
      if (varnames["npp","timestep"] == "Y") {
        npp_ref <- drop(readYearly(inFile = paste0(folderRef,varnames["npp","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
@@ -470,7 +498,7 @@ readMECOData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = NU
                              headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
      }
 
-   }else{ # regular == F - her no monthly data, as this is mainly for reading old outputs already written in this split, but yearly format
+   }else{ # regular == F - here no monthly data, as this is mainly for reading old outputs already written in this split, but yearly format
       firec_ref <- array(0,dim = c(ncells, nyears_ref))
       firec_ref[,1:nyears1] <- drop(readYearly(inFile = paste0(folderRef,varnames["firec","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
                                           headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
@@ -512,17 +540,44 @@ readMECOData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = NU
        rh_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["rh","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
                              headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
      }else if (varnames["rh","timestep"] == "M") {
-       rh_scen <- apply(readMonthly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,
-                                   headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells), c(1,4), sum, drop = T)
+       rh_scen <- apply(readMonthly(inFile = paste0(folderRef,varnames["rh","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                   headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
      }
-     if (varnames["harvestc","timestep"] == "Y") {
-       harvest_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
-     }else if (varnames["harvestc","timestep"] == "M") {
-       harvest_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
-                                  headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
+     if (file.exists(paste0(folderScen,varnames["harvestc","outname"]))){
+       if (varnames["harvestc","timestep"] == "Y") {
+         harvest_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                        headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
+       }else if (varnames["harvestc","timestep"] == "M") {
+         harvest_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["harvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                          headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
+       }
+     }else{
+       if (varnames["pft_harvestc","timestep"] == "Y") {
+         harvest_scen <- apply(drop(lpjmliotools::readCFToutput(inFile = paste0(folderScen,varnames["pft_harvestc","outname"]),startyear = timespan_full_scen[1],
+                                                               stopyear = timespan_full_scen[2],size = 4, headersize = headerout,getyearstart = timespan_focus_scen[1],
+                                                               getyearstop = timespan_focus_scen[2],ncells = ncells, bands=ncfts)),c(1,3),sum)
+       }else if (varnames["pft_harvestc","timestep"] == "M") {
+         stop("Sub-yearly PFT output currently not supported.")
+       }
      }
-     rh_harvest_scen  <-  rh_scen + harvest_scen
+     if (file.exists(paste0(folderRef,varnames["rharvestc","outname"]))){
+       if (varnames["rharvestc","timestep"] == "Y") {
+         rharvest_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["rharvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                         headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells))
+       }else if (varnames["rharvestc","timestep"] == "M") {
+         rharvest_scen <- apply(readMonthly(inFile = paste0(folderScen,varnames["rharvestc","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
+                                           headersize = headerout,getyearstart = timespan_focus_scen[1],getyearstop = timespan_focus_scen[2],ncells = ncells), c(1,4), sum, drop = T)
+       }
+     }else{
+       if (varnames["pft_rharvestc","timestep"] == "Y") {
+         rharvest_scen <- apply(drop(lpjmliotools::readCFToutput(inFile = paste0(folderScen,varnames["pft_rharvestc","outname"]),startyear = timespan_full_scen[1],
+                                                                stopyear = timespan_focus_scen[2],size = 4, headersize = headerout,getyearstart = timespan_focus_scen[1],
+                                                                getyearstop = timespan_focus_scen[2],ncells = ncells, bands=ncfts)),c(1,3),sum)
+       }else if (varnames["pft_rharvestc","timestep"] == "M") {
+         stop("Sub-yearly PFT output currently not supported.")
+       }
+     }
+     rh_harvest_scen  <-  rh_scen + harvest_scen + rharvest_scen
    }
    if (varnames["firec","timestep"] == "Y") {
      firec_scen <- drop(readYearly(inFile = paste0(folderScen,varnames["firec","outname"]),startyear = timespan_full_scen[1],stopyear = timespan_full_scen[2],size = 4,
