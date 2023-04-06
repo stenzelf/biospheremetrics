@@ -480,13 +480,13 @@ readMECOData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = NU
        bft_ref <- drop(readCFToutput(inFile = paste0(folderRef,varnames["fpc_bft","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = nbfts,
                                      headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else{
-       bft_ref <- array(0,dim=c(ncell,nbfts,nyears_ref))
+       bft_ref <- array(0,dim=c(ncells,nbfts,nyears_ref))
      }
      if (file.exists(paste0(folderRef,varnames["cftfrac","outname"]))){
        cft_ref <- drop(readCFToutput(inFile = paste0(folderRef,varnames["cftfrac","outname"]),startyear = timespan_full_ref[1],stopyear = timespan_full_ref[2],size = 4,bands = ncfts,
                                      headersize = headerout,getyearstart = timespan_focus_ref[1],getyearstop = timespan_focus_ref[2],ncells = ncells))
      }else{
-       cft_ref <- array(0,dim=c(ncell,ncfts,nyears_ref))
+       cft_ref <- array(0,dim=c(ncells,ncfts,nyears_ref))
      }
      
    }else {# reference period split in two folders
@@ -542,7 +542,7 @@ readMECOData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = NU
                                                                  stopyear = timespan_full_ref[2],size = 4, headersize = headerout,getyearstart = timespan_focus_ref[1],
                                                                  getyearstop = timespan_focus_ref[2],ncells = ncells, bands=ncfts)),c(1,3),sum)
            }else{
-             harvest_ref <- array(0,dim=c(ncell,ncfts,nyears_ref))
+             harvest_ref <- array(0,dim=c(ncells,nyears_ref))
            }
          }else if (varnames["pft_harvestc","timestep"] == "M") {
            stop("Sub-yearly PFT output currently not supported.")
@@ -563,7 +563,7 @@ readMECOData <- function(folderRef, folderRef2 = NULL, folderScen, saveFile = NU
                                                                     stopyear = timespan_full_ref[2],size = 4, headersize = headerout,getyearstart = timespan_focus_ref[1],
                                                                     getyearstop = timespan_focus_ref[2],ncells = ncells, bands=ncfts)),c(1,3),sum)
            }else{
-             rharvest_ref <- array(0,dim=c(ncell,ncfts,nyears_ref))
+             rharvest_ref <- array(0,dim=c(ncells,nyears_ref))
            }
 
          }else if (varnames["pft_rharvestc","timestep"] == "M") {
