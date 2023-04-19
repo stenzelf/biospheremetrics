@@ -4,12 +4,16 @@
 \alias{list_needed_outputs}
 \title{Returns LPJmL outputs required for given metric}
 \usage{
-list_needed_outputs(metric = "all", with_nitrogen = TRUE)
+list_needed_outputs(
+  metric = "all",
+  with_nitrogen = TRUE,
+  only_first_filename = TRUE
+)
 }
 \arguments{
 \item{metric}{string/list of strings, containing name of metric to get
-required outputs for. Pick from "meco", "mcol", "biome", "all_pbs",
-       "pb_n", "pb_w", "pb_b", "pb_lsc", "all" (default)}
+  required outputs for. Pick from "meco", "mcol", "biome", "nitrogen",
+"lsc", "bluewater", "greenwater", "water", "biosphere", "all" (default)}
 
 \item{withNitrogen}{logical: include nitrogen outputs? default: TRUE}
 }

@@ -1,7 +1,7 @@
 Package: biospheremetrics
 Type: Package
 Title: Biosphere integrity metrics for LPJmL
-Version: 0.1.2
+Version: 0.1.3
 Author: Fabian Stenzel, Johanna Braun, Jannes Breier
 Maintainer: Fabian Stenzel <stenzel@pik-potsdam.de>
 Description: Functions to compute Biosphere integrity metrics M-COL and M-ECO based on output from LPJmL
