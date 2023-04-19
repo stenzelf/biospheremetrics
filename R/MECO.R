@@ -1721,42 +1721,48 @@ disaggregateMECOintoBiomes <- function(meco,
 
 
   meco_dims <- length(meco)
+  dims <- dim(meco[[1]])
+  if (length(dims)>1) years <- dims[2]
   # c(biome,meco_components,min/median/max)
-  meco_biomes <- array(0,dim = c(nclasses,meco_dims,3)) 
+  meco_biomes <- array(0,dim = c(nclasses,meco_dims,3,years)) 
   if (classes == "4biomes") { # aggregate to trop/temp/boreal/arctic
     for (b in 1:nclasses) {
       for (c in 1:meco_dims) {
-        if (type == "minmeanmax") {
-          meco_biomes[b,c,] <- c( min(meco[[c]][cell_list[[b]]],na.rm = T),
-                                   mean(meco[[c]][cell_list[[b]]],na.rm = T),
-                                   max(meco[[c]][cell_list[[b]]],na.rm = T) )
-        }else if (type == "quantile") {
-          meco_biomes[b,c,] <- c( quantile(meco[[c]][cell_list[[b]]], 
-                                           probs = c(0.1,0.5,0.9), na.rm = T) )
-        }else{stop(paste("type",type,
-                  "unknown. please choose either 'quantile' or 'minmeanmax'"))
-        }# end if
-      }# end for
-    }# end for
+        for (y in 1:years) {
+          if (type == "minmeanmax") {
+            meco_biomes[b,c,,y] <- c( min(meco[[c]][cell_list[[b]],y],na.rm = T),
+                                    mean(meco[[c]][cell_list[[b]],y],na.rm = T),
+                                    max(meco[[c]][cell_list[[b]],y],na.rm = T) )
+          }else if (type == "quantile") {
+            meco_biomes[b,c,,y] <- c( quantile(meco[[c]][cell_list[[b]],y], 
+                                             probs = c(0.1,0.5,0.9), na.rm = T) )
+          }else{stop(paste("type",type,
+                           "unknown. please choose either 'quantile' or 'minmeanmax'"))
+          }# end if
+        }# end for y
+      }# end for c
+    }# end for b
   }else if (classes == "allbiomes") { #calculate all biomes separately
     for (b in 1:nclasses) {
       for (c in 1:meco_dims) {
-        if (type == "minmeanmax") {
-          meco_biomes[b,c,] <- c(
-                    min(meco[[c]][which(biome_class$biome_id == b)],na.rm = T),
-                    mean(meco[[c]][which(biome_class$biome_id == b)],na.rm = T),
-                    max(meco[[c]][which(biome_class$biome_id == b)],na.rm = T) )
-        }else if (type == "quantile") {
-          meco_biomes[b,c,] <- c(
-                           quantile(meco[[c]][which(biome_class$biome_id == b)], 
-                                    probs = c(0.1,0.5,0.9), na.rm = T
-                                    ) 
-                                )
-        }else{stop(paste("type",type,
-                  "unknown. please choose either 'quantile' or 'minmeanmax'"))
-        }# end if
-      }# end for
-    }# end for
+        for (y in 1:years) {
+          if (type == "minmeanmax") {
+            meco_biomes[b,c,,y] <- c(
+              min(meco[[c]][which(biome_class$biome_id == b),y],na.rm = T),
+              mean(meco[[c]][which(biome_class$biome_id == b),y],na.rm = T),
+              max(meco[[c]][which(biome_class$biome_id == b),y],na.rm = T) )
+          }else if (type == "quantile") {
+            meco_biomes[b,c,,y] <- c(
+              quantile(meco[[c]][which(biome_class$biome_id == b),y], 
+                       probs = c(0.1,0.5,0.9), na.rm = T
+              ) 
+            )
+          }else{stop(paste("type",type,
+                           "unknown. please choose either 'quantile' or 'minmeanmax'"))
+          }# end if
+        }# end for y
+      }# end for c
+    }# end for b
   }else{
     stop(paste0("Unknown parameter classes: ",classes,
                 ", should be either '4biomes' or 'allbiomes'"))
