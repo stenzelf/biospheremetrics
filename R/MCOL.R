@@ -6,19 +6,22 @@
 #' Calculate MCOL based on a PNV run and LU run of LPJmL
 #'
 #' Function to calculate MCOL based on a PNV run and LU run of LPJmL
-#'
-#' @param inFol_lu folder of landuse scenario run
-#' @param inFol_pnv folder of pnv reference run
-#' @param startyr first year of simulations
-#' @param stopyr last year of simulations
+#' @param files_scenario list with variable names and corresponding file paths
+#' (character string) of the scenario LPJmL run. All needed files are
+#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")
+#' @param files_reference list with variable names and corresponding file paths
+#' (character string) of the reference LPJmL run. All needed files are
+#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
+#' needed for the applied method, set to NULL.
+#' @param time_span_scenario time span to be used for the scenario run, defined
+#' as a character string, e.g. `as.character(1982:2011)` (default)
+#' @param time_span_reference time span to be used for the scenario run, defined
+#' as an integer vector, e.g. `as.character(1901:1930)`. Can differ in offset
+#' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
+#' is used
 #' @param gridbased logical are pft outputs gridbased or pft-based?
-#' @param pftbands number of natural plant functional types (== bands in fpc - 1)
-#' @param cftbands number of crop functional types
-#' @param headersize headersize of the output files (default 0)
 #' @param saveDataFile whether to save input data to file (default T)
 #' @param dataFile file to save read in input data to
-#' @param ncells number of cells in lpjml grid
-#' @param fileType type of output files - one of "clm", "nc", "meta" (default: "clm")
 #' @param external_fire instead of reading in firec for fire emissions, read in
 #'        this external firec file from a separate spitfire run with disabled 
 #'        lighning. this will then include only human induced fires (default F)
@@ -27,8 +30,6 @@
 #' @param external_fire_file path to external firec file
 #' @param external_wood_harvest_file path to R-file containing processed 
 #'        timeline of maps for LUH2_v2h woodharvest 
-#' @param varnames data.frame with names (outname) and timestep of output files
-#'                 see code of calcMCOL() for an example with default values
 #'
 #' @return list data object containing the data to compute MCOL as arrays of 
 #'         ynpp_potential, ynpp, pftnpp_cft, pftnpp_nat, pftnpp_grasslands, 
@@ -39,300 +40,254 @@
 #' \dontrun{
 #' }
 #' @export
-readMCOLdata <- function( inFol_lu, 
-                          inFol_pnv, 
-                          startyr, 
-                          stopyr, 
-                          gridbased = T,
-                          pftbands = 11, 
-                          cftbands = 32, 
-                          headersize = 0,
-                          saveDataFile = FALSE, 
-                          dataFile, 
-                          ncells = 67420,
-                          fileType = "clm", 
-                          external_fire = F,
-                          external_wood_harvest = F,
-                          external_fire_file,
-                          external_wood_harvest_file,
-                          varnames
+calc_bi_status <- function( files_scenario, 
+                            files_reference, 
+                            time_span_scenario, 
+                            time_span_reference, 
+                            gridbased = T,
+                            readPreviouslySavedData = FALSE, 
+                            saveDataFile = FALSE, 
+                            dataFile = NULL, 
+                            external_fire = F,
+                            external_wood_harvest = F,
+                            npp_threshold = 20, 
+                            include_fire = F,
+                            grass_scaling = F, 
+                            grass_harvest_file = "/p/projects/open/Fabian/LPJbox/grazing_data.RData",
+                            external_fire_file = "/p/projects/open/Fabian/LPJbox/human_ignition_fraction.RData",
+                            external_wood_harvest_file = "/p/projects/open/LanduseData/LUH2_v2h/wood_harvest_biomass_sum_1500-2014_67420.RData"
                           ) {
-
-  totalbands = (pftbands + cftbands)
-  if (fileType == "clm") {
-    nppFile = paste0(inFol_lu, varnames["npp","outname"])
-    print(paste0("reading NPP file: ",nppFile))
-    if (varnames["npp","timestep"] == "Y") {
-      ynpp = drop(lpjmliotools::readYearly(inFile = nppFile,startyear = startyr, ncells = ncells,
-                    stopyear = stopyr,size = 4, headersize = headersize,
-                    getyearstart = startyr,getyearstop = stopyr))# gC/m2
-    }else if (varnames["npp","timestep"] == "M") {
-      mnpp = lpjmliotools::readMonthly(inFile = nppFile, startyear = startyr, stopyear = stopyr,
-                size = 4, ncells = ncells, headersize = headersize,
-                getyearstart = startyr,getyearstop = stopyr)# gC/m2
-      ynpp = apply(mnpp, c(1,4), sum, drop = T) #gC/m2
-      rm(mnpp)
-      gc()
+  if (grass_scaling && !file.exists(grass_harvest_file)) stop(paste0("Grass harvest scaling enabled, but grass_harvest_file does not exist in: ",grass_harvest_file))
+  # todo: add similar for fire and woodh
+  # reading required data
+  if (readPreviouslySavedData) {
+    if (file.exists(dataFile)) {
+      print(paste0("Reading in data from previously saved data file"))
+      load(dataFile)
+      wood_harvest[is.na(wood_harvest)] <- 0
+    }else{
+      stop(paste0("dataFile: '",dataFile,"' does not exist but is required since reading is set to FALSE."))
     }
-    pft_nppFile = paste0(inFol_lu,varnames["pft_npp","outname"])
-    print(paste0("reading PFT_NPP file: ",pft_nppFile))
-    if (varnames["pft_npp","timestep"] == "Y") {
-      pftnpp = drop(lpjmliotools::readCFToutput(inFile = pft_nppFile,startyear = startyr,
-                  stopyear = stopyr,size = 4, headersize = headersize, ncells = ncells,
-                  bands=totalbands,getyearstart = startyr,getyearstop = stopyr))
-    }else if (varnames["pft_npp","timestep"] == "M") {
-      mpftnpp = lpjmliotools::readMonthlyCFToutput(inFile = pft_nppFile,startyear = startyr,
-                    ncells = ncells, stopyear = stopyr,size = 4,
-                    headersize = headersize, bands=totalbands,
-                    getyearstart = startyr,getyearstop = stopyr)
-      pftnpp = apply(mpftnpp, c(1,2,4), sum, drop = T) #gC/m2
-      rm(mpftnpp)
-      gc()
+    if (saveDataFile) {
+      saveDataFile <- FALSE
+      print("Both readPreviouslySavedData and saveDataFile have been set to TRUE. Overwriting with the same data does not make sense, saving disabled. ")
     }
-    harvfile = paste0(inFol_lu,varnames["pft_harvest","outname"])
-    rharvfile = paste0(inFol_lu,varnames["pft_rharvest","outname"])
-    print(paste0("reading harvest file: ",harvfile))
-    if (varnames["pft_harvest","timestep"] == "Y") {
-      harvest = drop(lpjmliotools::readCFToutput(inFile = harvfile,startyear = startyr,
-                                  stopyear = stopyr,size = 4, headersize = headersize, ncells = ncells,
-                                  bands=cftbands,getyearstart = startyr,getyearstop = stopyr))
-    }else if (varnames["pft_harvest","timestep"] == "M") {
-      mharvest = lpjmliotools::readMonthlyCFToutput(inFile = harvfile,startyear = startyr,
-                                     ncells = ncells, stopyear = stopyr,size = 4,
-                                     headersize = headersize, bands=cftbands,
-                                     getyearstart = startyr,getyearstop = stopyr)
-      harvest = apply(mharvest, c(1,2,4), sum, drop = T) #gC/m2
-      rm(mharvest)
-      gc()
-    }
-    print(paste0("reading rharvest file: ",rharvfile))
-    if (varnames["pft_rharvest","timestep"] == "Y") {
-      rharvest = drop(lpjmliotools::readCFToutput(inFile = rharvfile,startyear = startyr,
-                  stopyear = stopyr,size = 4, headersize = headersize, ncells = ncells,
-                  bands=cftbands,getyearstart = startyr,getyearstop = stopyr))
-    }else if (varnames["pft_rharvest","timestep"] == "M") {
-      mrharvest = lpjmliotools::readMonthlyCFToutput(inFile = rharvfile,startyear = startyr,
-                     ncells = ncells, stopyear = stopyr,size = 4, headersize = headersize,
-                     bands=cftbands, getyearstart = startyr,getyearstop = stopyr)
-      rharvest = apply(mrharvest, c(1,2,4), sum, drop = T) #gC/m2
-      rm(mrharvest)
-      gc()
-    }
-    timberFile = paste0(inFol_lu,varnames["timber_harvest","outname"])
-    print(paste0("reading timber file: ",timberFile))
-    if (varnames["timber_harvest","timestep"] == "Y") {
-      timber = drop(lpjmliotools::readYearly(inFile = timberFile,startyear = startyr, ncells = ncells,
-                             stopyear = stopyr,size = 4, headersize = headersize,
-                             getyearstart = startyr,getyearstop = stopyr))# gC/m2
-    }else if (varnames["timber_harvest","timestep"] == "M") {
-      mtimber = lpjmliotools::readMonthly(inFile = timberFile, startyear = startyr, stopyear = stopyr,
-                        size = 4, ncells = ncells, headersize = headersize,
-                        getyearstart = startyr,getyearstop = stopyr)# gC/m2
-      timber = apply(mtimber, c(1,4), sum, drop = T) #gC/m2
-      rm(mtimber)
-      gc()
-    }
-
-      fireFile = paste0(inFol_lu,varnames["firec","outname"])
-      print(paste0("reading fire file: ",fireFile))
+  }else{
+    print(paste0("Reading in data from outputs"))
+    
+    require(magrittr)
+    fileType <- tools::file_ext(files_reference$grid)
+    
+    if (fileType %in% c("json","clm")) {
+      # read grid
+      grid <- lpjmlkit::read_io(
+        files_reference$grid,
+      )$data %>% drop()
+      # calculate cell area
+      cell_area <- lpjmlkit::calc_cellarea(grid[, 2])
+      ncells <- length(grid[, 1])
+      
+      npp <- lpjmlkit::read_io(
+        files_scenario$npp,
+        subset = list(year = as.character(time_span_scenario))) %>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
+        lpjmlkit::as_array(aggregate = list(month = sum))
+      
+      pftnpp <- lpjmlkit::read_io(
+        files_scenario$pft_npp, 
+        subset = list(year = as.character(time_span_scenario))) %>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
+        lpjmlkit::as_array(aggregate = list(month = sum))
+      
+      harvest <- lpjmlkit::read_io(
+        files_scenario$pft_harvestc, 
+        subset = list(year = as.character(time_span_scenario))) %>% 
+        lpjmlkit::transform(to = c("year_month_day")) %>%
+        lpjmlkit::as_array(aggregate = list(month = sum)) 
+      
+      rharvest <- lpjmlkit::read_io(
+        files_scenario$pft_rharvestc, 
+        subset = list(year = as.character(time_span_scenario))) %>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
+        lpjmlkit::as_array(aggregate = list(month = sum)) 
+      
+      timber <- lpjmlkit::read_io(
+        files_scenario$timber_harvestc, 
+        subset = list(year = as.character(time_span_scenario))) %>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
+        lpjmlkit::as_array(aggregate = list(month = sum))
+      
+      # read fire in monthly res. if possible, then multiply with monthly 
+      # human/total ignition frac and aggregate to yearly. Otherwise aggregate 
+      # human/total ignition frac to yearly and multiply with yearly firec
+      fire_raw <- lpjmlkit::read_io(
+        files_scenario$firec, 
+        subset = list(year = as.character(time_span_scenario))) %>%
+        lpjmlkit::transform(to = c("year_month_day"))%>%
+        lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
       if (external_fire){
         load(external_fire_file) #frac = c(cell,month,year)
       }
-      if (varnames["firec","timestep"] == "Y") {
-        fire = drop(lpjmliotools::readYearly(inFile = fireFile,startyear = startyr, ncells = ncells,
-                                stopyear = stopyr,size = 4, headersize = headersize,
-                                getyearstart = startyr,getyearstop = stopyr)) # gC/m2
+      if ("month" %in% names(dim(fire_raw))) {
         if (external_fire){
-          frac_yearly <- apply(frac[,,year=as.character(startyr:stopyr)],c(1,3),mean,na.rm=T)
-          fire <- fire*frac_yearly
-          rm(frac_yearly,frac)
-          gc()
-        }
-      }else if (varnames["firec","timestep"] == "M") {
-        mfire = drop(lpjmliotools::readMonthly(inFile = fireFile, startyear = startyr, stopyear = stopyr,
-                              size = 4, ncells = ncells, headersize = headersize,
-                              getyearstart = startyr,getyearstop = stopyr)) # gC/m2
-        if (external_fire){
-          fire = apply(mfire*frac[,,year=as.character(startyr:stopyear)], c(1,3), sum, drop = T, na.rm=T) #gC/m2
+          fire <- apply(fire_raw*frac[,,year=time_span_scenario], c("cell","year"), sum, na.rm=T) #gC/m2
           rm(frac)
         }else{
-          fire = apply(mfire, c(1,3), sum, drop = T, na.rm=T) #gC/m2
+          fire <- apply(fire_raw, c("cell","year"), sum, na.rm=T) #gC/m2
         }
-        rm(mfire)
-        gc()
+        rm(fire_raw)
+      }else{
+        if (external_fire){
+          frac_yearly <- apply(frac[,,year=time_span_scenario],c("cell","year"),mean,na.rm=T)
+          fire <- fire_raw*frac_yearly
+          rm(frac_yearly,frac)
+        }
       }
-    if (external_wood_harvest){
-      load(external_wood_harvest_file) #wh_lpj in kgC
-      wh_years <- names(wh_lpj[1,])
-      wood_harvest <- wh_lpj[,match(as.character(startyr:stopyr),wh_years)]*10^3/cellarea #from kgC to gC/m2
-      wood_harvest[is.na(wood_harvest)] <- 0 # the division can lead to NAs
-      rm(wh_lpj,wh_years)
       gc()
+      if (external_wood_harvest){
+        load(external_wood_harvest_file) #wh_lpj in kgC
+        wh_years <- names(wh_lpj[1,])
+        wood_harvest <- wh_lpj[,match(time_span_scenario,wh_years)]*10^3/cell_area #from kgC to gC/m2
+        wood_harvest[is.na(wood_harvest)] <- 0 # the division can lead to NAs
+        rm(wh_lpj,wh_years)
+        gc()
+      }else{
+        wood_harvest <- fire*0
+      }
+      
+      cftfrac <- lpjmlkit::read_io(
+        files_scenario$cftfrac, 
+        subset = list(year = as.character(time_span_scenario))) %>%
+        lpjmlkit::transform(to = c("year_month_day"))%>%
+        lpjmlkit::as_array(aggregate = list(month = sum)) # gC/m2
+      
+      ynpp_potential <- lpjmlkit::read_io(
+        files_reference$npp, 
+        subset = list(year = as.character(time_span_reference))) %>%
+        lpjmlkit::transform(to = c("year_month_day"))%>%
+        lpjmlkit::as_array(aggregate = list(month = sum)) # gC/m2
+      
+      fpc <- lpjmlkit::read_io(
+        files_scenario$fpc, silent = silence,
+        subset = list(year = as.character(time_span_scenario))) %>%
+        lpjmlkit::transform(to = c("year_month_day"))%>%
+        lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
+      
+      cftbands <- dim(cftfrac)[["band"]]
+      pftbands <- dim(fpc)[["band"]]-1
+      totalbands <- (pftbands + cftbands)
+      
+    }else if (fileType == "nc") { # to be added
+      stop("nc reading has not been updated to latest functionality. please contact Fabian")
     }else{
-      wood_harvest <- fire*0
+      stop(paste0("Unrecognized file type (",fileType,")"))
     }
-
-    cftFile = paste0(inFol_lu,varnames["cftfrac","outname"])
-    print(paste0("reading cftfrac file: ",cftFile))
-    if (varnames["cftfrac","timestep"] == "Y") {
-      cftfrac = drop(lpjmliotools::readCFToutput(inFile = cftFile,startyear = startyr,
-                                    stopyear = stopyr,size = 4, headersize = headersize, ncells = ncells,
-                                    bands=cftbands, getyearstart = startyr,getyearstop = stopyr))
-    }else if (varnames["cftfrac","timestep"] == "M") {
-      mcftfrac = lpjmliotools::readMonthlyCFToutput(inFile = cftFile,startyear = startyr,
-                                       ncells = ncells, stopyear = stopyr,size = 4, headersize = headersize,
-                                       bands=cftbands, getyearstart = startyr,getyearstop = stopyr)
-      cftfrac = apply(mcftfrac, c(1,2,4), sum, drop = T) #gC/m2
-      rm(mcftfrac)
-      gc()
+    bp_bands <- c(15,16,31,32)
+    grass_bands <- c(14,30)
+    nat_bands <- 1:pftbands
+    if (!gridbased) { # needs to be scaled with standfrac
+      pftnpp[,,nat_bands] <- pftnpp[,,nat_bands]*fpc[,,2:(pftbands+1)]
+      pftnpp[,,-c(nat_bands)] <- pftnpp[,,-c(nat_bands)]*cftfrac
+      harvest <- harvest*cftfrac
     }
-    pnv_nppFile = paste0(inFol_pnv,varnames["npp","outname"])
-    print(paste0("reading PNV NPP file: ",pnv_nppFile))
-    if (varnames["npp","timestep"] == "Y") {
-      ynpp_potential = drop(lpjmliotools::readYearly(inFile = pnv_nppFile,startyear = startyr,
-                          stopyear = stopyr,size = 4, headersize = headersize,
-                          getyearstart = startyr,getyearstop = stopyr))# gC/m2
-    }else if (varnames["npp","timestep"] == "M") {
-      mnpp_potential = lpjmliotools::readMonthly(inFile = pnv_nppFile,startyear = startyr,
-                        stopyear = stopyr,size = 4, headersize = headersize,
-                        getyearstart = startyr,getyearstop = stopyr)# gC/m2
-      ynpp_potential = apply(mnpp_potential, c(1,4), sum, drop = T) #gC/m2
-      rm(mnpp_potential)
-      gc()
+    pftnpp_grasslands <- apply(pftnpp[, pftbands+grass_bands, ],c(1,3),sum) #gC/m2 only from grassland bands
+    pftnpp_cft <- apply(pftnpp[,-c(nat_bands,pftbands+grass_bands,pftbands+bp_bands), ], c(1,3), sum) #gC/m2 not from grassland and bioenergy bands
+    pftnpp_bioenergy <- apply(pftnpp[, pftbands+bp_bands, ], c(1,3), sum) #gC/m2 only from bioenergy bands
+    pftnpp_nat <- apply(pftnpp[,nat_bands,], c(1,3), sum) #gC/m2
+    
+    harvest_grasslands <- apply(harvest[,grass_bands,],c(1,3),sum) #gC/m2 only from grassland bands
+    harvest_bioenergy <- apply(harvest[,bp_bands,],c(1,3),sum) #gC/m2 only from bioenergy bands
+    harvest_cft <- apply(harvest[,-c(grass_bands,bp_bands),], c(1,3), sum) #gC/m2 not from grassland and bioenergy bands
+    rharvest_cft <- apply(rharvest[,-c(grass_bands,bp_bands),], c(1,3), sum) #gC/m2 not from grassland and bioenergy bands
+    
+    if (saveDataFile) {
+      if (!file.exists(dataFile) ) {
+        print(paste0("Writing data file: ",dataFile))
+      }else{
+        print(paste0("Data file (",dataFile,") already exists, old file renamed to: ",dataFile,"_sav"))
+        file.rename(dataFile, paste0(dataFile,"_sav"))
+      }
+      save(ynpp_potential,ynpp,pftnpp_cft,pftnpp_nat,pftnpp_grasslands,pftnpp_bioenergy,
+           harvest_cft,rharvest_cft,fire,timber,cftfrac,fpc,harvest_grasslands,
+           harvest_bioenergy,wood_harvest,file = dataFile)
     }
-    fpcFile = paste0(inFol_lu,varnames["fpc","outname"])
-    print(paste0("reading FPC file: ",fpcFile))
-    if (varnames["fpc","timestep"] == "Y") {
-      fpc = drop(lpjmliotools::readCFToutput(inFile = fpcFile,startyear = startyr,
-                                   stopyear = stopyr,size = 4, headersize = headersize, ncells = ncells,
-                                   bands = (pftbands + 1),getyearstart = startyr,getyearstop = stopyr))
-    }else if (varnames["fpc","timestep"] == "M") {
-      mfpc = lpjmliotools::readMonthlyCFToutput(inFile = fpcFile,startyear = startyr, ncells = ncells,
-                  stopyear = stopyr,size = 4, headersize = headersize,
-                  bands = (pftbands + 1), getyearstart = startyr,getyearstop = stopyr)
-      fpc = apply(mfpc, c(1,2,4), sum, drop = T) #gC/m2
-      rm(mfpc)
-      gc()
+    
+  }
+  
+  print(paste0("Calculating data"))
+  if (grass_scaling) {
+    load(grass_harvest_file)
+    nregs <- length(grazing_data$name)
+    lpj_grass_harvest_region <- array(0,dim = nregs)
+    lpj_grass_harvest_2000 <- rowMeans(harvest_grasslands[,(1995-startyr+1):(2005-startyr+1)])*cellarea/1000*2 # from gC/m2 to kgDM
+    grassland_scaling_factor_cellwise <- array(1,dim = ncells)
+    for (r in 1:nregs) {
+      lpj_grass_harvest_region[r] <- sum(lpj_grass_harvest_2000[which(mapping_lpj67420_to_grazing_regions==r)])
     }
-  }else if (fileType == "nc") {
-    stop("nc reading has not been updated to latest functionality. please contact Fabian")
-    nppFile = paste0(inFol_lu,varnames["pft_npp","outname"])
-    print(paste0("reading NPP file: ",nppFile))
-    npp = lpjmliotools::netcdfMonthly2lpjarray(ncInFile = nppFile, lon = lon, lat = lat)# gC/m2
-    print(paste0("reading PFT_NPP file: ",pft_nppFile))
-    pftnpp = lpjmliotools::netcdfCFT2lpjarray(ncInFile = pft_nppFile,lon = lon, lat = lat)
-    print(paste0("reading cftfrac file: ",cftFile))
-    cftfrac = lpjmliotools::netcdfCFT2lpjarray(ncInFile = cftFile,lon = lon, lat = lat)
-    print(paste0("reading PNV NPP file: ",pnv_nppFile))
-    npp_potential = lpjmliotools::netcdfMonthly2lpjarray(ncInFile = pnv_nppFile,lon = lon, lat = lat)# gC/m2
-    print(paste0("reading FPC file: ",fpcFile))
-    fpc = lpjmliotools::netcdfCFT2lpjarray(ncInFile = fpcFile,var = "fpc",lon = lon, lat = lat)
-
-    ynpp = apply(npp, c(1,3), sum) #gC/m2
-    ynpp_potential = apply(npp_potential, c(1,3), sum) #gC/m2
-
-    nppFile = paste0(inFol_lu, varnames["npp","outname"])
-    print(paste0("reading NPP file: ",nppFile))
-    if (varnames["npp","timestep"] == "Y") {
-      ynpp = drop(lpjmliotools::netcdfYearly2lpjarray(ncInFile = nppFile, lon = lon, lat = lat))# gC/m2
-    }else if (varnames["npp","timestep"] == "M") {
-      npp = lpjmliotools::netcdfMonthly2lpjarray(ncInFile = nppFile, lon = lon, lat = lat)# gC/m2
-      ynpp = apply(npp, c(1,4), sum, drop = T) #gC/m2
+    scaling_factor <- grazing_data$Herrero_2000_kgDM_by_region/lpj_grass_harvest_region
+    for (r in 1:nregs) {
+      grassland_scaling_factor_cellwise[which(mapping_lpj67420_to_grazing_regions==r)] <- scaling_factor[r]
     }
-    pft_nppFile = paste0(inFol_lu,varnames["pft_npp","outname"])
-    print(paste0("reading PFT_NPP file: ",pft_nppFile))
-    if (varnames["pft_npp","timestep"] == "Y") {
-      pftnpp = drop(lpjmliotools::netcdfCFT2lpjarray(inFile = pft_nppFile, lon = lon, lat = lat))
-    }else if (varnames["pft_npp","timestep"] == "M") {
-      stop("Monthly netcdf output for pft_npp currently not supported.")
-    }
-    harvfile = paste0(inFol_lu,varnames["pft_harvest","outname"])
-    rharvfile = paste0(inFol_lu,varnames["pft_rharvest","outname"])
-    print(paste0("reading harvest file: ",harvfile))
-    if (varnames["pft_harvest","timestep"] == "Y") {
-      harvest = drop(lpjmliotools::netcdfCFT2lpjarray(inFile = harvfile, lon = lon, lat = lat))
-    }else if (varnames["pft_harvest","timestep"] == "M") {
-      stop("Monthly netcdf output for pft_harvest currently not supported.")
-    }
-    print(paste0("reading rharvest file: ",rharvfile))
-    if (varnames["pft_rharvest","timestep"] == "Y") {
-      rharvest = drop(lpjmliotools::netcdfCFT2lpjarray(inFile = rharvfile, lon = lon, lat = lat))
-    }else if (varnames["pft_rharvest","timestep"] == "M") {
-      stop("Monthly netcdf output for pft_rharvest currently not supported.")
-    }
-    timberFile = paste0(inFol_lu,varnames["timber_harvest","outname"])
-    print(paste0("reading timber file: ",timberFile))
-    if (varnames["timber_harvest","timestep"] == "Y") {
-      timber = drop(lpjmliotools::netcdfYearly2lpjarray(ncInFile = timberFile, lon = lon, lat = lat))# gC/m2
-    }else if (varnames["timber_harvest","timestep"] == "M") {
-      mtimber = lpjmliotools::netcdfMonthly2lpjarray(ncInFile = timberFile, lon = lon, lat = lat)# gC/m2
-      timber = apply(mtimber, c(1,4), sum, drop = T) #gC/m2
-    }
-    fireFile = paste0(inFol_lu,varnames["firec","outname"])
-    print(paste0("reading fire file: ",fireFile))
-    if (varnames["firec","timestep"] == "Y") {
-      fire = drop(lpjmliotools::netcdfYearly2lpjarray(ncInFile = fireFile, lon = lon, lat = lat))# gC/m2
-    }else if (varnames["firec","timestep"] == "M") {
-      mfire = lpjmliotools::netcdfMonthly2lpjarray(ncInFile = fireFile, lon = lon, lat = lat)# gC/m2
-      fire = apply(mfire, c(1,4), sum, drop = T) #gC/m2
-    }
-    cftFile = paste0(inFol_lu,varnames["cftfrac","outname"])
-    print(paste0("reading cftfrac file: ",cftFile))
-    if (varnames["cftfrac","timestep"] == "Y") {
-      cftfrac = drop(lpjmliotools::netcdfCFT2lpjarray(inFile = cftFile, lon = lon, lat = lat))
-    }else if (varnames["cftfrac","timestep"] == "M") {
-      stop("Monthly netcdf output for cftfrac currently not supported.")
-    }
-    pnv_nppFile = paste0(inFol_pnv,varnames["npp","outname"])
-    print(paste0("reading PNV NPP file: ",pnv_nppFile))
-    if (varnames["npp","timestep"] == "Y") {
-      ynpp_potential = drop(lpjmliotools::netcdfYearly2lpjarray(ncInFile = pnv_nppFile, lon = lon, lat = lat))# gC/m2
-    }else if (varnames["npp","timestep"] == "M") {
-      npp_potential = lpjmliotools::netcdfMonthly2lpjarray(ncInFile = pnv_nppFile, lon = lon, lat = lat)# gC/m2
-      ynpp_potential = apply(npp_potential, c(1,4), sum, drop = T) #gC/m2
-    }
-    fpcFile = paste0(inFol_lu,varnames["fpc","outname"])
-    print(paste0("reading FPC file: ",fpcFile))
-    if (varnames["fpc","timestep"] == "Y") {
-      fpc = drop(lpjmliotools::netcdfCFT2lpjarray(inFile = fpcFile, lon = lon, lat = lat))
-    }else if (varnames["fpc","timestep"] == "M") {
-      stop("Monthly netcdf output for fpc currently not supported.")
-    }
+    #plotGlobalMan(data = grassland_scaling_factor_cellwise,file = "~/scaling_factor_lpj_grazing.png",
+    #         title = "grassland scaling factor",brks = c(seq(0,1,length.out = 11),seq(2,10,length.out = 9),60),
+    #         palette = "RdBu",legendtitle = "",legYes = T,eps=F)
+    harvest_grasslands <- harvest_grasslands*rep(grassland_scaling_factor_cellwise,
+                                                 times = length(harvest_grasslands[1,]))
+  }
+  
+  npp_act_overtime <- colSums(ynpp*cellarea)/10^15 # from gC/m2 to GtC
+  npp_pot_overtime <- colSums(ynpp_potential*cellarea)/10^15 # from gC/m2 to GtC
+  npp_eco_overtime <- colSums(pftnpp_nat*cellarea)/10^15 # from gC/m2 to GtC
+  npp_luc_overtime <- npp_pot_overtime - npp_act_overtime
+  
+  harvest_cft_overtime <- colSums(harvest_cft*cellarea)/10^15 # from gC/m2 to GtC
+  rharvest_cft_overtime <- colSums(rharvest_cft*cellarea)/10^15 # from gC/m2 to GtC
+  harvest_grasslands_overtime <- colSums(harvest_grasslands*cellarea)/10^15 # from gC/m2 to GtC
+  harvest_bioenergy_overtime <- colSums(harvest_bioenergy*cellarea)/10^15 # from gC/m2 to GtC
+  
+  timber_harvest_overtime <- colSums(timber*cellarea)/10^15 # from gC/m2 to GtC
+  fire_overtime <- colSums(fire*cellarea)/10^15 # from gC/m2 to GtC
+  wood_harvest_overtime <- colSums(wood_harvest*cellarea)/10^15 # from gC/m2 to GtC
+  
+  if (include_fire){
+    mcol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
+      harvest_grasslands_overtime + harvest_bioenergy_overtime +
+      timber_harvest_overtime + fire_overtime + npp_luc_overtime +
+      wood_harvest_overtime
   }else{
-    print(paste0("Unrecognized file type (",fileType,")"))
-    break
+    mcol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
+      harvest_grasslands_overtime + harvest_bioenergy_overtime +
+      timber_harvest_overtime + npp_luc_overtime +
+      wood_harvest_overtime
   }
-  if (gridbased) {
-    pftnpp_grasslands <- apply(pftnpp[, c(totalbands - c(18,2)), ],c(1,3),sum) #gC/m2
-    pftnpp_cft <- apply(pftnpp[,-c(1:(pftbands), totalbands - 18, totalbands - 2), ], c(1,3), sum) #gC/m2
-    pftnpp_bioenergy <- apply(pftnpp[, c(totalbands - c(17,16,1,0)), ], c(1,3), sum) #gC/m2
-    harvest_grasslands <- apply(harvest[,c(cftbands - c(18,2)),],c(1,3),sum) #gC/m2 only from grassland bands
-    harvest_bioenergy <- apply(harvest[,c(cftbands - c(17,16,1,0)),],c(1,3),sum) #gC/m2 only from bioenergy bands
-    harvest_cft <- apply(harvest[,-c(cftbands - c(18,17,16,2,1,0)),], c(1,3), sum) #gC/m2 not from grassland and bioenergy bands
-    rharvest_cft <- apply(rharvest[,-c(cftbands - c(18,17,16,2,1,0)),], c(1,3), sum) #gC/m2 not from grassland and bioenergy bands
-    pftnpp_nat <- apply(pftnpp[,1:(pftbands),], c(1,3), sum) #gC/m2
-  }else{# todo: complete this part
-    pftnpp_cft <- apply(pftnpp[,(totalbands - cftbands + 1):totalbands,]*cftfrac,c(1,3),sum) #gC/m2
-    pftnpp_nat <- apply(pftnpp[,1:(pftbands),],c(1,3),sum)*fpc[,1,] #gC/m2
+  
+  mcol_overtime_perc_piref <- mcol_overtime/mean(npp_pot_overtime[1:10])*100
+  mcol_luc <- ynpp_potential - ynpp
+  # pick a PI window that excludes onset effects, but is reasonable early
+  if (length(ynpp_potential[1,])>200) pi_window <- 30:59 # for simulations startig earlier than 1800
+  else pi_window <- 3:32 # for simulations startig 1901
+  mcol_luc_piref <- rep(rowMeans(ynpp_potential[,pi_window]),times = length(ynpp[1,])) - ynpp # not used, but handed over for checking comparison to pi_ref
+  if (include_fire){
+    mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + fire + wood_harvest
+  }else{
+    mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + wood_harvest
   }
-  if (saveDataFile) {
-    if (!file.exists(dataFile) ) {
-      print(paste0("Writing data file: ",dataFile))
-    }else{
-      print(paste0("Data file (",dataFile,") already exists, old file renamed to: ",dataFile,"_sav"))
-      file.rename(dataFile, paste0(dataFile,"_sav"))
-    }
-    save(ynpp_potential,ynpp,pftnpp_cft,pftnpp_nat,pftnpp_grasslands,pftnpp_bioenergy,
-         harvest_cft,rharvest_cft,fire,timber,cftfrac,fpc,harvest_grasslands,
-         harvest_bioenergy,wood_harvest,file = dataFile)
-  }
-  # return variables to calcMCOL
-  return(list(ynpp_potential = ynpp_potential, ynpp = ynpp, pftnpp_cft = pftnpp_cft,
-              pftnpp_nat = pftnpp_nat, pftnpp_grasslands = pftnpp_grasslands,
-              pftnpp_bioenergy = pftnpp_bioenergy, harvest_cft = harvest_cft,
-              rharvest_cft = rharvest_cft, fire = fire, timber = timber,
-              cftfrac = cftfrac, fpc = fpc, harvest_grasslands = harvest_grasslands,
-              harvest_bioenergy = harvest_bioenergy, wood_harvest = wood_harvest))
+  mcol <- mcol_harvest + mcol_luc
+  mcol[abs(ynpp_potential)<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
+  mcol_perc <- mcol/ynpp_potential*100 #actual NPPpot as ref
+  
+  
+  mcol_perc_piref <- mcol/rowMeans(ynpp_potential[,pi_window])*100 # NPPpi as ref
+  
+  # todo: return variables to calcMCOL
+  #return(list(ynpp_potential = ynpp_potential, ynpp = ynpp, pftnpp_cft = pftnpp_cft,
+  #            pftnpp_nat = pftnpp_nat, pftnpp_grasslands = pftnpp_grasslands,
+  #            pftnpp_bioenergy = pftnpp_bioenergy, harvest_cft = harvest_cft,
+  #            rharvest_cft = rharvest_cft, fire = fire, timber = timber,
+  #            cftfrac = cftfrac, fpc = fpc, harvest_grasslands = harvest_grasslands,
+  #            harvest_bioenergy = harvest_bioenergy, wood_harvest = wood_harvest))
+  
+  
 
 } # end of readMCOLdata
 
@@ -399,149 +354,25 @@ calcMCOL <- function( inFol_lu,
                       include_fire = F,
                       external_fire = F, 
                       external_wood_harvest = F,
-                      pftbands = 11, 
-                      cftbands = 32, 
                       dataFile = NULL, 
-                      ncells = 67420,
                       saveDataFile = FALSE, 
                       readPreviouslySavedData = FALSE,  
                       fileType = "clm", 
-                      headersize = 0, 
-                      varnames = NULL, 
+                      varnames = NULL,
                       grass_scaling = F, 
                       grass_harvest_file = "/p/projects/open/Fabian/LPJbox/grazing_data.RData",
                       external_fire_file = "/p/projects/open/Fabian/LPJbox/human_ignition_fraction.RData",
                       external_wood_harvest_file = "/p/projects/open/LanduseData/LUH2_v2h/wood_harvest_biomass_sum_1500-2014_67420.RData"
                       ){
-  if (grass_scaling && !file.exists(grass_harvest_file)) stop(paste0("Grass harvest scaling enabled, but grass_harvest_file does not exist in: ",grass_harvest_file))
-
   if (is.null(varnames)) {
     print("Varnames not given, using standard values, which might not fit this specific configuration. Please check!")
     varnames <- data.frame(row.names = c("npp",    "pft_npp",    "pft_harvest",     "pft_rharvest",     "firec",    "timber_harvest",     "cftfrac",    "fpc"),
-                       outname = c(  "npp.bin","pft_npp.bin","pft_harvestc.bin","pft_rharvestc.bin","firec.bin","timber_harvestc.bin","cftfrac.bin","fpc.bin"),
-                       timestep = c( "Y",      "Y",          "Y",               "Y",                "Y",        "Y",                  "Y",          "Y"))
+                           outname = c(  "npp.bin","pft_npp.bin","pft_harvestc.bin","pft_rharvestc.bin","firec.bin","timber_harvestc.bin","cftfrac.bin","fpc.bin"),
+                           timestep = c( "Y",      "Y",          "Y",               "Y",                "Y",        "Y",                  "Y",          "Y"))
   }
-
-  # reading required data
-  if (readPreviouslySavedData) {
-    if (file.exists(dataFile)) {
-      print(paste0("Reading in data from previously saved data file"))
-      load(dataFile)
-      wood_harvest[is.na(wood_harvest)] <- 0
-    }else{
-      stop(paste0("dataFile: '",dataFile,"' does not exist but is required since reading is set to FALSE."))
-    }
-    if (saveDataFile) {
-      saveDataFile <- FALSE
-      print("Both readPreviouslySavedData and saveDataFile have been set to TRUE. Overwriting with the same data does not make sense, saving disabled. ")
-    }
-  }else{
-    print(paste0("Reading in data from outputs"))
-    readVars <- readMCOLdata( inFol_lu = inFol_lu,
-                              inFol_pnv = inFol_pnv,
-                              startyr = startyr,
-                              stopyr = stopyr, 
-                              gridbased = gridbased, 
-                              pftbands = pftbands,
-                              cftbands = cftbands,
-                              dataFile = dataFile, 
-                              ncells = ncells,
-                              fileType = fileType, 
-                              headersize = headersize,
-                              external_fire = external_fire, 
-                              external_wood_harvest = external_wood_harvest,
-                              external_fire_file = external_fire_file,
-                              external_wood_harvest_file = external_wood_harvest_file,
-                              varnames = varnames, 
-                              saveDataFile = saveDataFile
-                            )
-    ynpp_potential <- readVars$ynpp_potential
-    ynpp <- readVars$ynpp
-    pftnpp_cft <- readVars$pftnpp_cft
-    pftnpp_nat <- readVars$pftnpp_nat
-    pftnpp_grasslands <- readVars$pftnpp_grasslands
-    pftnpp_bioenergy <- readVars$pftnpp_bioenergy
-    harvest_cft <- readVars$harvest_cft
-    harvest_bioenergy <- readVars$harvest_bioenergy
-    harvest_grasslands <- readVars$harvest_grasslands
-    rharvest_cft <- readVars$rharvest_cft
-    fire <- readVars$fire
-    wood_harvest <- readVars$wood_harvest
-    wood_harvest[is.na(wood_harvest)] <- 0
-    timber <- readVars$timber
-    cftfrac <- readVars$cftfrac
-    fpc <- readVars$fpc
-  }
-
-  print(paste0("Calculating data"))
-  if (grass_scaling) {
-    load(grass_harvest_file)
-    nregs <- length(grazing_data$name)
-    lpj_grass_harvest_region <- array(0,dim = nregs)
-    lpj_grass_harvest_2000 <- rowMeans(harvest_grasslands[,(1995-startyr+1):(2005-startyr+1)])*cellarea/1000*2 # from gC/m2 to kgDM
-    grassland_scaling_factor_cellwise <- array(1,dim = ncells)
-    for (r in 1:nregs) {
-      lpj_grass_harvest_region[r] <- sum(lpj_grass_harvest_2000[which(mapping_lpj67420_to_grazing_regions==r)])
-    }
-    scaling_factor <- grazing_data$Herrero_2000_kgDM_by_region/lpj_grass_harvest_region
-    for (r in 1:nregs) {
-      grassland_scaling_factor_cellwise[which(mapping_lpj67420_to_grazing_regions==r)] <- scaling_factor[r]
-    }
-    #plotGlobalMan(data = grassland_scaling_factor_cellwise,file = "~/scaling_factor_lpj_grazing.png",
-    #         title = "grassland scaling factor",brks = c(seq(0,1,length.out = 11),seq(2,10,length.out = 9),60),
-    #         palette = "RdBu",legendtitle = "",legYes = T,eps=F)
-    harvest_grasslands <- harvest_grasslands*rep(grassland_scaling_factor_cellwise,
-                                                 times = length(harvest_grasslands[1,]))
-  }
-
-  npp_act_overtime <- colSums(ynpp*cellarea)/10^15 # from gC/m2 to GtC
-  # lastyr <- startyr + length(npp_act_overtime) - 1
-  npp_pot_overtime <- colSums(ynpp_potential*cellarea)/10^15 # from gC/m2 to GtC
-  npp_eco_overtime <- colSums(pftnpp_nat*cellarea)/10^15 # from gC/m2 to GtC
-  #npp_harv_overtime <- colSums((pftnpp_cft + pftnpp_grasslands)*cellarea)/10^15 #from gC/m2 to GtC
-  #npp_bioenergy_overtime <- colSums(pftnpp_bioenergy*cellarea)/10^15 #from gC/m2 to GtC
-  npp_luc_overtime <- npp_pot_overtime - npp_act_overtime
-
-  harvest_cft_overtime <- colSums(harvest_cft*cellarea)/10^15 # from gC/m2 to GtC
-  rharvest_cft_overtime <- colSums(rharvest_cft*cellarea)/10^15 # from gC/m2 to GtC
-  harvest_grasslands_overtime <- colSums(harvest_grasslands*cellarea)/10^15 # from gC/m2 to GtC
-  harvest_bioenergy_overtime <- colSums(harvest_bioenergy*cellarea)/10^15 # from gC/m2 to GtC
-
-  timber_harvest_overtime <- colSums(timber*cellarea)/10^15 # from gC/m2 to GtC
-  fire_overtime <- colSums(fire*cellarea)/10^15 # from gC/m2 to GtC
-  wood_harvest_overtime <- colSums(wood_harvest*cellarea)/10^15 # from gC/m2 to GtC
-
-  if (include_fire){
-    mcol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
-        harvest_grasslands_overtime + harvest_bioenergy_overtime +
-        timber_harvest_overtime + fire_overtime + npp_luc_overtime +
-        wood_harvest_overtime
-  }else{
-    mcol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
-        harvest_grasslands_overtime + harvest_bioenergy_overtime +
-        timber_harvest_overtime + npp_luc_overtime +
-        wood_harvest_overtime
-  }
-
-
-
-  mcol_overtime_perc_piref <- mcol_overtime/mean(npp_pot_overtime[1:10])*100
-  mcol_luc <- ynpp_potential - ynpp
-  # pick a PI window that excludes onset effects, but is reasonable early
-  if (length(ynpp_potential[1,])>200) pi_window <- 30:59 # for simulations startig earlier than 1800
-  else pi_window <- 3:32 # for simulations startig 1901
-  mcol_luc_piref <- rep(rowMeans(ynpp_potential[,pi_window]),times = length(ynpp[1,])) - ynpp # not used, but handed over for checking comparison to pi_ref
-    if (include_fire){
-      mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + fire + wood_harvest
-  }else{
-      mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + wood_harvest
-  }
-  mcol <- mcol_harvest + mcol_luc
-  mcol[abs(ynpp_potential)<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
-  mcol_perc <- mcol/ynpp_potential*100 #actual NPPpot as ref
-
-
-  mcol_perc_piref <- mcol/rowMeans(ynpp_potential[,pi_window])*100 # NPPpi as ref
+  
+  # todo: translate varnames and folders to files_scenarios/reference lists
+  
 
   if (grass_scaling){
     return(list(mcol_overtime = mcol_overtime, mcol = mcol, mcol_perc = mcol_perc,
