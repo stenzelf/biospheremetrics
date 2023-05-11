@@ -20,45 +20,64 @@
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
 #' @param gridbased logical are pft outputs gridbased or pft-based?
-#' @param saveDataFile whether to save input data to file (default T)
-#' @param dataFile file to save read in input data to
+#' @param readPreviouslySavedData flag whether to read previously saved data
+#'        instead of reading it in from output files (default FALSE)
+#' @param saveDataFile whether to save input data to file (default FALSE)
+#' @param dataFile file to save/read input data to/from (default NULL)
+#' @param include_fire boolean include firec in calculation of MCOL? (default T)
 #' @param external_fire instead of reading in firec for fire emissions, read in
 #'        this external firec file from a separate spitfire run with disabled 
 #'        lighning. this will then include only human induced fires (default F)
 #' @param external_wood_harvest include external wood harvest from LUH2_v2h 
 #'        (default F)
-#' @param external_fire_file path to external firec file
+#' @param grass_scaling whether to scale pasture harvest according to
+#'        data given via grass_harvest_file (default F)
+#' @param npp_threshold lower threshold for npp (to mask out non-lu areas
+#'        according to Haberl et al. 2007). Below MCOL will be set to 0.
+#'        (default: 20 gC/m2)
+#' @param grass_harvest_file file containing grazing data to rescale the
+#'        grassland harvests according to Herrero et al. 2013. File contains:
+#'        grazing_data list object with $name and $id of 29 world regions, and
+#'        $Herrero_2000_kgDM_by_region containing for each of these regions and
+#'        mapping_lpj67420_to_grazing_regions array with a mapping between 67420
+#'        LPJmL cells and the 29 regions
+#' @param external_fire_file path to external file with human induced fire 
+#'        fraction c(cell,month,year) since 1500
 #' @param external_wood_harvest_file path to R-file containing processed 
 #'        timeline of maps for LUH2_v2h woodharvest 
 #'
-#' @return list data object containing the data to compute MCOL as arrays of 
-#'         ynpp_potential, ynpp, pftnpp_cft, pftnpp_nat, pftnpp_grasslands, 
-#'         pftnpp_bioenergy, harvest_cft, rharvest_cft, fire, timber, cftfrac, 
-#'         fpc, harvest_grasslands, harvest_bioenergy
+#' @return list data object containing MCOL and components as arrays: mcol, 
+#'         mcol_overtime, mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, 
+#'         ynpp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
+#'         harvest_cft_overtime, npp_luc_overtime, rharvest_cft_overtime, 
+#'         fire_overtime, timber_harvest_overtime, harvest_cft, mcol_harvest,
+#'         grassland_scaling_factor_cellwise,  mcol_luc, mcol_luc_piref
 #'
 #' @examples
 #' \dontrun{
 #' }
 #' @export
-calc_bi_status <- function( files_scenario, 
+read_calc_mcol <- function( files_scenario, 
                             files_reference, 
                             time_span_scenario, 
-                            time_span_reference, 
+                            time_span_reference = NULL, 
                             gridbased = T,
                             readPreviouslySavedData = FALSE, 
                             saveDataFile = FALSE, 
                             dataFile = NULL, 
+                            include_fire = F,
                             external_fire = F,
                             external_wood_harvest = F,
-                            npp_threshold = 20, 
-                            include_fire = F,
                             grass_scaling = F, 
+                            npp_threshold = 20, 
                             grass_harvest_file = "/p/projects/open/Fabian/LPJbox/grazing_data.RData",
                             external_fire_file = "/p/projects/open/Fabian/LPJbox/human_ignition_fraction.RData",
                             external_wood_harvest_file = "/p/projects/open/LanduseData/LUH2_v2h/wood_harvest_biomass_sum_1500-2014_67420.RData"
                           ) {
+  if (is.null(time_span_reference)) time_span_reference <- time_span_scenario
   if (grass_scaling && !file.exists(grass_harvest_file)) stop(paste0("Grass harvest scaling enabled, but grass_harvest_file does not exist in: ",grass_harvest_file))
-  # todo: add similar for fire and woodh
+  if (external_wood_harvest && !file.exists(external_wood_harvest_file)) stop(paste0("External wood harvest enabled, but external_wood_harvest_file does not exist in: ",external_wood_harvest_file))
+  if (external_fire && !file.exists(external_fire_file)) stop(paste0("External fire fraction file enabled, but external_fire_file does not exist in: ",external_fire_file))
   # reading required data
   if (readPreviouslySavedData) {
     if (file.exists(dataFile)) {
@@ -116,35 +135,38 @@ calc_bi_status <- function( files_scenario,
         subset = list(year = as.character(time_span_scenario))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum))
-      
-      # read fire in monthly res. if possible, then multiply with monthly 
-      # human/total ignition frac and aggregate to yearly. Otherwise aggregate 
-      # human/total ignition frac to yearly and multiply with yearly firec
-      fire_raw <- lpjmlkit::read_io(
-        files_scenario$firec, 
-        subset = list(year = as.character(time_span_scenario))) %>%
-        lpjmlkit::transform(to = c("year_month_day"))%>%
-        lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
-      if (external_fire){
-        load(external_fire_file) #frac = c(cell,month,year)
-      }
-      if ("month" %in% names(dim(fire_raw))) {
-        if (external_fire){
-          fire <- apply(fire_raw*frac[,,year=time_span_scenario], c("cell","year"), sum, na.rm=T) #gC/m2
-          rm(frac)
+      if (include_fire){
+        # read fire in monthly res. if possible, then multiply with monthly 
+        # human/total ignition frac and aggregate to yearly. Otherwise aggregate 
+        # human/total ignition frac to yearly and multiply with yearly firec
+        fire_raw <- lpjmlkit::read_io(
+          files_scenario$firec, 
+          subset = list(year = as.character(time_span_scenario))) %>%
+          lpjmlkit::transform(to = c("year_month_day")) %>%
+          lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
+        if (external_fire) {
+          load(external_fire_file) #frac = c(cell,month,year)
+        }
+        if ("month" %in% names(dim(fire_raw))) {
+          if (external_fire) {
+            fire <- apply(fire_raw*frac[,,year = time_span_scenario], c("cell","year"), sum, na.rm = T) #gC/m2
+            rm(frac)
+          }else{
+            fire <- apply(fire_raw, c("cell","year"), sum, na.rm = T) #gC/m2
+          }
+          rm(fire_raw)
         }else{
-          fire <- apply(fire_raw, c("cell","year"), sum, na.rm=T) #gC/m2
+          if (external_fire) {
+            frac_yearly <- apply(frac[,,year = time_span_scenario],c("cell","year"),mean,na.rm = T)
+            fire <- fire_raw*frac_yearly
+            rm(frac_yearly,frac)
+          }
         }
-        rm(fire_raw)
+        gc()
       }else{
-        if (external_fire){
-          frac_yearly <- apply(frac[,,year=time_span_scenario],c("cell","year"),mean,na.rm=T)
-          fire <- fire_raw*frac_yearly
-          rm(frac_yearly,frac)
-        }
+        fire <- timber*0
       }
-      gc()
-      if (external_wood_harvest){
+      if (external_wood_harvest) {
         load(external_wood_harvest_file) #wh_lpj in kgC
         wh_years <- names(wh_lpj[1,])
         wood_harvest <- wh_lpj[,match(time_span_scenario,wh_years)]*10^3/cell_area #from kgC to gC/m2
@@ -158,24 +180,23 @@ calc_bi_status <- function( files_scenario,
       cftfrac <- lpjmlkit::read_io(
         files_scenario$cftfrac, 
         subset = list(year = as.character(time_span_scenario))) %>%
-        lpjmlkit::transform(to = c("year_month_day"))%>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) # gC/m2
       
       ynpp_potential <- lpjmlkit::read_io(
         files_reference$npp, 
         subset = list(year = as.character(time_span_reference))) %>%
-        lpjmlkit::transform(to = c("year_month_day"))%>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) # gC/m2
       
       fpc <- lpjmlkit::read_io(
         files_scenario$fpc, silent = silence,
         subset = list(year = as.character(time_span_scenario))) %>%
-        lpjmlkit::transform(to = c("year_month_day"))%>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
       
       cftbands <- dim(cftfrac)[["band"]]
-      pftbands <- dim(fpc)[["band"]]-1
-      totalbands <- (pftbands + cftbands)
+      pftbands <- dim(fpc)[["band"]] - 1
       
     }else if (fileType == "nc") { # to be added
       stop("nc reading has not been updated to latest functionality. please contact Fabian")
@@ -249,7 +270,7 @@ calc_bi_status <- function( files_scenario,
   fire_overtime <- colSums(fire*cellarea)/10^15 # from gC/m2 to GtC
   wood_harvest_overtime <- colSums(wood_harvest*cellarea)/10^15 # from gC/m2 to GtC
   
-  if (include_fire){
+  if (include_fire) {
     mcol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
       harvest_grasslands_overtime + harvest_bioenergy_overtime +
       timber_harvest_overtime + fire_overtime + npp_luc_overtime +
@@ -267,7 +288,7 @@ calc_bi_status <- function( files_scenario,
   if (length(ynpp_potential[1,])>200) pi_window <- 30:59 # for simulations startig earlier than 1800
   else pi_window <- 3:32 # for simulations startig 1901
   mcol_luc_piref <- rep(rowMeans(ynpp_potential[,pi_window]),times = length(ynpp[1,])) - ynpp # not used, but handed over for checking comparison to pi_ref
-  if (include_fire){
+  if (include_fire) {
     mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + fire + wood_harvest
   }else{
     mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + wood_harvest
@@ -279,50 +300,45 @@ calc_bi_status <- function( files_scenario,
   
   mcol_perc_piref <- mcol/rowMeans(ynpp_potential[,pi_window])*100 # NPPpi as ref
   
-  # todo: return variables to calcMCOL
-  #return(list(ynpp_potential = ynpp_potential, ynpp = ynpp, pftnpp_cft = pftnpp_cft,
-  #            pftnpp_nat = pftnpp_nat, pftnpp_grasslands = pftnpp_grasslands,
-  #            pftnpp_bioenergy = pftnpp_bioenergy, harvest_cft = harvest_cft,
-  #            rharvest_cft = rharvest_cft, fire = fire, timber = timber,
-  #            cftfrac = cftfrac, fpc = fpc, harvest_grasslands = harvest_grasslands,
-  #            harvest_bioenergy = harvest_bioenergy, wood_harvest = wood_harvest))
-  
-  
+  # todo: return mcol variables for wrapper functions
 
-} # end of readMCOLdata
+  return(list(mcol_overtime = mcol_overtime, mcol = mcol, mcol_perc = mcol_perc,
+              mcol_overtime_perc_piref = mcol_overtime_perc_piref,
+              mcol_perc_piref = mcol_perc_piref, ynpp_potential = ynpp_potential,
+              npp_act_overtime = npp_act_overtime, npp_pot_overtime = npp_pot_overtime,
+              npp_eco_overtime = npp_eco_overtime, 
+              harvest_cft_overtime = harvest_cft_overtime, npp_luc_overtime = npp_luc_overtime,
+              rharvest_cft_overtime = rharvest_cft_overtime, fire_overtime = fire_overtime,
+              timber_harvest_overtime = timber_harvest_overtime, harvest_cft = harvest_cft, 
+              rharvest_cft = rharvest_cft, wood_harvest_overtime = wood_harvest_overtime,
+              mcol_harvest = mcol_harvest, mcol_luc = mcol_luc, mcol_luc_piref = mcol_luc_piref))
+
+} # end of read_calc_mcol
 
 #' Calculate MCOL
 #'
-#' Function to calculate MCOL
+#' Wrapper function to calculate MCOL
 #'
 #' @param inFol_lu folder of landuse scenario run
 #' @param inFol_pnv folder of pnv reference run
 #' @param startyr first year of simulations
 #' @param stopyr last year of simulations
 #' @param gridbased logical are pft outputs gridbased or pft-based?
-#' @param npp_threshold lower threshold for npp (to mask out non-lu areas
-#'        according to Haberl et al. 2007). Below MCOL will be set to 0.
-#'        (default: 20 gC/m2)
+#' @param readPreviouslySavedData flag whether to read previously saved data
+#'        instead of reading it in from output files (default FALSE)
+#' @param saveDataFile whether to save input data to file (default FALSE)
+#' @param dataFile file to save/read input data to/from (default NULL)
 #' @param include_fire boolean include firec in calculation of MCOL? (default T)
 #' @param external_fire instead of reading in firec for fire emissions, read in
 #'        this external firec file from a separate spitfire run with disabled 
 #'        lighning. this will then include only human induced fires (default F)
 #' @param external_wood_harvest include external wood harvest from LUH2_v2h 
 #'        (default F)
-#' @param pftbands number of natural plant functional types (== bands in fpc - 1)
-#' @param cftbands number of crop functional types
-#' @param readPreviouslySavedData flag whether to read previously saved data
-#'        instead of reading it in from output files (default FALSE)
-#' @param saveDataFile whether to save input data to file (default FALSE)
-#' @param dataFile file to save/read input data to/from (default NULL)
-#' @param ncells number of cells in lpjml grid
-#' @param fileType type of output files - one of "clm", "nc" (default: "clm")
-#' @param headersize headersize of the output files (default 0)
-#' @param varnames data.frame with names (outname) and timestep of output files
-#'        -- can be specified to account for variable file names
-#'        (default NULL -- standard names are used)
 #' @param grass_scaling whether to scale pasture harvest according to
 #'        data given via grass_harvest_file (default F)
+#' @param npp_threshold lower threshold for npp (to mask out non-lu areas
+#'        according to Haberl et al. 2007). Below MCOL will be set to 0.
+#'        (default: 20 gC/m2)
 #' @param grass_harvest_file file containing grazing data to rescale the
 #'        grassland harvests according to Herrero et al. 2013. File contains:
 #'        grazing_data list object with $name and $id of 29 world regions, and
@@ -349,57 +365,74 @@ calcMCOL <- function( inFol_lu,
                       inFol_pnv, 
                       startyr, 
                       stopyr, 
-                      gridbased = T, 
-                      npp_threshold = 20, 
-                      include_fire = F,
-                      external_fire = F, 
-                      external_wood_harvest = F,
-                      dataFile = NULL, 
-                      saveDataFile = FALSE, 
-                      readPreviouslySavedData = FALSE,  
-                      fileType = "clm", 
                       varnames = NULL,
+                      gridbased = T,
+                      readPreviouslySavedData = FALSE, 
+                      saveDataFile = FALSE, 
+                      dataFile = NULL, 
+                      include_fire = F,
+                      external_fire = F,
+                      external_wood_harvest = F,
                       grass_scaling = F, 
+                      npp_threshold = 20, 
                       grass_harvest_file = "/p/projects/open/Fabian/LPJbox/grazing_data.RData",
                       external_fire_file = "/p/projects/open/Fabian/LPJbox/human_ignition_fraction.RData",
                       external_wood_harvest_file = "/p/projects/open/LanduseData/LUH2_v2h/wood_harvest_biomass_sum_1500-2014_67420.RData"
-                      ){
+                      ) {
   if (is.null(varnames)) {
     print("Varnames not given, using standard values, which might not fit this specific configuration. Please check!")
-    varnames <- data.frame(row.names = c("npp",    "pft_npp",    "pft_harvest",     "pft_rharvest",     "firec",    "timber_harvest",     "cftfrac",    "fpc"),
-                           outname = c(  "npp.bin","pft_npp.bin","pft_harvestc.bin","pft_rharvestc.bin","firec.bin","timber_harvestc.bin","cftfrac.bin","fpc.bin"),
-                           timestep = c( "Y",      "Y",          "Y",               "Y",                "Y",        "Y",                  "Y",          "Y"))
+    varnames <- data.frame(row.names = c("grid","npp","pft_npp","pft_harvest","pft_rharvest","firec","timber_harvest","cftfrac","fpc"),
+                           outname = c("grid.bin.json",  "mnpp.bin.json","pft_npp.bin.json","pft_harvest.bin.json","pft_rharvest.bin.json","firec.bin.json","timber_harvestc.bin.json","cftfrac.bin.json","fpc.bin.json"),
+                           timestep = c("Y","Y","Y","Y","Y","Y","Y","Y","Y"))
   }
   
-  # todo: translate varnames and folders to files_scenarios/reference lists
-  
+  # translate varnames and folders to files_scenarios/reference lists
+  files_scenario <- list(grid = paste0(inFol_lu,varnames["grid","outname"]),
+                         npp = paste0(inFol_lu,varnames["npp","outname"]),
+                         pft_npp = paste0(inFol_lu,varnames["pft_npp","outname"]),
+                         pft_harvestc = paste0(inFol_lu,varnames["pft_harvest","outname"]),
+                         pft_rharvestc = paste0(inFol_lu,varnames["pft_rharvest","outname"]),
+                         firec = paste0(inFol_lu,varnames["firec","outname"]),
+                         timber_harvestc = paste0(inFol_lu,varnames["timber_harvest","outname"]),
+                         cftfrac = paste0(inFol_lu,varnames["cftfrac","outname"]),
+                         fpc = paste0(inFol_lu,varnames["fpc","outname"])
+                         )
+  files_reference <- list(grid = paste0(inFol_pnv,varnames["grid","outname"]),
+                         npp = paste0(inFol_pnv,varnames["npp","outname"]),
+                         pft_npp = paste0(inFol_pnv,varnames["pft_npp","outname"]),
+                         pft_harvestc = paste0(inFol_pnv,varnames["pft_harvest","outname"]),
+                         pft_rharvestc = paste0(inFol_pnv,varnames["pft_rharvest","outname"]),
+                         firec = paste0(inFol_pnv,varnames["firec","outname"]),
+                         timber_harvestc = paste0(inFol_pnv,varnames["timber_harvest","outname"]),
+                         cftfrac = paste0(inFol_pnv,varnames["cftfrac","outname"]),
+                         fpc = paste0(inFol_pnv,varnames["fpc","outname"])
+                         )
+# todo call read_calc_mcol
+  return(read_calc_mcol(files_scenario = files_scenario, 
+                        files_reference = files_reference, 
+                        time_span_scenario = as.character(startyr:stopyr), 
+                        time_span_reference = as.character(startyr:stopyr), 
+                        gridbased = gridbased,
+                        readPreviouslySavedData = readPreviouslySavedData, 
+                        saveDataFile = saveDataFile, 
+                        dataFile = dataFile, 
+                        include_fire = include_fire,
+                        external_fire = external_fire,
+                        external_wood_harvest = external_wood_harvest,
+                        grass_scaling = grass_scaling, 
+                        npp_threshold = npp_threshold, 
+                        grass_harvest_file = grass_harvest_file,
+                        external_fire_file = external_fire_file,
+                        external_wood_harvest_file = external_wood_harvest_file
+  ) )
 
-  if (grass_scaling){
-    return(list(mcol_overtime = mcol_overtime, mcol = mcol, mcol_perc = mcol_perc,
-                mcol_overtime_perc_piref = mcol_overtime_perc_piref,
-                mcol_perc_piref = mcol_perc_piref, ynpp_potential = ynpp_potential,
-                npp_act_overtime = npp_act_overtime, npp_pot_overtime = npp_pot_overtime,
-                npp_eco_overtime = npp_eco_overtime, #npp_bioenergy_overtime = npp_bioenergy_overtime,
-                harvest_cft_overtime = harvest_cft_overtime, npp_luc_overtime = npp_luc_overtime,
-                rharvest_cft_overtime = rharvest_cft_overtime, fire_overtime = fire_overtime,
-                timber_harvest_overtime = timber_harvest_overtime, harvest_cft = harvest_cft, 
-                rharvest_cft = rharvest_cft,
-                grassland_scaling_factor_cellwise = grassland_scaling_factor_cellwise,
-                wood_harvest_overtime = wood_harvest_overtime,
-                mcol_harvest = mcol_harvest, mcol_luc = mcol_luc, mcol_luc_piref = mcol_luc_piref))
-  }else{
-    return(list(mcol_overtime = mcol_overtime, mcol = mcol, mcol_perc = mcol_perc,
-                mcol_overtime_perc_piref = mcol_overtime_perc_piref,
-                mcol_perc_piref = mcol_perc_piref, ynpp_potential = ynpp_potential,
-                npp_act_overtime = npp_act_overtime, npp_pot_overtime = npp_pot_overtime,
-                npp_eco_overtime = npp_eco_overtime, #npp_bioenergy_overtime = npp_bioenergy_overtime,
-                harvest_cft_overtime = harvest_cft_overtime, npp_luc_overtime = npp_luc_overtime,
-                rharvest_cft_overtime = rharvest_cft_overtime, fire_overtime = fire_overtime,
-                timber_harvest_overtime = timber_harvest_overtime, harvest_cft = harvest_cft,
-                rharvest_cft = rharvest_cft, wood_harvest_overtime = wood_harvest_overtime, 
-                mcol_harvest = mcol_harvest, mcol_luc = mcol_luc, mcol_luc_piref = mcol_luc_piref))
-  }
 }
+#test
+mcol <- calcMCOL(inFol_lu = "/p/projects/open/Johanna/NETPs_and_food/lpjml/output/lu_1500_2014/",
+                 inFol_pnv = "/p/projects/open/Johanna/NETPs_and_food/lpjml/output/pnv_1500_2014/",
+                 startyr = 1980,stopyr = 2014,readPreviouslySavedData = F,saveDataFile = F,include_fire = F,
+                  
+                 )
 
 #' Plot absolute MCOL, overtime, maps, and npp into given folder
 #'
@@ -429,7 +462,7 @@ calcMCOL <- function( inFol_lu,
 #' }
 #' @export
 plotMCOL <- function(mcolData, outFol, plotyears, minVal, maxVal, legendpos,
-                  startyr, mapyear, mapyear_buffer = 5, highlightyear, eps = FALSE){
+                  startyr, mapyear, mapyear_buffer = 5, highlightyear, eps = FALSE) {
   mapindex <- mapyear - startyr
   print(paste0("Plotting MCOL figures"))
   dir.create(file.path(outFol),showWarnings = F)
@@ -485,7 +518,7 @@ plotMCOL <- function(mcolData, outFol, plotyears, minVal, maxVal, legendpos,
 #' \dontrun{
 #' }
 #' @export
-plotMCOLmap <- function(data, file, title = "", legendtitle = "", zeroThreshold = 0.1, eps = FALSE){
+plotMCOLmap <- function(data, file, title = "", legendtitle = "", zeroThreshold = 0.1, eps = FALSE) {
   brks <- c(-400,-200,-100,-50,-zeroThreshold,zeroThreshold,10,20,30,40,50,60,70,80,100)
   classes <- c("<-200","-200 - -100","-100 - -50",paste0("-50 - -",zeroThreshold),paste0("-",zeroThreshold," - ",zeroThreshold),paste0(zeroThreshold," - 10"),"10 - 20","20 - 30","30 - 40","40 - 50","50 - 60","60 - 70","70 - 80","80 - 100")
   palette <- c("navy","royalblue3","royalblue1","skyblue1","grey80","yellowgreen","greenyellow","yellow","gold","orange","orangered","orangered4","brown4","black")
@@ -540,7 +573,7 @@ plotMCOLmap <- function(data, file, title = "", legendtitle = "", zeroThreshold 
 #' }
 #' @export
 plotMCOLovertime <- function(mcolData, file, firstyr, plotyrs, highlightyrs = 2000, minVal = 0,
-                            maxVal = 100, legendpos = "topleft", ext = FALSE, eps = FALSE, ref = "pi"){
+                            maxVal = 100, legendpos = "topleft", ext = FALSE, eps = FALSE, ref = "pi") {
   lastyr = firstyr + length(mcolData$npp_act_overtime) - 1
   colz = c("slateblue","gold","green3","darkorange","black","red3","green","brown","yellow","turquoise","darkgreen")
   if (eps) {
@@ -579,8 +612,8 @@ plotMCOLovertime <- function(mcolData, file, firstyr, plotyrs, highlightyrs = 20
   axis(side = 4, col = colz[6],col.axis = colz[6])
   mtext(text = "%", col=colz[6], side = 4,line = 2)
 
-  if (!is.null(highlightyrs)){
-    for (y in highlightyrs){
+  if (!is.null(highlightyrs)) {
+    for (y in highlightyrs) {
       lines(x=c(y,y),y=c(minVal,maxVal),col="grey40")
     }
   }
