@@ -17,7 +17,7 @@ and install via  [`devtools`](https://rawgit.com/rstudio/cheatsheets/master/pack
 ```R
 devtools::install("<path_to_pbfunctions>/biosphere_integrity_metrics")
 
-library("boundaries")
+library("biospheremetrics")
 ```
 
 ## Scripts
