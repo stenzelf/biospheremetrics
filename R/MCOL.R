@@ -1,7 +1,7 @@
 # written by Fabian Stenzel
-# 2022 - stenzel@pik-potsdam.de
+# 2022-2023 - stenzel@pik-potsdam.de
 
-# todo: add optional reading of monthly netcdf CFT outputs
+################# MCOL calc functions  ###################
 
 #' Calculate MCOL based on a PNV run and LU run of LPJmL
 #'
@@ -19,6 +19,10 @@
 #' as an integer vector, e.g. `as.character(1901:1930)`. Can differ in offset
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
+#' @param reference_npp_time_span time span to read reference npp from, using 
+#'     index years 10:39 from potential npp input if set to NULL (default: NULL)
+#' @param reference_npp_file file to read reference npp from, using 
+#'        potential npp input if set to NULL (default: NULL)
 #' @param gridbased logical are pft outputs gridbased or pft-based?
 #' @param readPreviouslySavedData flag whether to read previously saved data
 #'        instead of reading it in from output files (default FALSE)
@@ -48,7 +52,7 @@
 #'
 #' @return list data object containing MCOL and components as arrays: mcol, 
 #'         mcol_overtime, mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, 
-#'         ynpp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
+#'         npp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
 #'         harvest_cft_overtime, npp_luc_overtime, rharvest_cft_overtime, 
 #'         fire_overtime, timber_harvest_overtime, harvest_cft, mcol_harvest,
 #'         grassland_scaling_factor_cellwise,  mcol_luc, mcol_luc_piref
@@ -61,6 +65,8 @@ read_calc_mcol <- function( files_scenario,
                             files_reference, 
                             time_span_scenario, 
                             time_span_reference = NULL, 
+                            reference_npp_time_span = NULL, 
+                            reference_npp_file = NULL,
                             gridbased = T,
                             readPreviouslySavedData = FALSE, 
                             saveDataFile = FALSE, 
@@ -105,12 +111,20 @@ read_calc_mcol <- function( files_scenario,
       # calculate cell area
       cell_area <- lpjmlkit::calc_cellarea(grid[, 2])
       ncells <- length(grid[, 1])
-      
+
       npp <- lpjmlkit::read_io(
         files_scenario$npp,
         subset = list(year = as.character(time_span_scenario))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop() # gC/m2
+
+      if (!is.null(reference_npp_file)){
+        npp_ref <- lpjmlkit::read_io(
+          reference_npp_file,
+          subset = list(year = as.character(reference_npp_time_span))) %>%
+          lpjmlkit::transform(to = c("year_month_day")) %>%
+          lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()#rem bands
+      }
       
       pftnpp <- lpjmlkit::read_io(
         files_scenario$pft_npp, 
@@ -134,7 +148,7 @@ read_calc_mcol <- function( files_scenario,
         files_scenario$timber_harvestc, 
         subset = list(year = as.character(time_span_scenario))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()#rem bands
       if (include_fire){
         # read fire in monthly res. if possible, then multiply with monthly 
         # human/total ignition frac and aggregate to yearly. Otherwise aggregate 
@@ -143,7 +157,7 @@ read_calc_mcol <- function( files_scenario,
           files_scenario$firec, 
           subset = list(year = as.character(time_span_scenario))) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
-          lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
+          lpjmlkit::as_array(aggregate = list(band = sum)) #gC/m2
         if (external_fire) {
           load(external_fire_file) #frac = c(cell,month,year)
         }
@@ -181,22 +195,22 @@ read_calc_mcol <- function( files_scenario,
         files_scenario$cftfrac, 
         subset = list(year = as.character(time_span_scenario))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) # gC/m2
+        lpjmlkit::as_array(aggregate = list(month = sum))
       
-      ynpp_potential <- lpjmlkit::read_io(
+      npp_potential <- lpjmlkit::read_io(
         files_reference$npp, 
         subset = list(year = as.character(time_span_reference))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) # gC/m2
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop() # gC/m2
       
       fpc <- lpjmlkit::read_io(
-        files_scenario$fpc, silent = silence,
+        files_scenario$fpc, 
         subset = list(year = as.character(time_span_scenario))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
+        lpjmlkit::as_array(aggregate = list(band = sum))
       
-      cftbands <- dim(cftfrac)[["band"]]
-      pftbands <- dim(fpc)[["band"]] - 1
+      cftbands <- lpjmlkit::read_meta(files_scenario$cftfrac)$nbands
+      pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
       
     }else if (fileType == "nc") { # to be added
       stop("nc reading has not been updated to latest functionality. please contact Fabian")
@@ -211,15 +225,20 @@ read_calc_mcol <- function( files_scenario,
       pftnpp[,,-c(nat_bands)] <- pftnpp[,,-c(nat_bands)]*cftfrac
       harvest <- harvest*cftfrac
     }
-    pftnpp_grasslands <- apply(pftnpp[, pftbands+grass_bands, ],c(1,3),sum) #gC/m2 only from grassland bands
-    pftnpp_cft <- apply(pftnpp[,-c(nat_bands,pftbands+grass_bands,pftbands+bp_bands), ], c(1,3), sum) #gC/m2 not from grassland and bioenergy bands
-    pftnpp_bioenergy <- apply(pftnpp[, pftbands+bp_bands, ], c(1,3), sum) #gC/m2 only from bioenergy bands
-    pftnpp_nat <- apply(pftnpp[,nat_bands,], c(1,3), sum) #gC/m2
-    
-    harvest_grasslands <- apply(harvest[,grass_bands,],c(1,3),sum) #gC/m2 only from grassland bands
-    harvest_bioenergy <- apply(harvest[,bp_bands,],c(1,3),sum) #gC/m2 only from bioenergy bands
-    harvest_cft <- apply(harvest[,-c(grass_bands,bp_bands),], c(1,3), sum) #gC/m2 not from grassland and bioenergy bands
-    rharvest_cft <- apply(rharvest[,-c(grass_bands,bp_bands),], c(1,3), sum) #gC/m2 not from grassland and bioenergy bands
+    pftnpp_grasslands <- apply(pftnpp[,,pftbands+grass_bands ],c(1,2),sum) #gC/m2 only from grassland bands
+    pftnpp_cft <- apply(pftnpp[,,-c(nat_bands,pftbands+grass_bands,pftbands+bp_bands)], c(1,2), sum) #gC/m2 not from grassland and bioenergy bands
+    pftnpp_bioenergy <- apply(pftnpp[,, pftbands+bp_bands ], c(1,2), sum) #gC/m2 only from bioenergy bands
+    pftnpp_nat <- apply(pftnpp[,,nat_bands], c(1,2), sum) #gC/m2
+
+    if (is.null(reference_npp_file)){
+      pi_window <- 3:32
+      npp_ref <- npp_potential[,pi_window]
+    } # npp_ref
+
+    harvest_grasslands <- apply(harvest[,,grass_bands],c(1,2),sum) #gC/m2 only from grassland bands
+    harvest_bioenergy <- apply(harvest[,,bp_bands],c(1,2),sum) #gC/m2 only from bioenergy bands
+    harvest_cft <- apply(harvest[,,-c(grass_bands,bp_bands)], c(1,2), sum) #gC/m2 not from grassland and bioenergy bands
+    rharvest_cft <- apply(rharvest[,,-c(grass_bands,bp_bands)], c(1,2), sum) #gC/m2 not from grassland and bioenergy bands
     
     if (saveDataFile) {
       if (!file.exists(dataFile) ) {
@@ -228,9 +247,9 @@ read_calc_mcol <- function( files_scenario,
         print(paste0("Data file (",dataFile,") already exists, old file renamed to: ",dataFile,"_sav"))
         file.rename(dataFile, paste0(dataFile,"_sav"))
       }
-      save(ynpp_potential,ynpp,pftnpp_cft,pftnpp_nat,pftnpp_grasslands,pftnpp_bioenergy,
-           harvest_cft,rharvest_cft,fire,timber,cftfrac,fpc,harvest_grasslands,
-           harvest_bioenergy,wood_harvest,file = dataFile)
+      save(npp_potential,npp,npp_ref,pftnpp_cft,pftnpp_nat,pftnpp_grasslands,
+           pftnpp_bioenergy,harvest_cft,rharvest_cft,fire,timber,fpc,cftfrac,
+           harvest_grasslands,harvest_bioenergy,wood_harvest,file = dataFile)
     }
     
   }
@@ -255,9 +274,9 @@ read_calc_mcol <- function( files_scenario,
     harvest_grasslands <- harvest_grasslands*rep(grassland_scaling_factor_cellwise,
                                                  times = length(harvest_grasslands[1,]))
   }
-  
-  npp_act_overtime <- colSums(ynpp*cellarea)/10^15 # from gC/m2 to GtC
-  npp_pot_overtime <- colSums(ynpp_potential*cellarea)/10^15 # from gC/m2 to GtC
+
+  npp_act_overtime <- colSums(npp*cellarea)/10^15 # from gC/m2 to GtC
+  npp_pot_overtime <- colSums(npp_potential*cellarea)/10^15 # from gC/m2 to GtC
   npp_eco_overtime <- colSums(pftnpp_nat*cellarea)/10^15 # from gC/m2 to GtC
   npp_luc_overtime <- npp_pot_overtime - npp_act_overtime
   
@@ -282,36 +301,35 @@ read_calc_mcol <- function( files_scenario,
       wood_harvest_overtime
   }
   
-  mcol_overtime_perc_piref <- mcol_overtime/mean(npp_pot_overtime[1:10])*100
-  mcol_luc <- ynpp_potential - ynpp
+  mcol_overtime_perc_piref <- mcol_overtime/mean(colSums(npp_ref*cellarea)/10^15)*100
+  mcol_luc <- npp_potential - npp
   # pick a PI window that excludes onset effects, but is reasonable early
-  if (length(ynpp_potential[1,])>200) pi_window <- 30:59 # for simulations startig earlier than 1800
-  else pi_window <- 3:32 # for simulations startig 1901
-  mcol_luc_piref <- rep(rowMeans(ynpp_potential[,pi_window]),times = length(ynpp[1,])) - ynpp # not used, but handed over for checking comparison to pi_ref
+  #mcol_luc_piref <- rep(rowMeans(npp_potential[,pi_window]),times = length(npp[1,])) - npp # not used, but handed over for checking comparison to pi_ref
+
   if (include_fire) {
     mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + fire + wood_harvest
   }else{
     mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + wood_harvest
   }
   mcol <- mcol_harvest + mcol_luc
-  mcol[abs(ynpp_potential)<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
-  mcol_perc <- mcol/ynpp_potential*100 #actual NPPpot as ref
+  mcol[abs(npp_potential)<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
+  mcol_perc <- mcol/npp_potential*100 #actual NPPpot as ref
   
   
-  mcol_perc_piref <- mcol/rowMeans(ynpp_potential[,pi_window])*100 # NPPpi as ref
+  mcol_perc_piref <- mcol/rowMeans(npp_ref)*100 # NPPpi as ref
   
   # todo: return mcol variables for wrapper functions
 
   return(list(mcol_overtime = mcol_overtime, mcol = mcol, mcol_perc = mcol_perc,
-              mcol_overtime_perc_piref = mcol_overtime_perc_piref,
-              mcol_perc_piref = mcol_perc_piref, ynpp_potential = ynpp_potential,
+              mcol_overtime_perc_piref = mcol_overtime_perc_piref, npp = npp,
+              mcol_perc_piref = mcol_perc_piref, npp_potential = npp_potential,
               npp_act_overtime = npp_act_overtime, npp_pot_overtime = npp_pot_overtime,
-              npp_eco_overtime = npp_eco_overtime, 
+              npp_eco_overtime = npp_eco_overtime, npp_ref = npp_ref,
               harvest_cft_overtime = harvest_cft_overtime, npp_luc_overtime = npp_luc_overtime,
               rharvest_cft_overtime = rharvest_cft_overtime, fire_overtime = fire_overtime,
               timber_harvest_overtime = timber_harvest_overtime, harvest_cft = harvest_cft, 
               rharvest_cft = rharvest_cft, wood_harvest_overtime = wood_harvest_overtime,
-              mcol_harvest = mcol_harvest, mcol_luc = mcol_luc, mcol_luc_piref = mcol_luc_piref))
+              mcol_harvest = mcol_harvest, mcol_luc = mcol_luc)) #, mcol_luc_piref = mcol_luc_piref))
 
 } # end of read_calc_mcol
 
@@ -323,6 +341,10 @@ read_calc_mcol <- function( files_scenario,
 #' @param inFol_pnv folder of pnv reference run
 #' @param startyr first year of simulations
 #' @param stopyr last year of simulations
+#' @param reference_npp_time_span time span to read reference npp from, using 
+#'     index years 10:39 from potential npp input if set to NULL (default: NULL)
+#' @param reference_npp_file file to read reference npp from, using 
+#'        potential npp input if set to NULL (default: NULL)
 #' @param gridbased logical are pft outputs gridbased or pft-based?
 #' @param readPreviouslySavedData flag whether to read previously saved data
 #'        instead of reading it in from output files (default FALSE)
@@ -352,7 +374,7 @@ read_calc_mcol <- function( files_scenario,
 #'
 #' @return list data object containing MCOL and components as arrays: mcol, 
 #'         mcol_overtime, mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, 
-#'         ynpp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
+#'         npp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
 #'         harvest_cft_overtime, npp_luc_overtime, rharvest_cft_overtime, 
 #'         fire_overtime, timber_harvest_overtime, harvest_cft, mcol_harvest,
 #'         grassland_scaling_factor_cellwise,  mcol_luc, mcol_luc_piref
@@ -365,6 +387,8 @@ calcMCOL <- function( inFol_lu,
                       inFol_pnv, 
                       startyr, 
                       stopyr, 
+                      reference_npp_time_span = NULL, 
+                      reference_npp_file = NULL,
                       varnames = NULL,
                       gridbased = T,
                       readPreviouslySavedData = FALSE, 
@@ -412,6 +436,8 @@ calcMCOL <- function( inFol_lu,
                         files_reference = files_reference, 
                         time_span_scenario = as.character(startyr:stopyr), 
                         time_span_reference = as.character(startyr:stopyr), 
+                        reference_npp_time_span = reference_npp_time_span, 
+                        reference_npp_file = reference_npp_file,
                         gridbased = gridbased,
                         readPreviouslySavedData = readPreviouslySavedData, 
                         saveDataFile = saveDataFile, 
@@ -427,12 +453,7 @@ calcMCOL <- function( inFol_lu,
   ) )
 
 }
-#test
-mcol <- calcMCOL(inFol_lu = "/p/projects/open/Johanna/NETPs_and_food/lpjml/output/lu_1500_2014/",
-                 inFol_pnv = "/p/projects/open/Johanna/NETPs_and_food/lpjml/output/pnv_1500_2014/",
-                 startyr = 1980,stopyr = 2014,readPreviouslySavedData = F,saveDataFile = F,include_fire = F,
-                  
-                 )
+################# MCOL plotting functions  ###################
 
 #' Plot absolute MCOL, overtime, maps, and npp into given folder
 #'
@@ -441,7 +462,7 @@ mcol <- calcMCOL(inFol_lu = "/p/projects/open/Johanna/NETPs_and_food/lpjml/outpu
 #' @param mcolData mcol data list object (returned from calcMCOL) containing
 #'                 mcol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
 #'                 npp_bioenergy_overtime, mcol_overtime, npp_harv_overtime,
-#'                 mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, ynpp
+#'                 mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, npp
 #'                 all in GtC
 #' @param outFol folder to write into
 #' @param plotyears range of years to plot over time
@@ -474,10 +495,10 @@ plotMCOL <- function(mcolData, outFol, plotyears, minVal, maxVal, legendpos,
                            file = paste0(outFol,"MCOL_luc_",mapyear,".png"), type = "exp",
                            title = paste0("MCOL_luc in ",mapyear), pow2min = 0, pow2max = 12,
                            legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
-  lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_luc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-                           file = paste0(outFol,"MCOL_luc_piref_",mapyear,".png"), type = "exp",
-                           title = paste0("MCOL_luc piref in ",mapyear), pow2min = 0, pow2max = 12,
-                           legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
+  #lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_luc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+  #                         file = paste0(outFol,"MCOL_luc_piref_",mapyear,".png"), type = "exp",
+  #                         title = paste0("MCOL_luc piref in ",mapyear), pow2min = 0, pow2max = 12,
+  #                         legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
   lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_harvest[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                            file = paste0(outFol,"MCOL_harv_",mapyear,".png"), type = "exp",
                            title = paste0("MCOL_harv in ",mapyear), pow2min = 0, pow2max = 12,
@@ -491,7 +512,7 @@ plotMCOL <- function(mcolData, outFol, plotyears, minVal, maxVal, legendpos,
   plotMCOLmap(data = rowMeans(mcolData$mcol_perc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                file = paste0(outFol,"MCOL_piref_LPJmL_",mapyear,".png"),
                title = paste0("MCOL_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),legendtitle = "% of NPPpi", eps = eps)
-  lpjmliotools::plotGlobalMan(data = rowMeans(mcolData$ynpp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+  lpjmliotools::plotGlobalMan(data = rowMeans(mcolData$npp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                 file = paste0(outFol,"NPP_LPJmL_",mapyear,".png"), brks = seq(0,1000,100),
                 palette = c("orangered4","orangered","orange","gold","greenyellow","limegreen","green4","darkcyan","darkslategrey","navy"),
                 title = paste0("NPP average ",mapyear-mapyear_buffer, "-",mapyear+mapyear_buffer),
@@ -552,7 +573,7 @@ plotMCOLmap <- function(data, file, title = "", legendtitle = "", zeroThreshold 
 #' @param mcolData mcol data list object (returned from calcMCOL) containing
 #'                  mcol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
 #'                  npp_bioenergy_overtime, mcol_overtime, npp_harv_overtime,
-#'                  mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, ynpp
+#'                  mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, npp
 #'                 all in GtC
 #' @param file character string for location/file to save plot to
 #' @param firstyr first year of mcol object
