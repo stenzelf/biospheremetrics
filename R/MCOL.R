@@ -1,11 +1,11 @@
 # written by Fabian Stenzel
 # 2022-2023 - stenzel@pik-potsdam.de
 
-################# MCOL calc functions  ###################
+################# BioCol calc functions  ###################
 
-#' Calculate MCOL based on a PNV run and LU run of LPJmL
+#' Calculate BioCol based on a PNV run and LU run of LPJmL
 #'
-#' Function to calculate MCOL based on a PNV run and LU run of LPJmL
+#' Function to calculate BioCol based on a PNV run and LU run of LPJmL
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files are
 #' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")
@@ -28,7 +28,7 @@
 #'        instead of reading it in from output files (default FALSE)
 #' @param saveDataFile whether to save input data to file (default FALSE)
 #' @param dataFile file to save/read input data to/from (default NULL)
-#' @param include_fire boolean include firec in calculation of MCOL? (default T)
+#' @param include_fire boolean include firec in calculation of BioCol? (default T)
 #' @param external_fire instead of reading in firec for fire emissions, read in
 #'        this external firec file from a separate spitfire run with disabled 
 #'        lighning. this will then include only human induced fires (default F)
@@ -37,7 +37,7 @@
 #' @param grass_scaling whether to scale pasture harvest according to
 #'        data given via grass_harvest_file (default F)
 #' @param npp_threshold lower threshold for npp (to mask out non-lu areas
-#'        according to Haberl et al. 2007). Below MCOL will be set to 0.
+#'        according to Haberl et al. 2007). Below BioCol will be set to 0.
 #'        (default: 20 gC/m2)
 #' @param grass_harvest_file file containing grazing data to rescale the
 #'        grassland harvests according to Herrero et al. 2013. File contains:
@@ -50,18 +50,18 @@
 #' @param external_wood_harvest_file path to R-file containing processed 
 #'        timeline of maps for LUH2_v2h woodharvest 
 #'
-#' @return list data object containing MCOL and components as arrays: mcol, 
-#'         mcol_overtime, mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, 
+#' @return list data object containing BioCol and components as arrays: biocol, 
+#'         biocol_overtime, biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, 
 #'         npp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
 #'         harvest_cft_overtime, npp_luc_overtime, rharvest_cft_overtime, 
-#'         fire_overtime, timber_harvest_overtime, harvest_cft, mcol_harvest,
-#'         grassland_scaling_factor_cellwise,  mcol_luc, mcol_luc_piref
+#'         fire_overtime, timber_harvest_overtime, harvest_cft, biocol_harvest,
+#'         grassland_scaling_factor_cellwise,  biocol_luc, biocol_luc_piref
 #'
 #' @examples
 #' \dontrun{
 #' }
 #' @export
-read_calc_mcol <- function( files_scenario, 
+read_calc_biocol <- function( files_scenario, 
                             files_reference, 
                             time_span_scenario, 
                             time_span_reference = NULL, 
@@ -100,7 +100,6 @@ read_calc_mcol <- function( files_scenario,
   }else{
     print(paste0("Reading in data from outputs"))
     
-    require(magrittr)
     fileType <- tools::file_ext(files_reference$grid)
     
     if (fileType %in% c("json","clm")) {
@@ -109,7 +108,7 @@ read_calc_mcol <- function( files_scenario,
         files_reference$grid,
       )$data %>% drop()
       # calculate cell area
-      cell_area <- lpjmlkit::calc_cellarea(grid[, 2])
+      cellarea <- lpjmlkit::calc_cellarea(grid[, 2])
       ncells <- length(grid[, 1])
 
       npp <- lpjmlkit::read_io(
@@ -183,7 +182,7 @@ read_calc_mcol <- function( files_scenario,
       if (external_wood_harvest) {
         load(external_wood_harvest_file) #wh_lpj in kgC
         wh_years <- names(wh_lpj[1,])
-        wood_harvest <- wh_lpj[,match(time_span_scenario,wh_years)]*10^3/cell_area #from kgC to gC/m2
+        wood_harvest <- wh_lpj[,match(time_span_scenario,wh_years)]*10^3/cellarea #from kgC to gC/m2
         wood_harvest[is.na(wood_harvest)] <- 0 # the division can lead to NAs
         rm(wh_lpj,wh_years)
         gc()
@@ -249,7 +248,8 @@ read_calc_mcol <- function( files_scenario,
       }
       save(npp_potential,npp,npp_ref,pftnpp_cft,pftnpp_nat,pftnpp_grasslands,
            pftnpp_bioenergy,harvest_cft,rharvest_cft,fire,timber,fpc,cftfrac,
-           harvest_grasslands,harvest_bioenergy,wood_harvest,file = dataFile)
+           harvest_grasslands,harvest_bioenergy,wood_harvest,lat,lon,cellarea,
+           file = dataFile)
     }
     
   }
@@ -290,52 +290,52 @@ read_calc_mcol <- function( files_scenario,
   wood_harvest_overtime <- colSums(wood_harvest*cellarea)/10^15 # from gC/m2 to GtC
   
   if (include_fire) {
-    mcol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
+    biocol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
       harvest_grasslands_overtime + harvest_bioenergy_overtime +
       timber_harvest_overtime + fire_overtime + npp_luc_overtime +
       wood_harvest_overtime
   }else{
-    mcol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
+    biocol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
       harvest_grasslands_overtime + harvest_bioenergy_overtime +
       timber_harvest_overtime + npp_luc_overtime +
       wood_harvest_overtime
   }
   
-  mcol_overtime_perc_piref <- mcol_overtime/mean(colSums(npp_ref*cellarea)/10^15)*100
-  mcol_luc <- npp_potential - npp
+  biocol_overtime_perc_piref <- biocol_overtime/mean(colSums(npp_ref*cellarea)/10^15)*100
+  biocol_luc <- npp_potential - npp
   # pick a PI window that excludes onset effects, but is reasonable early
-  #mcol_luc_piref <- rep(rowMeans(npp_potential[,pi_window]),times = length(npp[1,])) - npp # not used, but handed over for checking comparison to pi_ref
+  #biocol_luc_piref <- rep(rowMeans(npp_potential[,pi_window]),times = length(npp[1,])) - npp # not used, but handed over for checking comparison to pi_ref
 
   if (include_fire) {
-    mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + fire + wood_harvest
+    biocol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + fire + wood_harvest
   }else{
-    mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + wood_harvest
+    biocol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + wood_harvest
   }
-  mcol <- mcol_harvest + mcol_luc
-  mcol[abs(npp_potential)<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
-  mcol_perc <- mcol/npp_potential*100 #actual NPPpot as ref
+  biocol <- biocol_harvest + biocol_luc
+  biocol[abs(npp_potential)<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
+  biocol_perc <- biocol/npp_potential*100 #actual NPPpot as ref
   
   
-  mcol_perc_piref <- mcol/rowMeans(npp_ref)*100 # NPPpi as ref
+  biocol_perc_piref <- biocol/rowMeans(npp_ref)*100 # NPPpi as ref
   
-  # todo: return mcol variables for wrapper functions
+  # todo: return biocol variables for wrapper functions
 
-  return(list(mcol_overtime = mcol_overtime, mcol = mcol, mcol_perc = mcol_perc,
-              mcol_overtime_perc_piref = mcol_overtime_perc_piref, npp = npp,
-              mcol_perc_piref = mcol_perc_piref, npp_potential = npp_potential,
+  return(list(biocol_overtime = biocol_overtime, biocol = biocol, biocol_perc = biocol_perc,
+              biocol_overtime_perc_piref = biocol_overtime_perc_piref, npp = npp,
+              biocol_perc_piref = biocol_perc_piref, npp_potential = npp_potential,
               npp_act_overtime = npp_act_overtime, npp_pot_overtime = npp_pot_overtime,
               npp_eco_overtime = npp_eco_overtime, npp_ref = npp_ref,
               harvest_cft_overtime = harvest_cft_overtime, npp_luc_overtime = npp_luc_overtime,
               rharvest_cft_overtime = rharvest_cft_overtime, fire_overtime = fire_overtime,
               timber_harvest_overtime = timber_harvest_overtime, harvest_cft = harvest_cft, 
               rharvest_cft = rharvest_cft, wood_harvest_overtime = wood_harvest_overtime,
-              mcol_harvest = mcol_harvest, mcol_luc = mcol_luc)) #, mcol_luc_piref = mcol_luc_piref))
+              biocol_harvest = biocol_harvest, biocol_luc = biocol_luc)) #, biocol_luc_piref = biocol_luc_piref))
 
-} # end of read_calc_mcol
+} # end of read_calc_biocol
 
-#' Calculate MCOL
+#' Calculate BioCol
 #'
-#' Wrapper function to calculate MCOL
+#' Wrapper function to calculate BioCol
 #'
 #' @param inFol_lu folder of landuse scenario run
 #' @param inFol_pnv folder of pnv reference run
@@ -350,7 +350,7 @@ read_calc_mcol <- function( files_scenario,
 #'        instead of reading it in from output files (default FALSE)
 #' @param saveDataFile whether to save input data to file (default FALSE)
 #' @param dataFile file to save/read input data to/from (default NULL)
-#' @param include_fire boolean include firec in calculation of MCOL? (default T)
+#' @param include_fire boolean include firec in calculation of BioCol? (default T)
 #' @param external_fire instead of reading in firec for fire emissions, read in
 #'        this external firec file from a separate spitfire run with disabled 
 #'        lighning. this will then include only human induced fires (default F)
@@ -359,7 +359,7 @@ read_calc_mcol <- function( files_scenario,
 #' @param grass_scaling whether to scale pasture harvest according to
 #'        data given via grass_harvest_file (default F)
 #' @param npp_threshold lower threshold for npp (to mask out non-lu areas
-#'        according to Haberl et al. 2007). Below MCOL will be set to 0.
+#'        according to Haberl et al. 2007). Below BioCol will be set to 0.
 #'        (default: 20 gC/m2)
 #' @param grass_harvest_file file containing grazing data to rescale the
 #'        grassland harvests according to Herrero et al. 2013. File contains:
@@ -372,18 +372,18 @@ read_calc_mcol <- function( files_scenario,
 #' @param external_wood_harvest_file path to R-file containing processed 
 #'        timeline of maps for LUH2_v2h woodharvest 
 #'
-#' @return list data object containing MCOL and components as arrays: mcol, 
-#'         mcol_overtime, mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, 
+#' @return list data object containing BioCol and components as arrays: biocol, 
+#'         biocol_overtime, biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, 
 #'         npp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
 #'         harvest_cft_overtime, npp_luc_overtime, rharvest_cft_overtime, 
-#'         fire_overtime, timber_harvest_overtime, harvest_cft, mcol_harvest,
-#'         grassland_scaling_factor_cellwise,  mcol_luc, mcol_luc_piref
+#'         fire_overtime, timber_harvest_overtime, harvest_cft, biocol_harvest,
+#'         grassland_scaling_factor_cellwise,  biocol_luc, biocol_luc_piref
 #'
 #' @examples
 #' \dontrun{
 #' }
 #' @export
-calcMCOL <- function( inFol_lu, 
+calcBioCol <- function( inFol_lu, 
                       inFol_pnv, 
                       startyr, 
                       stopyr, 
@@ -431,8 +431,8 @@ calcMCOL <- function( inFol_lu,
                          cftfrac = paste0(inFol_pnv,varnames["cftfrac","outname"]),
                          fpc = paste0(inFol_pnv,varnames["fpc","outname"])
                          )
-# todo call read_calc_mcol
-  return(read_calc_mcol(files_scenario = files_scenario, 
+# todo call read_calc_biocol
+  return(read_calc_biocol(files_scenario = files_scenario, 
                         files_reference = files_reference, 
                         time_span_scenario = as.character(startyr:stopyr), 
                         time_span_reference = as.character(startyr:stopyr), 
@@ -453,26 +453,26 @@ calcMCOL <- function( inFol_lu,
   ) )
 
 }
-################# MCOL plotting functions  ###################
+################# BioCol plotting functions  ###################
 
-#' Plot absolute MCOL, overtime, maps, and npp into given folder
+#' Plot absolute BioCol, overtime, maps, and npp into given folder
 #'
-#' Wrapper function to plot absolute mcol, overtime, maps, and npp into given folder
+#' Wrapper function to plot absolute biocol, overtime, maps, and npp into given folder
 #'
-#' @param mcolData mcol data list object (returned from calcMCOL) containing
-#'                 mcol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
-#'                 npp_bioenergy_overtime, mcol_overtime, npp_harv_overtime,
-#'                 mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, npp
+#' @param biocolData biocol data list object (returned from calcBioCol) containing
+#'                 biocol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
+#'                 npp_bioenergy_overtime, biocol_overtime, npp_harv_overtime,
+#'                 biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, npp
 #'                 all in GtC
 #' @param outFol folder to write into
 #' @param plotyears range of years to plot over time
 #' @param minVal y-axis minimum value for plot over time
 #' @param maxVal y-axis maximum value for plot over time
 #' @param legendpos position of legend
-#' @param startyr first year of mcolData object
-#' @param mapyear year to plot mcol map for
-#' @param mapyear_buffer +- years around mapyear to average mcol
-#'                       (make sure these years exist in mcolData)
+#' @param startyr first year of biocolData object
+#' @param mapyear year to plot biocol map for
+#' @param mapyear_buffer +- years around mapyear to average biocol
+#'                       (make sure these years exist in biocolData)
 #' @param highlightyear year(s) that should be highlighted in overtime plot
 #' @param eps write plots as eps, instead of png (default = FALSE)
 #'
@@ -482,49 +482,49 @@ calcMCOL <- function( inFol_lu,
 #' \dontrun{
 #' }
 #' @export
-plotMCOL <- function(mcolData, outFol, plotyears, minVal, maxVal, legendpos,
+plotBioCol <- function(biocolData, outFol, plotyears, minVal, maxVal, legendpos,
                   startyr, mapyear, mapyear_buffer = 5, highlightyear, eps = FALSE) {
   mapindex <- mapyear - startyr
-  print(paste0("Plotting MCOL figures"))
+  print(paste0("Plotting BioCol figures"))
   dir.create(file.path(outFol),showWarnings = F)
-  lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-             file = paste0(outFol,"MCOL_absolute_",mapyear,".png"), type = "exp",
-             title = paste0("MCOL_abs in ",mapyear), pow2min = 0, pow2max = 12,
+  lpjmliotools::plotGlobal(data = rowMeans(biocolData$biocol[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+             file = paste0(outFol,"BioCol_absolute_",mapyear,".png"), type = "exp",
+             title = paste0("BioCol_abs in ",mapyear), pow2min = 0, pow2max = 12,
              legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
-  lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_luc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-                           file = paste0(outFol,"MCOL_luc_",mapyear,".png"), type = "exp",
-                           title = paste0("MCOL_luc in ",mapyear), pow2min = 0, pow2max = 12,
+  lpjmliotools::plotGlobal(data = rowMeans(biocolData$biocol_luc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+                           file = paste0(outFol,"BioCol_luc_",mapyear,".png"), type = "exp",
+                           title = paste0("BioCol_luc in ",mapyear), pow2min = 0, pow2max = 12,
                            legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
-  #lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_luc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-  #                         file = paste0(outFol,"MCOL_luc_piref_",mapyear,".png"), type = "exp",
-  #                         title = paste0("MCOL_luc piref in ",mapyear), pow2min = 0, pow2max = 12,
+  #lpjmliotools::plotGlobal(data = rowMeans(biocolData$biocol_luc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+  #                         file = paste0(outFol,"BioCol_luc_piref_",mapyear,".png"), type = "exp",
+  #                         title = paste0("BioCol_luc piref in ",mapyear), pow2min = 0, pow2max = 12,
   #                         legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
-  lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_harvest[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-                           file = paste0(outFol,"MCOL_harv_",mapyear,".png"), type = "exp",
-                           title = paste0("MCOL_harv in ",mapyear), pow2min = 0, pow2max = 12,
+  lpjmliotools::plotGlobal(data = rowMeans(biocolData$biocol_harvest[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+                           file = paste0(outFol,"BioCol_harv_",mapyear,".png"), type = "exp",
+                           title = paste0("BioCol_harv in ",mapyear), pow2min = 0, pow2max = 12,
                            legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
-  plotMCOLovertime(mcolData = mcolData, file = paste0(outFol,"MCOL_overtime_LPJmL_",plotyears[1],"-",plotyears[2],".png"),
+  plotBioColovertime(biocolData = biocolData, file = paste0(outFol,"BioCol_overtime_LPJmL_",plotyears[1],"-",plotyears[2],".png"),
                   firstyr = startyr, plotyrs = plotyears, minVal = minVal, ref = "pi",
                   legendpos = legendpos, maxVal = maxVal, eps = eps, highlightyrs = highlightyear)
-  plotMCOLmap(data = rowMeans(mcolData$mcol_perc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-               file = paste0(outFol,"MCOL_LPJmL_",mapyear,".png"),legendtitle = "% of NPPpot", eps = eps,
-               title = paste0("MCOL_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer) )
-  plotMCOLmap(data = rowMeans(mcolData$mcol_perc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-               file = paste0(outFol,"MCOL_piref_LPJmL_",mapyear,".png"),
-               title = paste0("MCOL_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),legendtitle = "% of NPPpi", eps = eps)
-  lpjmliotools::plotGlobalMan(data = rowMeans(mcolData$npp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+  plotBioColmap(data = rowMeans(biocolData$biocol_perc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+               file = paste0(outFol,"BioCol_LPJmL_",mapyear,".png"),legendtitle = "% of NPPpot", eps = eps,
+               title = paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer) )
+  plotBioColmap(data = rowMeans(biocolData$biocol_perc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+               file = paste0(outFol,"BioCol_piref_LPJmL_",mapyear,".png"),
+               title = paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),legendtitle = "% of NPPpi", eps = eps)
+  lpjmliotools::plotGlobalMan(data = rowMeans(biocolData$npp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                 file = paste0(outFol,"NPP_LPJmL_",mapyear,".png"), brks = seq(0,1000,100),
                 palette = c("orangered4","orangered","orange","gold","greenyellow","limegreen","green4","darkcyan","darkslategrey","navy"),
                 title = paste0("NPP average ",mapyear-mapyear_buffer, "-",mapyear+mapyear_buffer),
                 legendtitle = "gC/m2",legYes = T)
   
-} # end of plotMCOL
+} # end of plotBioCol
 
-#' Plot global map of MCOL to file
+#' Plot global map of BioCol to file
 #'
-#' Plot global map of MCOL to file with legend colors similar to Haberl et al. 2007
+#' Plot global map of BioCol to file with legend colors similar to Haberl et al. 2007
 #'
-#' @param data array containing MCOL percentage value for each gridcell
+#' @param data array containing BioCol percentage value for each gridcell
 #' @param file character string for location/file to save plot to
 #' @param plotyears range of years to plot over time
 #' @param title character string title for plot
@@ -539,7 +539,9 @@ plotMCOL <- function(mcolData, outFol, plotyears, minVal, maxVal, legendpos,
 #' \dontrun{
 #' }
 #' @export
-plotMCOLmap <- function(data, file, title = "", legendtitle = "", zeroThreshold = 0.1, eps = FALSE) {
+plotBioColmap <- function(data, file, title = "", legendtitle = "", zeroThreshold = 0.1, eps = FALSE) {
+  outFol <- dirname(file)
+  dir.create(file.path(outFol),showWarnings = F)
   brks <- c(-400,-200,-100,-50,-zeroThreshold,zeroThreshold,10,20,30,40,50,60,70,80,100)
   classes <- c("<-200","-200 - -100","-100 - -50",paste0("-50 - -",zeroThreshold),paste0("-",zeroThreshold," - ",zeroThreshold),paste0(zeroThreshold," - 10"),"10 - 20","20 - 30","30 - 40","40 - 50","50 - 60","60 - 70","70 - 80","80 - 100")
   palette <- c("navy","royalblue3","royalblue1","skyblue1","grey80","yellowgreen","greenyellow","yellow","gold","orange","orangered","orangered4","brown4","black")
@@ -565,26 +567,26 @@ plotMCOLmap <- function(data, file, title = "", legendtitle = "", zeroThreshold 
   dev.off()
 }
 
-#' Plot absolute MCOL, overtime, maps, and npp into given folder
+#' Plot absolute BioCol, overtime, maps, and npp into given folder
 #'
-#' Plot to file a comparison over time of global sums of MCOL, NPPpot, NPPeco,
+#' Plot to file a comparison over time of global sums of BioCol, NPPpot, NPPeco,
 #' and NPPact, with legend similar to Krausmann et al. 2013
 #'
-#' @param mcolData mcol data list object (returned from calcMCOL) containing
-#'                  mcol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
-#'                  npp_bioenergy_overtime, mcol_overtime, npp_harv_overtime,
-#'                  mcol_overtime_perc_piref, mcol_perc, mcol_perc_piref, npp
+#' @param biocolData biocol data list object (returned from calcBioCol) containing
+#'                  biocol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
+#'                  npp_bioenergy_overtime, biocol_overtime, npp_harv_overtime,
+#'                  biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, npp
 #'                 all in GtC
 #' @param file character string for location/file to save plot to
-#' @param firstyr first year of mcol object
+#' @param firstyr first year of biocol object
 #' @param plotyrs range of years to plot over time
 #' @param highlightyrs year(s) that should be highlighted in overtime plot (default: 2000)
 #' @param minVal y-axis minimum value for plot over time (default: 0)
 #' @param maxVal y-axis maximum value for plot over time (default: 100)
 #' @param legendpos position of legend (default: "topleft")
 #' @param highlightyrs year(s) that should be highlighted in overtime plot (default: 2000)
-#' @param ref reference period for mcol ("pi" or "act"), to either use
-#'        mcolData$mcol_overtime_perc_piref or mcolData$mcol_overtime
+#' @param ref reference period for biocol ("pi" or "act"), to either use
+#'        biocolData$biocol_overtime_perc_piref or biocolData$biocol_overtime
 #' @param eps write plots as eps, instead of png (default = FALSE)
 #'
 #' @return none
@@ -593,9 +595,11 @@ plotMCOLmap <- function(data, file, title = "", legendtitle = "", zeroThreshold 
 #' \dontrun{
 #' }
 #' @export
-plotMCOLovertime <- function(mcolData, file, firstyr, plotyrs, highlightyrs = 2000, minVal = 0,
+plotBioColovertime <- function(biocolData, file, firstyr, plotyrs, highlightyrs = 2000, minVal = 0,
                             maxVal = 100, legendpos = "topleft", ext = FALSE, eps = FALSE, ref = "pi") {
-  lastyr = firstyr + length(mcolData$npp_act_overtime) - 1
+  outFol <- dirname(file)
+  dir.create(file.path(outFol),showWarnings = F)
+  lastyr = firstyr + length(biocolData$npp_act_overtime) - 1
   colz = c("slateblue","gold","green3","darkorange","black","red3","green","brown","yellow","turquoise","darkgreen")
   if (eps) {
     file = strsplit(file,".",fixed=TRUE)[[1]]
@@ -609,24 +613,24 @@ plotMCOLovertime <- function(mcolData, file, firstyr, plotyrs, highlightyrs = 20
   plot(NA,ylab="GtC/yr",xlab="Year",xlim=plotyrs,
        ylim=c(minVal, maxVal),xaxs="i",yaxs="i")
   grid()
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$npp_pot_overtime,type = "l",col=colz[1])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$npp_act_overtime,type = "l",col=colz[2])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$npp_eco_overtime,type = "l",col=colz[3])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$npp_luc_overtime,type = "l",col=colz[4])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$mcol_overtime,type = "l",col=colz[5])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$harvest_cft_overtime,type = "l",col=colz[7])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$rharvest_cft_overtime,type = "l",col=colz[8])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$fire_overtime,type = "l",col=colz[9])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$timber_harvest_overtime,type = "l",col=colz[10])
-  lines(x=seq(firstyr,lastyr,1),y=mcolData$wood_harvest_overtime,type = "l",col=colz[11])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$npp_pot_overtime,type = "l",col=colz[1])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$npp_act_overtime,type = "l",col=colz[2])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$npp_eco_overtime,type = "l",col=colz[3])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$npp_luc_overtime,type = "l",col=colz[4])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$biocol_overtime,type = "l",col=colz[5])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$harvest_cft_overtime,type = "l",col=colz[7])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$rharvest_cft_overtime,type = "l",col=colz[8])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$fire_overtime,type = "l",col=colz[9])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$timber_harvest_overtime,type = "l",col=colz[10])
+  lines(x=seq(firstyr,lastyr,1),y=biocolData$wood_harvest_overtime,type = "l",col=colz[11])
   
   
   par(bty="n",oma=c(0,0,0,0),mar=c(4,5,1,3), new = T)
   if (ref == "pi") {
-    plot(x=seq(firstyr,lastyr,1),y=mcolData$mcol_overtime_perc_piref,ylab="",xlab="",xlim=plotyrs,
+    plot(x=seq(firstyr,lastyr,1),y=biocolData$biocol_overtime_perc_piref,ylab="",xlab="",xlim=plotyrs,
          ylim=c(0, 30),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
   } else if (ref == "act") {
-    plot(x=seq(firstyr,lastyr,1),y=mcolData$mcol_overtime,ylab="",xlab="",xlim=plotyrs,
+    plot(x=seq(firstyr,lastyr,1),y=biocolData$biocol_overtime,ylab="",xlab="",xlim=plotyrs,
          ylim=c(0, 30),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
   }else stop(paste0("Unknown value for parameter ref: ",ref," - Aborting."))
 

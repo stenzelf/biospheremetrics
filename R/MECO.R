@@ -1,11 +1,11 @@
 # written by Fabian Stenzel, based on work by Sebastian Ostberg
 # 2022-2023 - stenzel@pik-potsdam.de
 
-################# MECO calc functions  ###################
+################# EcoRisk calc functions  ###################
 
-#' Wrapper for calculating the ecosystem change metric MECO
+#' Wrapper for calculating the ecosystem change metric EcoRisk
 #'
-#' Function to read in data for meco, and call the calculation function once,
+#' Function to read in data for ecorisk, and call the calculation function once,
 #' if overtime is F, or for each timeslice of length window years, if
 #' overtime is T
 #'
@@ -14,11 +14,11 @@
 #' @param readPreviouslySavedData whether to read in previously saved data
 #'        (default: FALSE)
 #' @param saveFileData file to save read in data to (default NULL)
-#' @param saveFileMECO file to save MECO data to (default NULL)
-#' @param nitrogen include nitrogen outputs for pools and fluxes into MECO
+#' @param saveFileEcoRisk file to save EcoRisk data to (default NULL)
+#' @param nitrogen include nitrogen outputs for pools and fluxes into EcoRisk
 #'        calculation (default F)
 #' @param weighting apply "old" (Ostberg-like), "new", or "equal" weighting of
-#'        deltaV weights (default "equal")
+#'        vegetation_structure_change weights (default "equal")
 #' @param varnames data.frame with names of output files (outname) and time res.
 #'        (timestep) -- can be specified to account for variable file names
 #'        (default NULL -- standard names as below)
@@ -30,22 +30,22 @@
 #' @param dimensionsOnlyLocal flag whether to use only local change component
 #'        for water/carbon/nitrogen fluxes and pools, or use an average of
 #'        local change, global change and ecosystem balance (default F)
-#' @param overtime logical: calculate meco as time-series? (default: F)
+#' @param overtime logical: calculate ecorisk as time-series? (default: F)
 #' @param window integer, number of years for window length (default: 30)
 #'
-#' @return list data object containing arrays of meco_total, deltaV, 
-#'         local_change, global_change, ecosystem_balance, carbon_stocks, 
+#' @return list data object containing arrays of ecorisk_total, vegetation_structure_change, 
+#'         local_change, global_importance, ecosystem_balance, carbon_stocks, 
 #'         carbon_fluxes, water_fluxes (+ nitrogen_stocks and nitrogen_fluxes)
 #'
 #' @examples
 #' \dontrun{
 #' }
 #' @export
-mecoWrapper <- function(folderRef,
+ecoriskWrapper <- function(folderRef,
                      folderScen,
                      readPreviouslySavedData = FALSE,
                      saveFileData = NULL,
-                     saveFileMECO = NULL,
+                     saveFileEcoRisk = NULL,
                      nitrogen = TRUE,
                      weighting = "equal",
                      varnames = NULL,
@@ -58,9 +58,9 @@ mecoWrapper <- function(folderRef,
   if (is.null(varnames)) {
     print("variable name list not provided, using standard list, which might 
           not be applicable for this case ...")
-    varnames <- data.frame(row.names = c("grid",    "fpc",    "fpc_bft",    "cftfrac",    "firec",    "rh_harvest",    "npp",    "evapinterc",    "runoff",    "transp",    "soillitc",    "vegc",    "swcsum",    "firef",    "rh",    "harvestc",        "rharvestc",        "pft_harvestc",       "pft_rharvestc",       "evap",    "interc",    "soilc",    "litc",    "swc",    "vegn",    "soilnh4",    "soilno3",    "leaching",    "n2o_denit",    "n2o_nit",    "n2o_denit",    "n2_emis",    "bnf",    "n_volatilization"),
-                             outname = c("grid.bin","fpc.bin","fpc_bft.bin","cftfrac.bin","firec.bin","rh_harvest.bin","npp.bin","evapinterc.bin","runoff.bin","transp.bin","soillitc.bin","vegc.bin","swcsum.bin","firef.bin","rh.bin","flux_harvest.bin","flux_rharvest.bin","pft_harvest.pft.bin","pft_rharvest.pft.bin","evap.bin","interc.bin","soilc.bin","litc.bin","swc.bin","vegn.bin","soilnh4.bin","soilno3.bin","leaching.bin","n2o_denit.bin","n2o_nit.bin","n2o_denit.bin","n2_emis.bin","bnf.bin","n_volatilization.bin"),
-                            timestep = c("Y",       "Y",      "Y",          "Y",          "Y",        "Y",             "Y",      "Y",             "Y",         "Y",         "Y",           "Y",       "Y",         "Y",        "Y",     "Y",               "Y",                "Y",                  "Y",                   "Y",       "Y",         "Y",        "Y",       "Y",      ,"Y",      "Y",          "Y",          "Y",           "Y",            "Y",          "Y",            "Y",          "Y",      "Y"))
+    varnames <- data.frame(row.names = c("grid",    "fpc",    "fpc_bft",    "cftfrac",    "firec",    "rh_harvest",    "npp",    "evapinterc",    "runoff",    "transp",    "soillitc",    "vegc",    "swcsum",    "firef",    "rh",    "harvestc",        "rharvestc",        "pft_harvestc",       "pft_rharvestc",       "evap",    "interc", "discharge",   "soilc",    "litc",    "swc",    "vegn",    "soilnh4",    "soilno3",    "leaching",    "n2o_denit",    "n2o_nit",    "n2o_denit",    "n2_emis",    "bnf",    "n_volatilization"),
+                             outname = c("grid.bin","fpc.bin","fpc_bft.bin","cftfrac.bin","firec.bin","rh_harvest.bin","npp.bin","evapinterc.bin","runoff.bin","transp.bin","soillitc.bin","vegc.bin","swcsum.bin","firef.bin","rh.bin","flux_harvest.bin","flux_rharvest.bin","pft_harvest.pft.bin","pft_rharvest.pft.bin","evap.bin","interc.bin","discharge.bin","soilc.bin","litc.bin","swc.bin","vegn.bin","soilnh4.bin","soilno3.bin","leaching.bin","n2o_denit.bin","n2o_nit.bin","n2o_denit.bin","n2_emis.bin","bnf.bin","n_volatilization.bin"),
+                            timestep = c("Y",       "Y",      "Y",          "Y",          "Y",        "Y",             "Y",      "Y",             "Y",         "Y",         "Y",           "Y",       "Y",         "Y",        "Y",     "Y",               "Y",                "Y",                  "Y",                   "Y",       "Y",        ,"Y", "Y",        "Y",       "Y",      ,"Y",      "Y",          "Y",          "Y",           "Y",            "Y",          "Y",            "Y",          "Y",      "Y"))
   }
 
   nyears <- length(time_span_reference)
@@ -87,6 +87,7 @@ mecoWrapper <- function(folderRef,
     pft_rharvestc = paste0(folderScen,varnames["pft_rharvest","outname"]),
     evap = paste0(folderScen,varnames["evap","outname"]),
     interc = paste0(folderScen,varnames["interc","outname"]),
+    discharge = paste0(folderScen,varnames["discharge","outname"]),
     soilc = paste0(folderScen,varnames["soilc","outname"]),
     litc = paste0(folderScen,varnames["litc","outname"]),
     swc = paste0(folderScen,varnames["swc","outname"]),
@@ -118,6 +119,7 @@ mecoWrapper <- function(folderRef,
      pft_rharvestc = paste0(folderRef,varnames["pft_rharvest","outname"]),
      evap = paste0(folderRef,varnames["evap","outname"]),
      interc = paste0(folderRef,varnames["interc","outname"]),
+     discharge = paste0(folderRef,varnames["discharge","outname"]),
      soilc = paste0(folderRef,varnames["soilc","outname"]),
      litc = paste0(folderRef,varnames["litc","outname"]),
      swc = paste0(folderRef,varnames["swc","outname"]),
@@ -145,8 +147,8 @@ mecoWrapper <- function(folderRef,
      }
 
    }else{
-     #first read in all lpjml output files required for computing MECO
-     returned_vars <- readMECOData(files_reference = files_reference,
+     #first read in all lpjml output files required for computing EcoRisk
+     returned_vars <- readEcoRiskData(files_reference = files_reference,
                                    files_scenario = files_scenario,
                                    saveFile = saveFileData,
                                    export = F,
@@ -171,20 +173,21 @@ mecoWrapper <- function(folderRef,
 
    ncells <- length(cellArea)
    slices <- (nyears_scen - window + 1)
-   meco <- list(meco_total = array(0,dim=c(ncells,slices)),
-                deltaV = array(0,dim=c(ncells,slices)),
+   ecorisk <- list(ecorisk_total = array(0,dim=c(ncells,slices)),
+                vegetation_structure_change = array(0,dim=c(ncells,slices)),
                 local_change = array(0,dim=c(ncells,slices)),
-                global_change = array(0,dim=c(ncells,slices)),
+                global_importance = array(0,dim=c(ncells,slices)),
                 ecosystem_balance = array(0,dim=c(ncells,slices)),
                 carbon_stocks = array(0,dim=c(ncells,slices)),
                 carbon_fluxes = array(0,dim=c(ncells,slices)),
+                water_stocks = array(0,dim=c(ncells,slices)),
                 water_fluxes = array(0,dim=c(ncells,slices)),
                 nitrogen_stocks = array(0,dim=c(ncells,slices)),
                 nitrogen_fluxes = array(0,dim=c(ncells,slices))
                 )
    for (y in 1:slices) {
     print(paste0("Calculating time slice ",y," of ",slices))
-    returned <- calcMECO(fpc_ref = fpc_ref, 
+    returned <- calcEcoRisk(fpc_ref = fpc_ref, 
                         fpc_scen = fpc_scen[,,y:(y+window-1)],
                         bft_ref = bft_ref, 
                         bft_scen = bft_scen[,,y:(y+window-1)],
@@ -198,32 +201,33 @@ mecoWrapper <- function(folderRef,
                         cellArea = cellArea,
                         dimensionsOnlyLocal = dimensionsOnlyLocal,
                         nitrogen = nitrogen)
-    meco$meco_total[,y] <- returned$meco_total
-    meco$deltaV[,y] <- returned$deltaV
-    meco$local_change[,y] <- returned$local_change
-    meco$global_change[,y] <- returned$global_change
-    meco$ecosystem_balance[,y] <- returned$ecosystem_balance
-    meco$carbon_stocks[,y] <- returned$carbon_stocks
-    meco$carbon_fluxes[,y] <- returned$carbon_fluxes
-    meco$water_fluxes[,y] <- returned$water_fluxes
-    meco$nitrogen_stocks[,y] <- returned$nitrogen_stocks
-    meco$nitrogen_fluxes[,y] <- returned$nitrogen_fluxes
+    ecorisk$ecorisk_total[,y] <- returned$ecorisk_total
+    ecorisk$vegetation_structure_change[,y] <- returned$vegetation_structure_change
+    ecorisk$local_change[,y] <- returned$local_change
+    ecorisk$global_importance[,y] <- returned$global_importance
+    ecorisk$ecosystem_balance[,y] <- returned$ecosystem_balance
+    ecorisk$carbon_stocks[,y] <- returned$carbon_stocks
+    ecorisk$carbon_fluxes[,y] <- returned$carbon_fluxes
+    ecorisk$water_stocks[,y] <- returned$water_stocks
+    ecorisk$water_fluxes[,y] <- returned$water_fluxes
+    ecorisk$nitrogen_stocks[,y] <- returned$nitrogen_stocks
+    ecorisk$nitrogen_fluxes[,y] <- returned$nitrogen_fluxes
    }
 
 
    ############## export and save data if requested #############
-   if (!(is.null(saveFileMECO))) {
-      print(paste0("Saving MECO data to: ",saveFileMECO))
-      save(meco, file = saveFileMECO)
+   if (!(is.null(saveFileEcoRisk))) {
+      print(paste0("Saving EcoRisk data to: ",saveFileEcoRisk))
+      save(ecorisk, file = saveFileEcoRisk)
    }
    #
    ###
-   return(meco)
+   return(ecorisk)
 }
 
-#' Calculate the ecosystem change metric MECO between 2 sets of states
+#' Calculate the ecosystem change metric EcoRisk between 2 sets of states
 #'
-#' Function to calculate the ecosystem change metric MECO, based on gamma/deltaV
+#' Function to calculate the ecosystem change metric EcoRisk, based on gamma/vegetation_structure_change
 #' work from Sykes (1999), Heyder (2011), and Ostberg (2015,2018).
 #' This is a reformulated version in R, not producing 100% similar values
 #' than the C/bash version from Ostberg et al. 2018, but similar the methodology
@@ -237,7 +241,7 @@ mecoWrapper <- function(folderRef,
 #' @param state_ref reference run data for state variables
 #' @param state_scen scenario run data for state variables
 #' @param weighting apply "old" (Ostberg-like), "new", or "equal" weighting of
-#'        deltaV weights (default "equal")
+#'        vegetation_structure_change weights (default "equal")
 #' @param lat latitude array
 #' @param lon longitude array
 #' @param cellArea cellarea array
@@ -246,15 +250,15 @@ mecoWrapper <- function(folderRef,
 #'        local change, global change and ecosystem balance (default F)
 #' @param nitrogen include nitrogen outputs (default: TRUE)
 #'
-#' @return list data object containing arrays of meco_total, deltaV, 
-#'         local_change, global_change, ecosystem_balance, carbon_stocks, 
+#' @return list data object containing arrays of ecorisk_total, vegetation_structure_change, 
+#'         local_change, global_importance, ecosystem_balance, carbon_stocks, 
 #'         carbon_fluxes, water_fluxes (+ nitrogen_stocks and nitrogen_fluxes)
 #'
 #' @examples
 #' \dontrun{
 #' }
 #' @export
-calcMECO <- function(fpc_ref,
+calcEcoRisk <- function(fpc_ref,
                      fpc_scen,
                      bft_ref,
                      bft_scen,
@@ -277,8 +281,8 @@ calcMECO <- function(fpc_ref,
   if (di_ref[3] != di_scen[3]){
     stop("Dimension year does not match between fpc_scen and fpc_ref.")
   }
-  ######### calc deltaV and variability of deltaV within      ##########
-  ######### reference period S(deltaV,sigma_deltaV)           ##########
+  ######### calc vegetation_structure_change and variability of vegetation_structure_change within      ##########
+  ######### reference period S(vegetation_structure_change,sigma_vegetation_structure_change)           ##########
   fpc_ref_mean <- apply(fpc_ref, c(1,2), mean)
   bft_ref_mean <- apply(bft_ref, c(1,2), mean)
   cft_ref_mean <- apply(cft_ref, c(1,2), mean)
@@ -286,12 +290,12 @@ calcMECO <- function(fpc_ref,
   mean_state_ref <- apply(state_ref,c(1,3),mean)
   mean_state_scen <- apply(state_scen,c(1,3),mean)
 
-  sigma_deltaV_ref_list <- array(0, dim = c(ncells, nyears))
-  # calculate for every year of the reference period, deltaV between 
+  sigma_vegetation_structure_change_ref_list <- array(0, dim = c(ncells, nyears))
+  # calculate for every year of the reference period, vegetation_structure_change between 
   # that year and the average reference period year
-  # -> this gives the variability of deltaV within the reference period
+  # -> this gives the variability of vegetation_structure_change within the reference period
   for (y in 1:nyears) {
-    sigma_deltaV_ref_list[,y] <- calcDeltaV(fpcRef = fpc_ref_mean,
+    sigma_vegetation_structure_change_ref_list[,y] <- calcDeltaV(fpcRef = fpc_ref_mean,
                                               fpcScen = fpc_ref[,,y],
                                               bftRef = bft_ref_mean,
                                               bftScen = bft_ref[,,y],
@@ -301,9 +305,9 @@ calcMECO <- function(fpc_ref,
                                               )
   }
   # calculate the std deviation over the reference period for each gridcell
-  deltaVsd <- apply(sigma_deltaV_ref_list,c(1),sd)
-  # calculate deltaV between average reference and average scenario period
-  deltaV <- calcDeltaV(fpcRef = fpc_ref_mean, 
+  vegetation_structure_changesd <- apply(sigma_vegetation_structure_change_ref_list,c(1),sd)
+  # calculate vegetation_structure_change between average reference and average scenario period
+  vegetation_structure_change <- calcDeltaV(fpcRef = fpc_ref_mean, 
                         fpcScen = apply(fpc_scen,c(1,2),mean),
                         bftRef = bft_ref_mean, 
                         bftScen = apply(bft_scen,c(1,2),mean), 
@@ -312,66 +316,87 @@ calcMECO <- function(fpc_ref,
                         weighting = weighting)
   #
   ####
-  ############## calc MECO components ################
+  ############## calc EcoRisk components ################
   # variable names for the state vector
   # 1:3 carbon fluxes
   # 4:6 water fluxes
   # 7:8 carbon pools/stocks,
-  # 9:10 additional variables for global/local difference, but not included in stocks/fluxes
-  # 11:12 nitrogen pools/stocks
-  # 13:15 nitrogen fluxes
-  #                 1         2         3         4         5        6          7        8      9       10      11      12       13      14        15
-  var_names <- c("firec","rh_harvest","npp","evapinterc","runoff","transp","soillitc","vegc","swcsum","firef","soiln","vegn","leaching","bnf","aggregated_n_emissions")
+  # 9:10 water pools
+  # 11 additional variables for global/local difference, but not included in stocks/fluxes
+  # 12:13 nitrogen pools/stocks
+  # 14:16 nitrogen fluxes
+  #                 1         2         3         4         5        6          7        8      9       10          11      12       13      14        15               16
+  var_names <- c("firec","rh_harvest","npp","evapinterc","runoff","transp","soillitc","vegc","swcsum","discharge","firef","soiln","vegn","leaching","bnf","aggregated_n_emissions")
 
-  delta <- deltaV*S_change_to_var_ratio(deltaV, deltaVsd)# deltaV
+  delta <- vegetation_structure_change*S_change_to_var_ratio(vegetation_structure_change, vegetation_structure_changesd)# vegetation_structure_change
   lc <- calcComponent(ref = state_ref, scen = state_scen, local = TRUE, cellArea = cellArea)         # local change
-  gc <- calcComponent(ref = state_ref, scen = state_scen, local = FALSE, cellArea = cellArea)         # global importance
+  gi <- calcComponent(ref = state_ref, scen = state_scen, local = FALSE, cellArea = cellArea)         # global importance
   eb <- calcEcosystemBalance(ref = state_ref, scen = state_scen)                                # ecosystem balance
   if (dimensionsOnlyLocal == T){
     cf <- calcComponent(ref = state_ref[,,1:3], scen = state_scen[,,1:3], local = TRUE, cellArea = cellArea)     # carbon fluxes (local change)
     cs <- calcComponent(ref = state_ref[,,7:8], scen = state_scen[,,7:8], local = TRUE, cellArea = cellArea)     # carbon stocks (local change)
     wf <- calcComponent(ref = state_ref[,,4:6], scen = state_scen[,,4:6], local = TRUE, cellArea = cellArea)     # water fluxes (local change)
+    ws <- calcComponent(ref = state_ref[,,9:10], scen = state_scen[,,9:10], local = TRUE, cellArea = cellArea)     # water pools (local change)
     if (nitrogen) {
-      ns <- calcComponent(ref = state_ref[,,11:12], scen = state_scen[,,11:12], local = TRUE, cellArea = cellArea) # nitrogen stocks (local change)
-      nf <- calcComponent(ref = state_ref[,,13:15], scen = state_scen[,,13:15], local = TRUE, cellArea = cellArea) # nitrogen fluxes (local change)
+      ns <- calcComponent(ref = state_ref[,,12:13], scen = state_scen[,,12:13], local = TRUE, cellArea = cellArea) # nitrogen stocks (local change)
+      nf <- calcComponent(ref = state_ref[,,14:16], scen = state_scen[,,14:16], local = TRUE, cellArea = cellArea) # nitrogen fluxes (local change)
     }
   }else{
-    cf <- (   calcComponent(ref = state_ref[,,1:3], scen = state_scen[,,1:3], local = TRUE, cellArea = cellArea)     # carbon fluxes (local change)
+    cf <- (   calcComponent(ref = state_ref[,,1:3], scen = state_scen[,,1:3], local = TRUE, cellArea = cellArea)     # carbon fluxes
                + calcComponent(ref = state_ref[,,1:3], scen = state_scen[,,1:3], local = FALSE, cellArea = cellArea)
                + calcEcosystemBalance(ref = state_ref[,,1:3], scen = state_scen[,,1:3]) )/3
-    cs <- (   calcComponent(ref = state_ref[,,7:8], scen = state_scen[,,7:8], local = TRUE, cellArea = cellArea)     # carbon stocks (local change)
+    cs <- (   calcComponent(ref = state_ref[,,7:8], scen = state_scen[,,7:8], local = TRUE, cellArea = cellArea)     # carbon stocks
                + calcComponent(ref = state_ref[,,7:8], scen = state_scen[,,7:8], local = FALSE, cellArea = cellArea)
                + calcEcosystemBalance(ref = state_ref[,,7:8], scen = state_scen[,,7:8]) )/3
-    wf <- (   calcComponent(ref = state_ref[,,4:6], scen = state_scen[,,4:6], local = TRUE, cellArea = cellArea)     # water fluxes (local change)
+    wf <- (   calcComponent(ref = state_ref[,,4:6], scen = state_scen[,,4:6], local = TRUE, cellArea = cellArea)     # water fluxes
                + calcComponent(ref = state_ref[,,4:6], scen = state_scen[,,4:6], local = FALSE, cellArea = cellArea)
                + calcEcosystemBalance(ref = state_ref[,,4:6], scen = state_scen[,,4:6]) )/3
+    ws <- (   calcComponent(ref = state_ref[,,9:10], scen = state_scen[,,9:10], local = TRUE, cellArea = cellArea)     # water pools
+               + calcComponent(ref = state_ref[,,9:10], scen = state_scen[,,9:10], local = FALSE, cellArea = cellArea)
+               + calcEcosystemBalance(ref = state_ref[,,9:10], scen = state_scen[,,9:10]) )/3
     if (nitrogen) {
-      ns <- (   calcComponent(ref = state_ref[,,11:12], scen = state_scen[,,11:12], local = TRUE, cellArea = cellArea)  # nitrogen stocks (local change)
-                 + calcComponent(ref = state_ref[,,11:12], scen = state_scen[,,11:12], local = FALSE, cellArea = cellArea)
-                 + calcEcosystemBalance(ref = state_ref[,,11:12], scen = state_scen[,,11:12]) )/3
-      nf <- (   calcComponent(ref = state_ref[,,13:15], scen = state_scen[,,13:15], local = TRUE, cellArea = cellArea) # nitrogen fluxes (local change)
-                 + calcComponent(ref = state_ref[,,13:15], scen = state_scen[,,13:15], local = FALSE, cellArea = cellArea)
-                 + calcEcosystemBalance(ref = state_ref[,,13:15], scen = state_scen[,,13:15]) )/3
+      ns <- (   calcComponent(ref = state_ref[,,12:13], scen = state_scen[,,12:13], local = TRUE, cellArea = cellArea)  # nitrogen stocks (local change)
+                 + calcComponent(ref = state_ref[,,12:13], scen = state_scen[,,12:13], local = FALSE, cellArea = cellArea)
+                 + calcEcosystemBalance(ref = state_ref[,,12:13], scen = state_scen[,,12:13]) )/3
+      nf <- (   calcComponent(ref = state_ref[,,14:16], scen = state_scen[,,14:16], local = TRUE, cellArea = cellArea) # nitrogen fluxes (local change)
+                 + calcComponent(ref = state_ref[,,14:16], scen = state_scen[,,14:16], local = FALSE, cellArea = cellArea)
+                 + calcEcosystemBalance(ref = state_ref[,,14:16], scen = state_scen[,,14:16]) )/3
     }
   }
 
-  # calc total MECO as the average of the 4 components
-  mecoFull <- (delta + lc + gc + eb)/4 #check for NAs
+  # calc total EcoRisk as the average of the 4 components
+  ecoriskFull <- (delta + lc + gi + eb)/4 #check for NAs
 
   if (nitrogen) {
-    meco <- list(meco_total = mecoFull, deltaV = delta, local_change = lc, global_change = gc, ecosystem_balance = eb,
-                   carbon_stocks = cs, carbon_fluxes = cf, water_fluxes = wf, nitrogen_stocks = ns, nitrogen_fluxes = nf)
+    ecorisk <- list(ecorisk_total = ecoriskFull, 
+                    vegetation_structure_change = delta, 
+                    local_change = lc, 
+                    global_importance = gi, 
+                    ecosystem_balance = eb,
+                    carbon_stocks = cs, 
+                    carbon_fluxes = cf, 
+                    water_fluxes = wf, 
+                    water_stocks = ws, 
+                    nitrogen_stocks = ns, 
+                    nitrogen_fluxes = nf)
   }else {
-    meco <- list(meco_total = mecoFull, deltaV = delta, local_change = lc, global_change = gc, ecosystem_balance = eb,
-                   carbon_stocks = cs, carbon_fluxes = cf, water_fluxes = wf)
+    ecorisk <- list(ecorisk_total = ecoriskFull, 
+                    vegetation_structure_change = delta, 
+                    local_change = lc, 
+                    global_importance = gi, 
+                    ecosystem_balance = eb,
+                    carbon_stocks = cs, 
+                    carbon_fluxes = cf, 
+                    water_fluxes = wf, 
+                    water_stocks = ws)
   }
   ###
-  return(meco)
+  return(ecorisk)
 }
 
-#' Read in output data from LPJmL to calculate the ecosystem change metric MECO
+#' Read in output data from LPJmL to calculate the ecosystem change metric EcoRisk
 #'
-#' Utility function to read in output data from LPJmL for calculation of MECO
+#' Utility function to read in output data from LPJmL for calculation of EcoRisk
 #'
 #' @param files_reference folder of reference run
 #' @param files_scenario folder of scenario run
@@ -379,7 +404,7 @@ calcMECO <- function(fpc_ref,
 #' @param export flag whether to export réad in data to global environment (default F)
 #' @param time_span_reference vector of years to use as scenario period
 #' @param time_span_scenario vector of years to use as scenario period
-#' @param nitrogen include nitrogen outputs for pools and fluxes into MECO calculation (default F)
+#' @param nitrogen include nitrogen outputs for pools and fluxes into EcoRisk calculation (default F)
 #'
 #' @return list data object containing arrays of state_ref, mean_state_ref,
 #'         state_scen, mean_state_scen, fpc_ref, fpc_scen, bft_ref, bft_scen,
@@ -389,7 +414,7 @@ calcMECO <- function(fpc_ref,
 #' \dontrun{
 #' }
 #' @export
-readMECOData <- function( files_reference,
+readEcoRiskData <- function( files_reference,
                           files_scenario,
                           saveFile = NULL,
                           export = FALSE,
@@ -401,7 +426,6 @@ readMECOData <- function( files_reference,
   nyears_ref <- length(time_span_reference)
   nyears_scen <- length(time_span_scenario)
 
-  require(magrittr)
   fileType <- tools::file_ext(files_reference$grid)
     
   if (fileType %in% c("json","clm")) {
@@ -420,7 +444,7 @@ readMECOData <- function( files_reference,
     npfts <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
     soillayers <- lpjmlkit::read_meta(files_scenario$swc)$nbands
     ### read in lpjml output
-    # for deltaV (fpc,fpc_bft,cftfrac)
+    # for vegetation_structure_change (fpc,fpc_bft,cftfrac)
     print("Reading in fpc,fpc_bft,cftfrac")
 
     cft_scen <- aperm(lpjmlkit::read_io(
@@ -540,6 +564,7 @@ readMECOData <- function( files_reference,
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum,band = sum))%>% drop()
     }else{
+       print("No harvest output available for reference period, setting to 0.")
        harvest_ref <- harvest_scen*0
     }
 
@@ -556,7 +581,8 @@ readMECOData <- function( files_reference,
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum,band = sum))%>% drop()
     }else{
-       rharvest_ref <- rharvest_scen*0
+      print("No rharvest output available for reference period, setting to 0.")
+      rharvest_ref <- rharvest_scen*0
     }
 
     rh_harvest_ref  <-  rh_ref + harvest_ref + rharvest_ref
@@ -624,7 +650,7 @@ readMECOData <- function( files_reference,
         lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()
 
     # csfiles = ( soillitc vegc_avg ) #carbon pools
-    print("Reading in soillitc, vegc_avg")
+    print("Reading in soillitc, vegc")
 
     soil_ref <- lpjmlkit::read_io(
         files_reference$soilc, 
@@ -646,8 +672,6 @@ readMECOData <- function( files_reference,
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()
 
-
-
     soil_scen <- lpjmlkit::read_io(
         files_scenario$soilc, 
         subset = list(year = as.character(time_span_scenario))) %>%
@@ -668,21 +692,13 @@ readMECOData <- function( files_reference,
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()
   
-
-    # allfiles = (swcsum firef) # other system-internal processes
-    print("Reading in swcsum, firef")
-
+    # water pools = (swcsum discharge)
+    print("Reading in swcsum, discharge")
     swcsum_ref <- lpjmlkit::read_io(
         files_reference$swc, 
         subset = list(year = as.character(time_span_reference))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>% drop()
-
-    firef_ref <- lpjmlkit::read_io(
-        files_reference$firef, 
-        subset = list(year = as.character(time_span_reference))) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()
 
     swcsum_scen <- lpjmlkit::read_io(
         files_scenario$swc, 
@@ -690,12 +706,33 @@ readMECOData <- function( files_reference,
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>% drop()
 
+    discharge_ref <- lpjmlkit::read_io(
+        files_reference$discharge, 
+        subset = list(year = as.character(time_span_reference))) %>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()
+
+    discharge_scen <- lpjmlkit::read_io(
+        files_scenario$discharge, 
+        subset = list(year = as.character(time_span_scenario))) %>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()
+
+
+    # allfiles = (firef) # other system-internal processes
+    print("Reading in  firef")
+
+    firef_ref <- lpjmlkit::read_io(
+        files_reference$firef, 
+        subset = list(year = as.character(time_span_reference))) %>%
+        lpjmlkit::transform(to = c("year_month_day")) %>%
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()
+
     firef_scen <- lpjmlkit::read_io(
         files_scenario$firef, 
         subset = list(year = as.character(time_span_scenario))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop()
-
 
 
    # nitrogen variables
@@ -825,7 +862,8 @@ readMECOData <- function( files_reference,
 
     } #end if nitrogen
   }else if (fileType == "nc") { # to be added
-      stop("nc reading has not been updated to latest functionality. please contact Fabian")
+      stop("nc reading has not been updated to latest functionality. \
+            please contact Fabian")
   }else{
       stop(paste0("Unrecognized file type (",fileType,")"))
   }
@@ -841,12 +879,13 @@ readMECOData <- function( files_reference,
                          soillitc_ref,               #  7
                          vegc_ref,                   #  8
                          swcsum_ref,                 #  9
-                         firef_ref,                  #  10
-                         soiln_ref,                  #  11
-                         vegn_ref,                   #  12
-                         leaching_ref,               #  13
-                         bnf_ref,                    #  14
-                         aggregated_n_emissions_ref, #  15
+                         discharge_ref,              #  10
+                         firef_ref,                  #  11
+                         soiln_ref,                  #  12
+                         vegn_ref,                   #  13
+                         leaching_ref,               #  14
+                         bnf_ref,                    #  15
+                         aggregated_n_emissions_ref, #  16
                          along = 3)
     state_scen <- abind( firec_scen,                  #  1
                          rh_harvest_scen,             #  2
@@ -857,12 +896,13 @@ readMECOData <- function( files_reference,
                          soillitc_scen,               #  7
                          vegc_scen,                   #  8
                          swcsum_scen,                 #  9
-                         firef_scen,                  #  10
-                         soiln_scen,                  #  11
-                         vegn_scen,                   #  12
-                         leaching_scen,               #  13
-                         bnf_scen,                    #  14
-                         aggregated_n_emissions_scen, #  15
+                         discharge_scen,              #  10
+                         firef_scen,                  #  11
+                         soiln_scen,                  #  12
+                         vegn_scen,                   #  13
+                         leaching_scen,               #  14
+                         bnf_scen,                    #  15
+                         aggregated_n_emissions_scen, #  16
                          along = 3)
   }else{
     require(abind)
@@ -875,6 +915,7 @@ readMECOData <- function( files_reference,
                         soillitc_ref,
                         vegc_ref,
                         swcsum_ref,
+                        discharge_ref,
                         firef_ref,
                         along = 3)
     state_scen <- abind(firec_scen,
@@ -886,6 +927,7 @@ readMECOData <- function( files_reference,
                         soillitc_scen,
                         vegc_scen,
                         swcsum_scen,
+                        discharge_scen,
                         firef_scen,
                         along = 3)
   }
@@ -904,10 +946,10 @@ readMECOData <- function( files_reference,
         )
 }
 
-#' Calculates changes in vegetation structure (deltaV)
+#' Calculates changes in vegetation structure (vegetation_structure_change)
 #'
-#' Utility function to calculate changes in vegetation structure (deltaV)
-#' for calculation of MECO
+#' Utility function to calculate changes in vegetation structure (vegetation_structure_change)
+#' for calculation of EcoRisk
 #'
 #' @param fpcRef reference fpc array (dim: [ncells,npfts+1])
 #' @param fpcScen scenario fpc array (dim: [ncells,npfts+1])
@@ -915,13 +957,13 @@ readMECOData <- function( files_reference,
 #' @param bftScen scenario bft array (dim: [ncells,nbfts])
 #' @param cftRef reference cft array (dim: [ncells,ncfts])
 #' @param cftScen scenario cft array (dim: [ncells,ncfts])
-#' @param weighting apply "old" (Ostberg-like), "new", or "equal" weighting of deltaV weights (default "equal")
+#' @param weighting apply "old" (Ostberg-like), "new", or "equal" weighting of vegetation_structure_change weights (default "equal")
 #'
-#' @return deltaV array of size ncells with the deltaV value [0,1] for each cell
+#' @return vegetation_structure_change array of size ncells with the vegetation_structure_change value [0,1] for each cell
 #'
 #' @examples
 #' \dontrun{
-#' deltaV <- calcDeltaV(fpcRef = fpc_ref_mean,fpcScen = apply(fpc_scen,c(1,2),mean),
+#' vegetation_structure_change <- calcDeltaV(fpcRef = fpc_ref_mean,fpcScen = apply(fpc_scen,c(1,2),mean),
 #'           bftRef = bft_ref_mean,bftScen = apply(bft_scen,c(1,2),mean),
 #'           cftRef = cft_ref_mean, cftScen = apply(cft_scen,c(1,2),mean),
 #'           weighting = "equal")
@@ -1143,7 +1185,7 @@ calcDeltaV <- function(fpcRef,
       stop("Unknown number of pfts.")
    }
 
-   # compute deltaV
+   # compute vegetation_structure_change
    require(fBasics) # for rowMins
    barrenV <- rowMins(cbind(barrenAreaRef,barrenAreaScen))
    treesV <- rowMins(cbind(rowSums(treeAreaRef,na.rm = T),rowSums(treeAreaScen,na.rm = T)))
@@ -1163,14 +1205,14 @@ calcDeltaV <- function(fpcRef,
    }else{
       stop("Unknown number of pfts.")
    }
-   deltaV <- 1 - barrenV - treesV*(1 - innerSumTrees) - grassV*(1 - innerSumGrasses)
-   deltaV[deltaV < 0] <- 0
-   deltaV[!is.finite(deltaV)] <- 0
-   #plotMECOtoScreen(data=deltaV,title = "deltaV")
-   return(deltaV)
+   vegetation_structure_change <- 1 - barrenV - treesV*(1 - innerSumTrees) - grassV*(1 - innerSumGrasses)
+   vegetation_structure_change[vegetation_structure_change < 0] <- 0
+   vegetation_structure_change[!is.finite(vegetation_structure_change)] <- 0
+   #plotEcoRisktoScreen(data=vegetation_structure_change,title = "vegetation_structure_change")
+   return(vegetation_structure_change)
 }
 
-################# further MECO utility functions ##################
+################# further EcoRisk utility functions ##################
 T_sigmoid_Trafo <- function(x) {
    return( -1/exp(3) + (1 + 1/exp(3))/(1 + exp(-6*(x - 0.5))) )
 }
@@ -1206,9 +1248,10 @@ state_Diff_local <- function(ref, scen, epsilon = 10^-4) { # based on Heyder 201
    s_ref <- array(1, dim = di) #initialize
 
    # for variables in places, where ref is small (<epsilon), but scen larger (Ostberg code, line 798)
-   # set back scenario and reference vector, to keep the unscaled values (Ostberg code, line 804)
-   s_scen[abs(ref) < epsilon & abs(scen) > epsilon] = scen[abs(ref) < epsilon & abs(scen) > epsilon]
-   s_ref[abs(ref) < epsilon & abs(scen) > epsilon] = ref[abs(ref) < epsilon & abs(scen) > epsilon]
+   # Sebastian set back scenario and reference vector, to keep the unscaled values (Ostberg code, line 804)
+   cells_ref0 <- abs(ref) < epsilon & abs(scen) > epsilon
+   s_scen[cells_ref0] <- scen[cells_ref0]
+   s_ref[cells_ref0] <- ref[cells_ref0]
 
    # for variables in places, where ref and scen are small (<epsilon), return 0 (both are 1, difference is 0) (Ostberg code, line 809)
    s_scen[abs(ref) < epsilon & abs(scen) < epsilon] <- 1 # no change
@@ -1231,8 +1274,16 @@ state_Diff_global <- function(ref, scen, cellArea, epsilon = 10^-4) { #c based o
    ncells <- di[1]
    global_mean_ref <- globally_weighted_mean_foreach_var(ref,cellArea)
    global_mean_scen <- globally_weighted_mean_foreach_var(scen,cellArea)
-   global_mean_ref[abs(global_mean_ref) < epsilon & !abs(global_mean_scen) < epsilon] <- global_mean_scen[abs(global_mean_ref) < epsilon & !abs(global_mean_scen) < epsilon] # if global mean state in ref period is 0 (e.g. for landuse vars in pnv run?) take the mean scen state instead
-   global_mean_ref[abs(global_mean_ref) < epsilon & abs(global_mean_scen) < epsilon] <- 1 # if both are 0 take 1, then the division is defined but 0 - 0 leads to no change, which is what MECO should show
+
+   # if global mean state in ref period is 0 (e.g. for landuse vars in pnv run?) 
+   # take the mean scen state instead
+   cells_ref0 <- abs(global_mean_ref) < epsilon & abs(global_mean_scen) > epsilon
+   global_mean_ref[cells_ref0] <- global_mean_scen[cells_ref0] 
+   # if both are 0 take 1, then the division is defined but 0 - 0 leads 
+   # to no change, which is what EcoRisk should show
+   cells_both0 <- abs(global_mean_ref) < epsilon & abs(global_mean_scen) < epsilon
+   global_mean_ref[cells_both0] <- 1
+
    norm <- rep(global_mean_ref, each = ncells)
    dim(norm) <- dim(ref)
    s_scen <- scen/norm
@@ -1326,9 +1377,9 @@ calcEcosystemBalance <- function(ref, scen, export=FALSE) {
   return(b*S_change_to_var_ratio(b, sigma_b_ref))
 }
 
-#' Create modified MECO data file
+#' Create modified EcoRisk data file
 #'
-#' Function to create a modified MECO data file where each reference cell is 
+#' Function to create a modified EcoRisk data file where each reference cell is 
 #' compared to the average reference biome cell. The scenario period is
 #' overwritten with the original reference period and all reference cells are 
 #' set to the average cell of the prescribed reference biome refBiom
@@ -1378,21 +1429,24 @@ replaceRefDataWithAverageRefBiomeCell <- function(dataFileIn, dataFileOut, biome
   state_ref <- rep(av_year_state, each = di_state[1])
   dim(state_ref) <- di_state
   # is the same for each year, thus for the mean just take one year
-  # mean_state_ref <- rep(colMeans(av_year_state), each = di_state[1]) # FS: mean states were removed from data file, removing also here
+  # mean_state_ref <- rep(colMeans(av_year_state), each = di_state[1]) 
+  # FS: mean states were removed from data file, removing also here
   
   dim(fpc_ref) <- di_fpc
   dim(bft_ref) <- di_bft
   dim(cft_ref) <- di_cft
 
   # and write out the modified data
-  # save(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea,file = dataFileOut)
-  save(state_ref,state_scen,fpc_ref,fpc_scen,bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea,file = dataFileOut)
+  # save(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,
+  # bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea,file = dataFileOut)
+  save(state_ref,state_scen,fpc_ref,fpc_scen,bft_ref,bft_scen,cft_ref,
+       cft_scen,lat,lon,cellArea,file = dataFileOut)
 
 }
 
-#' Create modified MECO data for crosstable
+#' Create modified EcoRisk data for crosstable
 #'
-#' Function to create a modified MECO data file where for each biome
+#' Function to create a modified EcoRisk data file where for each biome
 #' the average scenario cell is compared to the average scenario cell of all 
 #' other biomes. This can then be used to compute a crosstable with the average 
 #' difference between each of them as in the SI of Ostberg et al. 2013
@@ -1408,7 +1462,7 @@ replaceRefDataWithAverageRefBiomeCell <- function(dataFileIn, dataFileOut, biome
 #' \dontrun{
 #' }
 #' @export
-mecoCrossTable <- function(dataFileIn, dataFileOut, biome_classes_in, pickCells = NULL){
+ecoriskCrossTable <- function(dataFileIn, dataFileOut, biome_classes_in, pickCells = NULL){
   if (dataFileIn == dataFileOut) {
     stop("Same file for input and output of data, would overwrite original data. Aborting.")
   }
@@ -1484,7 +1538,8 @@ mecoCrossTable <- function(dataFileIn, dataFileOut, biome_classes_in, pickCells 
   lon <- rep(1,nbiomes*nbiomes)
   cellArea <- calcCellarea(lat = lat)
   # and write out the modified data
-  save(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea,file = dataFileOut)
+  save(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,
+       bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea,file = dataFileOut)
 
 }
 ################# biome (dis-)aggregation functions ##################
@@ -1510,9 +1565,9 @@ get_biome_names <- function(biomeNameLength = 2) {
   return(biome_class_names) 
 }
 
-#' Averages MECO values across regions
+#' Averages EcoRisk values across regions
 #'
-#' Returns the average value across either 4 regions or all (19) biomes for MECO
+#' Returns the average value across either 4 regions or all (19) biomes for EcoRisk
 #' and each of the subcomponents for each
 #'
 #' @param data List object, of which every item should be disaggregated 
@@ -1524,7 +1579,7 @@ get_biome_names <- function(biomeNameLength = 2) {
 #'
 #' @examples
 #' \dontrun{
-#' disaggregateIntoBiomes(meco = meco,
+#' disaggregateIntoBiomes(ecorisk = ecorisk,
 #'                    biome_class = biome_classes,
 #'                    type = "quantile",classes = "4biomes")
 #' }
@@ -1545,10 +1600,12 @@ disaggregateIntoBiomes <- function(data,
     temperate <- c(3,4,5,6,12,13,14)
     boreal <- c(7,8)
     arctic <- c(15,16)
-    cell_list <- list(tropical_cells = which(biome_class$biome_id %in% tropics),
-                      temperate_cells = which(biome_class$biome_id %in% temperate),
-                      boreal_cells = which(biome_class$biome_id %in% boreal),
-                      arctic_cells = which(biome_class$biome_id %in% arctic) )
+    cell_list <- list(
+                  tropical_cells = which(biome_class$biome_id %in% tropics),
+                  temperate_cells = which(biome_class$biome_id %in% temperate),
+                  boreal_cells = which(biome_class$biome_id %in% boreal),
+                  arctic_cells = which(biome_class$biome_id %in% arctic) 
+                  )
     nclasses <- 4
   }else if (classes == "allbiomes") {
     nclasses <- max(unique(biome_class$biome_id))
@@ -1606,14 +1663,14 @@ disaggregateIntoBiomes <- function(data,
   return(drop(data_biomes))
 }
 
-#' Calculate meco with each biomes average cell
+#' Calculate ecorisk with each biomes average cell
 #'
-#' Function to calculate meco with each biomes average cell
+#' Function to calculate ecorisk with each biomes average cell
 #' as a measure of internal variability
 #' 
 #' @param biome_classes biome classes object as returned by classify biomes, 
 #'                      calculated for dataFile_base
-#' @param dataFile_base base MECO to compute differences with (only ref is relevant)
+#' @param dataFile_base base EcoRisk to compute differences with (only ref is relevant)
 #' @param intra_biome_distrib_file file to additionally write results to
 #' @param create create new modified files, or read already existing ones?
 #' @param res how finegrained the distribution should be (resolution)
@@ -1621,7 +1678,7 @@ disaggregateIntoBiomes <- function(data,
 #' @param plot_folder folder to plot into
 #' @param time_span_reference suitable 30 year reference period (e.g. c(1901,1930), c(1550,1579))
 
-#' @return data object with distibution - dim: c(biomes,meco_variables,bins)
+#' @return data object with distibution - dim: c(biomes,ecorisk_variables,bins)
 #'
 #' @examples
 #' \dontrun{
@@ -1636,80 +1693,80 @@ calculateWithinBiomeDiffs <- function(biome_classes,
                                       plotting = FALSE, 
                                       plot_folder, 
                                       time_span_reference, 
-                                      vars_meco
+                                      vars_ecorisk
                                       ) {
   biomes_abbrv <- get_biome_names(1)
-  intra_biome_distrib <- array(0,dim = c(length(biome_classes$biome_names),10,1/res)) # nbiomes,nMECOvars,nHISTclasses
+  intra_biome_distrib <- array(0,dim = c(length(biome_classes$biome_names),10,1/res)) # nbiomes,nEcoRiskvars,nHISTclasses
 
   # start
   for (b in sort(unique(biome_classes$biome_id))) {
     filebase <- strsplit(dataFile_base, "_data.RData")[[1]]
     print(paste0("Calculating differences with biome ",b," (",biome_classes$biome_names[b],")"))
     dataFile = paste0(filebase,"_compared_to_average_",biomes_abbrv[b],"_data.RData")
-    mecoFile = paste0(filebase,"_compared_to_average_",biomes_abbrv[b],"_gamma.RData")
+    ecoriskFile = paste0(filebase,"_compared_to_average_",biomes_abbrv[b],"_gamma.RData")
     if (create){
       replaceRefDataWithAverageRefBiomeCell(dataFileIn = dataFile_base, 
                                             dataFileOut = dataFile,
                                             biome_classes_in = biome_classes,
                                             refBiom = b)
-      meco <- mecoWrapper(folderRef = NULL, 
+      ecorisk <- ecoriskWrapper(folderRef = NULL, 
                                 folderScen = NULL, # does not need to be specified, as data is read from file
                                 readPreviouslySavedData = TRUE, # does not need to be specified, as data is read from file
                                 saveFileData = dataFile, 
-                                saveFileMECO = mecoFile, 
-                                varnames = vars_meco,
+                                saveFileEcoRisk = ecoriskFile, 
+                                varnames = vars_ecorisk,
                                 timespan_full_ref = NULL, # does not need to be specified, as data is read from file
                                 timespan_full_scen = NULL, # does not need to be specified, as data is read from file
                                 timespan_focus_ref = time_span_reference,
                                 timespan_focus_scen = time_span_reference
       )
     }else{
-      load(mecoFile) #contains meco list object
+      load(ecoriskFile) #contains ecorisk list object
     }
 
     #compute average values per focus biom
     ref_cells <- which(biome_classes$biome_id == b)
     for (v in 1:10) {
-      intra_biome_distrib[b,v,] <- hist(meco[[v]][ref_cells], breaks = seq(0,1,res),plot = F)$counts
+      intra_biome_distrib[b,v,] <- hist(ecorisk[[v]][ref_cells], breaks = seq(0,1,res),plot = F)$counts
       intra_biome_distrib[b,v,] <- intra_biome_distrib[b,v,]/sum(intra_biome_distrib[b,v,])
     }
     if (plotting){
-      plotMECOmap(file = paste0(plot_folder,"MECO/compare_meco_to_",biomes_abbrv[b],".png"),
+      plotEcoRiskmap(file = paste0(plot_folder,"EcoRisk/compare_ecorisk_to_",biomes_abbrv[b],".png"),
                   focusBiome = b, biome_classes = biome_classes$biome_id,
-                  data = meco$meco_total, title = biome_classes$biome_names[b],
+                  data = ecorisk$ecorisk_total, title = biome_classes$biome_names[b],
                   legendtitle = "", eps = F,titleSize = 2,legYes = T)
-      plotMECOmap(file = paste0(plot_folder,"MECO/compare_deltaV_to_",biomes_abbrv[b],".png"),
+      plotEcoRiskmap(file = paste0(plot_folder,"EcoRisk/compare_vegetation_structure_change_to_",biomes_abbrv[b],".png"),
                   focusBiome = b, biome_classes = biome_classes$biome_id,
-                  data = meco$deltaV, title = biome_classes$biome_names[b],
+                  data = ecorisk$vegetation_structure_change, title = biome_classes$biome_names[b],
                   legendtitle = "", eps = F,titleSize = 2,legYes = T)
-      plotMECOmap(file = paste0(plot_folder,"MECO/compare_gc_to_",biomes_abbrv[b],".png"),
+      plotEcoRiskmap(file = paste0(plot_folder,"EcoRisk/compare_gi_to_",biomes_abbrv[b],".png"),
                   focusBiome = b, biome_classes = biome_classes$biome_id,
-                  data = meco$global_change, title = biome_classes$biome_names[b],
+                  data = ecorisk$global_importance, title = biome_classes$biome_names[b],
                   legendtitle = "", eps = F,titleSize = 2,legYes = T)
-      plotMECOmap(file = paste0(plot_folder,"MECO/compare_lc_to_",biomes_abbrv[b],".png"),
+      plotEcoRiskmap(file = paste0(plot_folder,"EcoRisk/compare_lc_to_",biomes_abbrv[b],".png"),
                   focusBiome = b, biome_classes = biome_classes$biome_id,
-                  data = meco$local_change, title = biome_classes$biome_names[b],
+                  data = ecorisk$local_change, title = biome_classes$biome_names[b],
                   legendtitle = "", eps = F,titleSize = 2,legYes = T)
-      plotMECOmap(file = paste0(plot_folder,"MECO/compare_eb_to_",biomes_abbrv[b],".png"),
+      plotEcoRiskmap(file = paste0(plot_folder,"EcoRisk/compare_eb_to_",biomes_abbrv[b],".png"),
                   focusBiome = b, biome_classes = biome_classes$biome_id,
-                  data = meco$ecosystem_balance, title = biome_classes$biome_names[b],
+                  data = ecorisk$ecosystem_balance, title = biome_classes$biome_names[b],
                   legendtitle = "", eps = F,titleSize = 2,legYes = T)
     }# end if plotting
   }
-  meco_dimensions <- c("meco_total", "deltaV", "local_change", "global_change", "ecosystem_balance",
+  ecorisk_dimensions <- c("ecorisk_total", "vegetation_structure_change", "local_change", "global_importance", "ecosystem_balance",
                     "carbon_stocks", "carbon_fluxes", "water_fluxes", "nitrogen_stocks", "nitrogen_fluxes")
   dim(intra_biome_distrib) <- c(biome = 19, variable = 10, bin = 1/res)
-  dimnames(intra_biome_distrib) <- list(biome = biomes_abbrv, variable = meco_dimensions, bin = seq(res,1,res))
+  dimnames(intra_biome_distrib) <- list(biome = biomes_abbrv, variable = ecorisk_dimensions, bin = seq(res,1,res))
   save(intra_biome_distrib, file = intra_biome_distrib_file)
   return(intra_biome_distrib)
 }
-################# MECO plotting functions ##################
+################# EcoRisk plotting functions ##################
 #' Plot distribution of similarity within biomes
 #'
 #' Function to plot the distribution of similarity within biomes
 #' 
 #' @param data data object with distibution - as returned by 
-#'             calculateWithInBiomeDiffs for each subcategory of meco.
+#'             calculateWithInBiomeDiffs for each subcategory of ecorisk.
 #'             dim: c(biomes,bins)
 #' @param biomes_abbrv to mask the focusBiome from
 #' @param scale scaling factor for distribution. defaults to 1
@@ -1732,7 +1789,7 @@ plotBiomeInternalDistributionToScreen <- function(data, biomes_abbrv,title = "",
   palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
   colIndex <- floor(seq(res/2,1-res/2,res)*10) + 1
   par(mar=c(2,4,0,0),oma=c(0,0,0,0))#bltr
-  plot(NA, xlim=c(0,1), ylim=c(0,20), xlab = "M-ECO", main = title, axes = F, ylab = "")
+  plot(NA, xlim=c(0,1), ylim=c(0,20), xlab = "EcoRisk", main = title, axes = F, ylab = "")
   axis(side = 2,  labels = F, at = 1:biomes)
   #axis(side = 1, at = seq(0,1,0.1))
   brks <- seq(0,1,0.1)
@@ -1778,9 +1835,9 @@ plotBiomeInternalDistribution <- function(data, file, biomes_abbrv, scale, title
    plotBiomeInternalDistributionToScreen(data = data, biomes_abbrv = biomes_abbrv, scale = scale, title = title, legendtitle = legendtitle)
    dev.off()
 }
-#' Plot MECO map to screen
+#' Plot EcoRisk map to screen
 #'
-#' Function to plot a global map of MECO values [0-1] per grid cell to screen
+#' Function to plot a global map of EcoRisk values [0-1] per grid cell to screen
 #'
 #' @param data folder of reference run
 #' @param focusBiome highlight the biome with this id and desaturate all other (default NULL -- no highlight)
@@ -1797,7 +1854,7 @@ plotBiomeInternalDistribution <- function(data, file, biomes_abbrv, scale, title
 #'
 #' }
 #' @export
-plotMECOmapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
+plotEcoRiskmapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
                                  title = "", legendtitle = "", titleSize = 1, legYes = T) {
    brks <- seq(0,1,0.1)
    data[data < brks[1]] <- brks[1]
@@ -1828,9 +1885,9 @@ plotMECOmapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
                          legend.args = list(legendtitle, side = 3, font = 2, line = 1)) # removed zlim
    }
 }
-#' Plot MECO map to file
+#' Plot EcoRisk map to file
 #'
-#' Function to plot a global map of MECO values [0-1] per grid cell to file
+#' Function to plot a global map of EcoRisk values [0-1] per grid cell to file
 #'
 #' @param data folder of reference run
 #' @param file to write into
@@ -1849,30 +1906,32 @@ plotMECOmapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
 #'
 #' }
 #' @export
-plotMECOmap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
+plotEcoRiskmap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
                          title = "", legendtitle = "", eps = FALSE, titleSize = 1, legYes = T) {
-   if (eps) {
-      file <- strsplit(file,".",fixed = TRUE)[[1]]
-      file <- paste(c(file[1:(length(file) - 1)],"eps"),collapse = ".")
-      ps.options(family = c("Helvetica"), pointsize = 18)
-      postscript(file, horizontal = FALSE, onefile = FALSE, width = 22, height = 8.5, paper = "special")
-   }else{
+  outFol <- dirname(file)
+  dir.create(file.path(outFol),showWarnings = F)
+  if (eps) {
+    file <- strsplit(file,".",fixed = TRUE)[[1]]
+    file <- paste(c(file[1:(length(file) - 1)],"eps"),collapse = ".")
+    ps.options(family = c("Helvetica"), pointsize = 18)
+    postscript(file, horizontal = FALSE, onefile = FALSE, width = 22, height = 8.5, paper = "special")
+  }else{
       png(file, width = 7.25, height = 3.5, units = "in", res = 300, pointsize = 6,type = "cairo")
-   }
-   plotMECOmapToScreen(data = data, focusBiome = focusBiome, biome_classes = biome_classes, title = title, legendtitle = legendtitle, titleSize = titleSize, legYes = legYes)
-   dev.off()
+  }
+  plotEcoRiskmapToScreen(data = data, focusBiome = focusBiome, biome_classes = biome_classes, title = title, legendtitle = legendtitle, titleSize = titleSize, legYes = legYes)
+  dev.off()
 }
-#' Plot radial MECO plot to screen
+#' Plot radial EcoRisk plot to screen
 #'
-#' Function to plot an aggregated radial status of MECO values [0-1]
+#' Function to plot an aggregated radial status of EcoRisk values [0-1]
 #' for the different sub-categories to screen
 #'
-#' @param data MECO data array c(4/19[biomes],[nMECOcomponents],3[min,mean,max])
+#' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],3[min,mean,max])
 #' @param title character string title for plot, default empty
 #' @param zoom scaling factor for circle plot. defaults to 1
 #' @param type plot type, 'legend1' for variable and color legend,
 #'             'legend2' for value legend, or 'regular' (default setting)
-#'             for the regular MECO plot
+#'             for the regular EcoRisk plot
 #' @param titleSize scaling factor for tile. defaults to 1
 #'
 #' @return None
@@ -1882,12 +1941,19 @@ plotMECOmap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
 #'
 #' }
 #' @export
-plotMECOradialToScreen <- function(data, title = "", zoom = 1.0, type = "regular", titleSize = 2, titleline=-2,quantile=T) {
+plotEcoRiskradialToScreen <- function(data, 
+                                      title = "", 
+                                      zoom = 1.0, 
+                                      type = "regular", 
+                                      titleSize = 2, 
+                                      titleline = -2,
+                                      quantile = T
+                                      ) {
    suppressPackageStartupMessages(require(circlize))
    require(RColorBrewer)
-   meco_dims <- length(data[,1])
-   if (meco_dims == 10) {
-     names <- c( meco = "m-eco", deltav = "vegetation\nstructure",
+   ecorisk_dims <- length(data[,1])
+   if (ecorisk_dims == 10) {
+     names <- c( ecorisk = "m-eco", deltav = "vegetation\nstructure",
                  local = "local\nchange", global = "global\nimportance",
                  balance =  "ecosystem\nbalance", cstocks = "carbon stocks", cfluxes = "carbon fluxes",
                  wfluxes = "water fluxes", nstocks = "nitrogen\nstocks", nfluxes = "nitrogen fluxes")
@@ -1896,10 +1962,10 @@ plotMECOradialToScreen <- function(data, title = "", zoom = 1.0, type = "regular
      #set <- brewer.pal(9, "Set1") #c(red,blue,green,purple,orange,yellow,brown,pink,grey)
      #colz <- c("limegreen", "darkgreen", "maroon","orchid4","bisque4",
      #         "orangered","sienna",brewer.pal(6, "PuBu")[6], "yellow" , "orange")
-     #                  meco    deltaV      lc       gc      eb          cs      cf       wf       ns      nf
+     #                  ecorisk    vegetation_structure_change      lc       gi      eb          cs      cf       wf       ns      nf
      angles <- matrix(c(90,270, 216,252,  180,216, 144,180, 108,144,  -18,18, -54,-18, -90,-54,  54,90, 18,54 ),byrow = T,nrow = length(colz))
-   }else if (meco_dims == 8) {
-     names <- c( meco = "m-eco", deltav = "vegetation\nstructure",
+   }else if (ecorisk_dims == 8) {
+     names <- c( ecorisk = "m-eco", deltav = "vegetation\nstructure",
                  local = "local\nchange", global = "global\nimportance",
                  balance =  "ecosystem\nbalance", cstocks = "carbon stocks",
                  cfluxes = "carbon fluxes", wfluxes = "water fluxes")
@@ -1907,7 +1973,7 @@ plotMECOradialToScreen <- function(data, title = "", zoom = 1.0, type = "regular
                rev(brewer.pal(6, "Oranges")[c(4,5)]), brewer.pal(6, "PuBu")[6])
      angles <- matrix(c(234,270, 198,234, 162,198, 126,162, 90,126,     18,54, -18,18, -54,-18),byrow = T,nrow = length(colz))
    }else{
-     stop(paste("Unknown number of dimensions for meco data:",meco_dims))
+     stop(paste("Unknown number of dimensions for ecorisk data:",ecorisk_dims))
    }
    par(oma = c(0,0,0,0), mar = c(0,0,0,0))
    plot(c(-zoom, zoom), c(-zoom, zoom), type = "n", axes = FALSE, ann = FALSE, asp = 1, main = "")
@@ -1918,12 +1984,12 @@ plotMECOradialToScreen <- function(data, title = "", zoom = 1.0, type = "regular
       for (i in 1:length(angles[,1])) {
          draw.sector(start.degree = angles[i,1] + 90, end.degree = angles[i,2] + 90, col = colz[i], clock.wise = F, rou1 = 0, rou2 = ro[i],border = "black")
       }
-     if (meco_dims == 10) {
+     if (ecorisk_dims == 10) {
        text(names,x = c(1.1,1.0,0.2,-0.8,-1.6, -0.4,0.7,1.05,   -1.7,-1.5),y = c(-0.15,-0.9,-1.3,-1.3,-0.9, 1.2,1,0.25,  0.3,1), adj = 0)
-     }else if (meco_dims == 8) {
+     }else if (ecorisk_dims == 8) {
        text(names,x = c(1.1,0.6,-0.2,-1.2,-1.7, -1.5,-0.4,0.7),y = c(-0.3,-1.1,-1.3,-1,-0.5, 1,1.2,1),adj = 0)
      }else{
-       stop(paste("Unknown number of dimensions for meco data:",meco_dims))
+       stop(paste("Unknown number of dimensions for ecorisk data:",ecorisk_dims))
      }
      draw.sector(start.degree = (angles[3,1]+angles[3,2])/2+90, end.degree = (angles[3,1]+angles[3,2])/2+90, rou1 = 0.7, rou2 = 1.1)# line lc
      draw.sector(start.degree = -9, end.degree = -9, rou1 = 0.9, rou2 = 1.05)# line m-eco
@@ -1965,21 +2031,21 @@ plotMECOradialToScreen <- function(data, title = "", zoom = 1.0, type = "regular
 
    }else {
       stop(paste0("Unknown type ",type,". Please use 'legend1' for variable and color legend,
-                  'legend2' for value legend, or 'regular' (default setting) for the regular meco plot."))
+                  'legend2' for value legend, or 'regular' (default setting) for the regular ecorisk plot."))
    }
 }
 
-#' Plot radial MECO plot to file
+#' Plot radial EcoRisk plot to file
 #'
-#' Function to plot an aggregated radial status of MECO values [0-1]
+#' Function to plot an aggregated radial status of EcoRisk values [0-1]
 #' for the different sub-categories to file
 #'
-#' @param data MECO data array c(4/19[biomes],[nMECOcomponents],3[min,mean,max])
+#' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],3[min,mean,max])
 #' @param file to write into
 #' @param title character string title for plot, default empty
 #' @param type plot type, 'legend1' for variable and color legend,
 #'             'legend2' for value legend, or 'regular' (default setting)
-#'             for the regular MECO plot
+#'             for the regular EcoRisk plot
 #' @param eps write as eps or png
 #' @param legYes logical. whether to plot legend or not. defaults to TRUE
 #'
@@ -1990,12 +2056,13 @@ plotMECOradialToScreen <- function(data, title = "", zoom = 1.0, type = "regular
 #'
 #' }
 #' @export
-plotMECOradial <- function(data, file, title = "", legYes = T, eps = FALSE,quantile=T) {
-   #param data MECO data array c(8[ncomponents],3[min,median,max])
+plotEcoRiskradial <- function(data, file, title = "", legYes = T, eps = FALSE,quantile=T) {
+   #param data EcoRisk data array c(8[ncomponents],3[min,median,max])
    #param title title for plot
-   #param type plot type, 'legend1' for variable and color legend, 'legend2' for value legend, or 'regular' (default setting) for the regular MECO plot
-
-   if (length(which(data < 0 | data > 1)) > 0) print("Warning: there are values in data outside the expected MECO range [0..1].")
+   #param type plot type, 'legend1' for variable and color legend, 'legend2' for value legend, or 'regular' (default setting) for the regular EcoRisk plot
+   outFol <- dirname(file)
+   dir.create(file.path(outFol),showWarnings = F)
+   if (length(which(data < 0 | data > 1)) > 0) print("Warning: there are values in data outside the expected EcoRisk range [0..1].")
    if (eps) {
       file <- strsplit(file,".",fixed = TRUE)[[1]]
       file <- paste(c(file[1:(length(file) - 1)],"eps"), collapse = ".")
@@ -2007,24 +2074,24 @@ plotMECOradial <- function(data, file, title = "", legYes = T, eps = FALSE,quant
    # adjust the margins, dependent on whether a legend should be plotted or not
    par(fig = c(0,0.7,0,1))#, oma=c(0,0,0,0),mar=c(0,0,0,0))
 
-   #plot main MECO radial
-   plotMECOradialToScreen(data = data, title = title,zoom=1.0, type = "regular")
+   #plot main EcoRisk radial
+   plotEcoRiskradialToScreen(data = data, title = title,zoom=1.0, type = "regular")
 
    if (legYes) {
       par(fig = c(0.7,1,0,0.5), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-      plotMECOradialToScreen(data = data, title = "", zoom = 1.5, type = "legend1")
+      plotEcoRiskradialToScreen(data = data, title = "", zoom = 1.5, type = "legend1")
       par(fig = c(0.7,1,0.5,1), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-      plotMECOradialToScreen(data = data, title = "",zoom = 1.5, type = "legend2", quantile=quantile)
+      plotEcoRiskradialToScreen(data = data, title = "",zoom = 1.5, type = "legend2", quantile=quantile)
    }
    dev.off()
 }
 
-#' Plot timeline of MECO variables to screen
+#' Plot timeline of EcoRisk variables to screen
 #'
-#' Function to plot timeline of MECO variables to screen
+#' Function to plot timeline of EcoRisk variables to screen
 #'
-#' @param data MECO data array 
-#'        c(4/19[biomes],8/10[nMECOcomponents],3[min,mean,max],timeslices)
+#' @param data EcoRisk data array 
+#'        c(4/19[biomes],8/10[nEcoRiskcomponents],3[min,mean,max],timeslices)
 #' @param timerange of the data input
 #' @param yrange range for y axis default c(0,1)
 #' @param legYes plot legend (default T)
@@ -2037,18 +2104,18 @@ plotMECOradial <- function(data, file, title = "", legYes = T, eps = FALSE,quant
 #' }
 #' @export
 plotOvertimeToScreen <- function(data, timerange, yrange = c(0,1), legYes = T, legOnly = F, varnames = NULL) {
-  meco_dims <- dim(data)[1]
+  ecorisk_dims <- dim(data)[1]
   if (is.null(varnames)){
-    if (meco_dims == 10) {
-      names <- c( meco = "m-eco", deltav = "vegetation structure",
+    if (ecorisk_dims == 10) {
+      names <- c( ecorisk = "m-eco", deltav = "vegetation structure",
                   local = "local change", global = "global importance",
                   balance =  "ecosystem balance", cstocks = "carbon stocks",
                   cfluxes =  "carbon fluxes", wfluxes = "water fluxes", 
                   nstocks = "nitrogen stocks", nfluxes = "nitrogen fluxes")
       set <- brewer.pal(12, "Set3") #c(blue-green, yellow,violet,red,blue,orange,green,pink,grey,purple,green-blue,yellow-orange)
       colz <- set[c(4,7,8,11,1,3,10,5,12,6)]
-    } else if (meco_dims == 8) {
-      names <- c( meco = "m-eco", deltav = "vegetation structure",
+    } else if (ecorisk_dims == 8) {
+      names <- c( ecorisk = "m-eco", deltav = "vegetation structure",
                   local = "local change", global = "global importance",
                   balance =  "ecosystem balance", cstocks = "carbon stocks",
                   cfluxes = "carbon fluxes", wfluxes = "water fluxes")
@@ -2056,7 +2123,7 @@ plotOvertimeToScreen <- function(data, timerange, yrange = c(0,1), legYes = T, l
                 brewer.pal(6, "Set1")[seq(2, 6, by = 2)],
                 rev(brewer.pal(6, "Oranges")[c(4,5)]), brewer.pal(6, "PuBu")[6])
     }else{
-      stop(paste("Unknown number of dimensions for meco data:",meco_dims))
+      stop(paste("Unknown number of dimensions for ecorisk data:",ecorisk_dims))
     }
   }else{
     names <- varnames
@@ -2069,7 +2136,7 @@ plotOvertimeToScreen <- function(data, timerange, yrange = c(0,1), legYes = T, l
     legend("center",legend = names,fill = colz, border = colz)
   }else{
     plot(NA, xlim = timerange, ylim = c(yrange[1],yrange[2]), cex.axis = 1,xlab = "", ylab = "")
-    for (i in 1:meco_dims){
+    for (i in 1:ecorisk_dims){
       if (i == 1) lines(x = years, y = data[i,2,], col = colz[i],lwd=4)
       else lines(x = years, y = data[i,2,], col = colz[i],lwd=2)
     }
@@ -2077,12 +2144,12 @@ plotOvertimeToScreen <- function(data, timerange, yrange = c(0,1), legYes = T, l
   }
 }
 
-#' Plot timeline of MECO variables as panel to file with 4/16 biomes
+#' Plot timeline of EcoRisk variables as panel to file with 4/16 biomes
 #'
-#' Function to plot a panel of 4/16 timelines per biome aggregated MECO values [0-1]
+#' Function to plot a panel of 4/16 timelines per biome aggregated EcoRisk values [0-1]
 #' to file
 #'
-#' @param data MECO data array c(4/19[biomes],[nMECOcomponents],3[min,mean,max])
+#' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],3[min,mean,max])
 #' @param biomeNames names of biomes
 #' @param file to write into
 #' @param yrange range for y axis (default c(0,1))
@@ -2096,15 +2163,17 @@ plotOvertimeToScreen <- function(data, timerange, yrange = c(0,1), legYes = T, l
 #'
 #' }
 #' @export
-plotMECOovertimePanel <- function(data, 
+plotEcoRiskovertimePanel <- function(data, 
                                 biomeNames, 
                                 file,
                                 yrange = c(0,1),
                                 timerange,
                                 eps = FALSE,
                                 varnames = NULL) {
+  outFol <- dirname(file)
+  dir.create(file.path(outFol),showWarnings = F)
   if (length(which(data < 0 | data > 1)) > 0) {
-    print("Warning: values in data outside the expected MECO range [0..1].")
+    print("Warning: values in data outside the expected EcoRisk range [0..1].")
   } 
   if (eps) {
     file <- strsplit(file,".",fixed = TRUE)[[1]]
@@ -2117,7 +2186,7 @@ plotMECOovertimePanel <- function(data,
         pointsize = 6,type = "cairo")
   }
   d <- length(data[,1,1,1])
- par(oma=c(0,0,0,0),mar=c(3,2,0.5,0))
+  par(oma=c(0,0,0,0),mar=c(3,2,0.5,0))
   if (d==16 | d==4){
     k <- sqrt(d)
     xs <- seq(0,0.8,length.out = k+1)
@@ -2158,12 +2227,12 @@ plotMECOovertimePanel <- function(data,
   dev.off()
 }
 
-#' Plot radial MECO panel to file with 4/16 biomes
+#' Plot radial EcoRisk panel to file with 4/16 biomes
 #'
-#' Function to plot an aggregated radial status of MECO values [0-1]
+#' Function to plot an aggregated radial status of EcoRisk values [0-1]
 #' for the different sub-categories to file
 #'
-#' @param data MECO data array c(4/19[biomes],[nMECOcomponents],3[min,mean,max])
+#' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],3[min,mean,max])
 #' @param biomeNames names of biomes
 #' @param file to write into
 #' @param quantile is it quantiles or minmeanmax data? - text for whiskers
@@ -2176,13 +2245,15 @@ plotMECOovertimePanel <- function(data,
 #'
 #' }
 #' @export
-plotMECOradialPanel <- function(data, 
+plotEcoRiskradialPanel <- function(data, 
                                 biomeNames, 
                                 file, 
                                 quantile = T, 
                                 eps = FALSE) {
+  outFol <- dirname(file)
+  dir.create(file.path(outFol),showWarnings = F)
   if (length(which(data < 0 | data > 1)) > 0) {
-    print("Warning: values in data outside the expected MECO range [0..1].")
+    print("Warning: values in data outside the expected EcoRisk range [0..1].")
   } 
   if (eps) {
     file <- strsplit(file,".",fixed = TRUE)[[1]]
@@ -2207,7 +2278,7 @@ plotMECOradialPanel <- function(data,
         } else {
           par(fig = c(xs[x],xs[x+1],ys[y+1],ys[y]), xpd = T, new=T)
         }
-        plotMECOradialToScreen(data = data[(x-1)*k+y,,], 
+        plotEcoRiskradialToScreen(data = data[(x-1)*k+y,,], 
                                title = "",zoom=1.0, type = "regular")
         mtext(text = biomeNames[(x-1)*k+y], side = 3, 
               line = -0.5, cex = 1,font = 2)
@@ -2218,10 +2289,10 @@ plotMECOradialPanel <- function(data,
   }
   #legend
   par(fig = c(0.6,1,0.1,0.6), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-  plotMECOradialToScreen(data = data[1,,], title = "", 
+  plotEcoRiskradialToScreen(data = data[1,,], title = "", 
                          zoom = 1.5, type = "legend1")
   par(fig = c(0.6,1,0.5,1.0), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-  plotMECOradialToScreen(data = data[1,,], title = "legend",zoom = 1.5,
+  plotEcoRiskradialToScreen(data = data[1,,], title = "legend",zoom = 1.5,
                           type = "legend2",titleSize = 1,quantile = quantile)
   dev.off()
 }
@@ -2309,7 +2380,8 @@ plotBiomesToScreen <- function(biome_ids, biomeNameLength = 1, orderLegend = "pl
 #' @export
 plotBiomes <- function(biome_ids, biomeNameLength = 1, orderLegend = "plants",file, title = "", titleSize = 2,
                        legYes = T, leg_scale = 1, eps = FALSE) {
-   #---- plotting ----------------------------------------------------------------#
+   outFol <- dirname(file)
+   dir.create(file.path(outFol),showWarnings = F)
    if (eps) {
       file <- strsplit(file,".",fixed = TRUE)[[1]]
       file <- paste(c(file[1:(length(file) - 1)],"eps"),collapse = ".")
@@ -2322,9 +2394,9 @@ plotBiomes <- function(biome_ids, biomeNameLength = 1, orderLegend = "plants",fi
    dev.off()
 }
 
-#' Plot radial MECO plot to file with 4/16 biomes
+#' Plot radial EcoRisk plot to file with 4/16 biomes
 #'
-#' Function to plot an aggregated radial status of MECO values [0-1]
+#' Function to plot an aggregated radial status of EcoRisk values [0-1]
 #' for the different sub-categories to file
 #'
 #' @param data input data with dimension c(nbiome_classes,3) -- Q10,Q50,Q90 each
@@ -2356,12 +2428,12 @@ plotBiomeAveragesToScreen <- function(data, biome_class_names, title = "",
   legend(x = 0, y = 1, legend = biome_class_names, fill = palette[colIndex], col = palette[colIndex],border = palette[colIndex], cex = leg_scale, bg = "white", bty = "o")
 }
 
-#' Plot radial MECO plot to file with 4/16 biomes
+#' Plot radial EcoRisk plot to file with 4/16 biomes
 #'
-#' Function to plot an aggregated radial status of MECO values [0-1]
+#' Function to plot an aggregated radial status of EcoRisk values [0-1]
 #' for the different sub-categories to file
 #'
-#' @param data MECO data array c(4[biomes],[nMECOcomponents],3[min,median,max])
+#' @param data EcoRisk data array c(4[biomes],[nEcoRiskcomponents],3[min,median,max])
 #' @param file to write into
 #' @param biome_class_names to write into
 #' @param title character string title for plot, default empty
@@ -2378,7 +2450,8 @@ plotBiomeAveragesToScreen <- function(data, biome_class_names, title = "",
 #' @export
 plotBiomeAverages <- function(data, file, biome_class_names, title = "", titleSize = 2,
                       leg_scale = 1, eps = FALSE) {
-  #---- plotting ----------------------------------------------------------------#
+  outFol <- dirname(file)
+  dir.create(file.path(outFol),showWarnings = F)
   if (eps) {
     file <- strsplit(file,".",fixed = TRUE)[[1]]
     file <- paste(c(file[1:(length(file) - 1)],"eps"),collapse = ".")
@@ -2394,7 +2467,7 @@ plotBiomeAverages <- function(data, file, biome_class_names, title = "", titleSi
 #' Plot crosstable showing (dis-)similarity between average biome pixels
 #'
 #' Function to plot a crosstable showing (dis-)similarity between average
-#' biome pixels based on M-ECO (former gamma) metric from LPJmL simulations
+#' biome pixels based on EcoRisk (former gamma) metric from LPJmL simulations
 #'
 #' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
 #' @param lmar left margin for plot in lines (default: 3)
@@ -2406,7 +2479,7 @@ plotBiomeAverages <- function(data, file, biome_class_names, title = "", titleSi
 #'
 #' }
 #' @export
-plotMECOcrossTableToScreen <- function(data, lmar = 3) {
+plotEcoRiskcrossTableToScreen <- function(data, lmar = 3) {
   #data prep
   data <- round(data,digits = 2)
   x = 1:ncol(data)
@@ -2446,7 +2519,7 @@ plotMECOcrossTableToScreen <- function(data, lmar = 3) {
 #' Plot crosstable to file showing (dis-)similarity between average biome pixels
 #'
 #' Function to plot to file a crosstable showing (dis-)similarity between average
-#' biome pixels based on M-ECO (former Gamma) metric from LPJmL simulations
+#' biome pixels based on EcoRisk (former Gamma) metric from LPJmL simulations
 #'
 #' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
 #' @param file to write into
@@ -2460,8 +2533,9 @@ plotMECOcrossTableToScreen <- function(data, lmar = 3) {
 #'
 #' }
 #' @export
-plotMECOcrossTable <- function(data, file, lmar=3, eps = FALSE) {
-  #---- plotting ----------------------------------------------------------------#
+plotEcoRiskcrossTable <- function(data, file, lmar=3, eps = FALSE) {
+  outFol <- dirname(file)
+  dir.create(file.path(outFol),showWarnings = F)
   if (eps) {
     file <- strsplit(file,".",fixed = TRUE)[[1]]
     file <- paste(c(file[1:(length(file) - 1)],"eps"),collapse = ".")
@@ -2470,6 +2544,6 @@ plotMECOcrossTable <- function(data, file, lmar=3, eps = FALSE) {
   }else{
     png(file, width = 6, height = 3, units = "in", res = 300, pointsize = 6,type = "cairo")
   }
-  plotMECOcrossTableToScreen(data = data, lmar = lmar)
+  plotEcoRiskcrossTableToScreen(data = data, lmar = lmar)
   dev.off()
 }
