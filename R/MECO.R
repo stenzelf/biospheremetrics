@@ -32,6 +32,7 @@
 #'        local change, global change and ecosystem balance (default F)
 #' @param overtime logical: calculate ecorisk as time-series? (default: F)
 #' @param window integer, number of years for window length (default: 30)
+#' @param debug write out all nitrogen state variables (default F)
 #'
 #' @return list data object containing arrays of ecorisk_total, vegetation_structure_change, 
 #'         local_change, global_importance, ecosystem_balance, carbon_stocks, 
@@ -53,7 +54,8 @@ ecoriskWrapper <- function(folderRef,
                      time_span_scenario,
                      dimensionsOnlyLocal = F,
                      overtime = F,
-                     window = 30
+                     window = 30,
+                     debug = FALSE
                      ) {
   if (is.null(varnames)) {
     print("variable name list not provided, using standard list, which might 
@@ -92,6 +94,7 @@ ecoriskWrapper <- function(folderRef,
     litc = paste0(folderScen,varnames["litc","outname"]),
     swc = paste0(folderScen,varnames["swc","outname"]),
     vegn = paste0(folderScen,varnames["vegn","outname"]),
+    
     soilnh4 = paste0(folderScen,varnames["soilnh4","outname"]),
     soilno3 = paste0(folderScen,varnames["soilno3","outname"]),
     leaching = paste0(folderScen,varnames["leaching","outname"]),
@@ -154,7 +157,8 @@ ecoriskWrapper <- function(folderRef,
                                    export = F,
                                    nitrogen = nitrogen,
                                    time_span_reference = time_span_reference,
-                                   time_span_scenario = time_span_scenario
+                                   time_span_scenario = time_span_scenario,
+                                   debug = debug
                                    )
      # extract variables from return list object and give them proper names
      state_ref <- returned_vars$state_ref
@@ -210,8 +214,10 @@ ecoriskWrapper <- function(folderRef,
     ecorisk$carbon_fluxes[,y] <- returned$carbon_fluxes
     ecorisk$water_stocks[,y] <- returned$water_stocks
     ecorisk$water_fluxes[,y] <- returned$water_fluxes
-    ecorisk$nitrogen_stocks[,y] <- returned$nitrogen_stocks
-    ecorisk$nitrogen_fluxes[,y] <- returned$nitrogen_fluxes
+    if (nitrogen){
+      ecorisk$nitrogen_stocks[,y] <- returned$nitrogen_stocks
+      ecorisk$nitrogen_fluxes[,y] <- returned$nitrogen_fluxes
+    }
    }
 
 
@@ -326,8 +332,8 @@ calcEcoRisk <- function(fpc_ref,
   # 12:13 nitrogen pools/stocks
   # 14:16 nitrogen fluxes
   #                 1         2         3         4         5        6          7        8      9       10          11      12       13      14        15               16
-  var_names <- c("firec","rh_harvest","npp","evapinterc","runoff","transp","soillitc","vegc","swcsum","discharge","firef","soiln","vegn","leaching","bnf","aggregated_n_emissions")
-
+  #var_names <- c("firec","rh_harvest","npp","evapinterc","runoff","transp","soillitc","vegc","swcsum","discharge","firef","soiln","vegn","leaching","bnf","aggregated_n_emissions")
+  var_names <- dimnames(state_ref)[[3]]
   delta <- vegetation_structure_change*S_change_to_var_ratio(vegetation_structure_change, vegetation_structure_changesd)# vegetation_structure_change
   lc <- calcComponent(ref = state_ref, scen = state_scen, local = TRUE, cellArea = cellArea)         # local change
   gi <- calcComponent(ref = state_ref, scen = state_scen, local = FALSE, cellArea = cellArea)         # global importance
@@ -405,6 +411,7 @@ calcEcoRisk <- function(fpc_ref,
 #' @param time_span_reference vector of years to use as scenario period
 #' @param time_span_scenario vector of years to use as scenario period
 #' @param nitrogen include nitrogen outputs for pools and fluxes into EcoRisk calculation (default F)
+#' @param debug write out all nitrogen state variables (default F)
 #'
 #' @return list data object containing arrays of state_ref, mean_state_ref,
 #'         state_scen, mean_state_scen, fpc_ref, fpc_scen, bft_ref, bft_scen,
@@ -420,7 +427,8 @@ readEcoRiskData <- function( files_reference,
                           export = FALSE,
                           time_span_reference,
                           time_span_scenario,
-                          nitrogen
+                          nitrogen,
+                          debug = FALSE
                           ) {
 
   nyears_ref <- length(time_span_reference)
@@ -860,6 +868,38 @@ readEcoRiskData <- function( files_reference,
       aggregated_n_emissions_scen <- n_volatilization_scen + n2o_nit_scen + n2o_denit_scen + n2_emis_scen
       soiln_scen <- soilno3_scen + soilnh4_scen
 
+
+      if (debug){
+        nitrogen_scen <- list(n_volatilization = n_volatilization_scen,
+                              n2o_nit = n2o_nit_scen,
+                              n2o_denit = n2o_denit_scen, 
+                              n2_emis = n2_emis_scen,
+                              leaching = leaching_scen,
+                              bnf = bnf_scen
+                              )
+        nitrogen_ref <- list(n_volatilization = n_volatilization_ref,
+                              n2o_nit = n2o_nit_ref,
+                              n2o_denit = n2o_denit_ref, 
+                              n2_emis = n2_emis_ref,
+                              leaching = leaching_ref,
+                              bnf = bnf_ref
+                              )
+        save(nitrogen_scen,nitrogen_ref,file="/p/projects/open/Fabian/Metrics/nitrogen_states_debug.RData")
+                
+        # load("/p/projects/open/Fabian/Metrics/nitrogen_states_debug.RData")
+        # test_fol <- "/p/projects/open/Fabian/Metrics/test/"
+        # for (i in 1:length(names(nitrogen_ref))){
+        #   name <- names(nitrogen_ref)[i]
+        #   mean_ref <- rowMeans(nitrogen_ref[[i]])
+        #   mean_scen <- rowMeans(nitrogen_scen[[i]])
+        #   change <- mean_scen/mean_ref
+        #   change_abs <- mean_scen-mean_ref
+        #   pow2max_val <- round(log2(max(change_abs)),0)
+        #   lpjmliotools::plotGlobal(file = paste0(test_fol,name,"_change.png"), data = change*100, title = paste(name," change in %"), pow2min = 1, pow2max = 12,type="exp")
+        #   lpjmliotools::plotGlobal(file = paste0(test_fol,name,"_change_abs.png"), data = change_abs, title = paste(name," absolute change in gN/m2"), pow2min = -5, pow2max = 10,type="exp")
+        # }
+      
+      }
     } #end if nitrogen
   }else if (fileType == "nc") { # to be added
       stop("nc reading has not been updated to latest functionality. \
@@ -887,6 +927,7 @@ readEcoRiskData <- function( files_reference,
                          bnf_ref,                    #  15
                          aggregated_n_emissions_ref, #  16
                          along = 3)
+
     state_scen <- abind( firec_scen,                  #  1
                          rh_harvest_scen,             #  2
                          npp_scen,                    #  3
@@ -904,6 +945,11 @@ readEcoRiskData <- function( files_reference,
                          bnf_scen,                    #  15
                          aggregated_n_emissions_scen, #  16
                          along = 3)
+    di <- dimnames(state_ref)
+    var_names <- c("firec","rh_harvest","npp","evapinterc","runoff","transp","soillitc","vegc","swcsum","discharge","firef","soiln","vegn","leaching","bnf","aggregated_n_emissions")
+    di[[3]] <- var_names
+    dimnames(state_ref) <- di
+    dimnames(state_scen) <- di
   }else{
     require(abind)
     state_ref <- abind( firec_ref,
@@ -930,6 +976,11 @@ readEcoRiskData <- function( files_reference,
                         discharge_scen,
                         firef_scen,
                         along = 3)
+    di <- dimnames(state_ref)
+    var_names <- c("firec","rh_harvest","npp","evapinterc","runoff","transp","soillitc","vegc","swcsum","discharge","firef")
+    di[[3]] <- var_names
+    dimnames(state_ref) <- di
+    dimnames(state_scen) <- di
   }
 
   if (!(is.null(saveFile))) {
@@ -1536,7 +1587,7 @@ ecoriskCrossTable <- function(dataFileIn, dataFileOut, biome_classes_in, pickCel
 
   lat <- rep(0,nbiomes*nbiomes)
   lon <- rep(1,nbiomes*nbiomes)
-  cellArea <- calcCellarea(lat = lat)
+  cellArea <- rep(2,nbiomes*nbiomes)
   # and write out the modified data
   save(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,
        bft_ref,bft_scen,cft_ref,cft_scen,lat,lon,cellArea,file = dataFileOut)
@@ -1589,7 +1640,14 @@ disaggregateIntoBiomes <- function(data,
                                    type = "quantile",
                                    classes = "4biomes"
                                   ) {
+  
   di <- dim(data[[1]])
+  comp_names <- names(data)
+  if (type == "minmeanmax") {
+    type_names <- c("min","mean","max")
+  }else if (type == "quantile"){
+    type_names <- c("Q10","Q50","Q90")
+  }
   if (length(di) > 1){
     slices <- di[2]
   }else{
@@ -1597,8 +1655,8 @@ disaggregateIntoBiomes <- function(data,
   }
   if (classes == "4biomes") {
     tropics <- c(1,2,9,10,11)
-    temperate <- c(3,4,5,6,12,13,14)
-    boreal <- c(7,8)
+    temperate <- c(3,4,5,12,13,14)
+    boreal <- c(6,7,8)
     arctic <- c(15,16)
     cell_list <- list(
                   tropical_cells = which(biome_class$biome_id %in% tropics),
@@ -1613,7 +1671,6 @@ disaggregateIntoBiomes <- function(data,
     stop(paste0("Unknown parameter classes: ",classes,
                 ", should be either '4biomes' or 'allbiomes'"))
   }
-
 
   data_dims <- length(data)
   # c(biome,data_components,min/median/max)
@@ -1635,6 +1692,8 @@ disaggregateIntoBiomes <- function(data,
         }# end for
       }# end for
     }# end for 
+    biome_names <- c("tropics","temperate","boreal","arctic")
+    dimnames(data_biomes) <- list(biome_names,comp_names,type_names,1:slices)
   }else if (classes == "allbiomes") { #calculate all biomes separately
     for (s in 1:slices) {
       for (b in 1:nclasses) {
@@ -1656,6 +1715,8 @@ disaggregateIntoBiomes <- function(data,
         }# end for
       }# end for
     }# end for 
+    biome_names <- biome_class$biome_names
+    dimnames(data_biomes) <- list(biome_names,comp_names,type_names,1:slices)
   }else{
     stop(paste0("Unknown parameter classes: ",classes,
                 ", should be either '4biomes' or 'allbiomes'"))
@@ -1709,16 +1770,15 @@ calculateWithinBiomeDiffs <- function(biome_classes,
                                             dataFileOut = dataFile,
                                             biome_classes_in = biome_classes,
                                             refBiom = b)
-      ecorisk <- ecoriskWrapper(folderRef = NULL, 
+      ecorisk <- ecoriskWrapper(folderRef = NULL, # does not need to be specified, as data is read from file
                                 folderScen = NULL, # does not need to be specified, as data is read from file
-                                readPreviouslySavedData = TRUE, # does not need to be specified, as data is read from file
+                                readPreviouslySavedData = TRUE, 
                                 saveFileData = dataFile, 
                                 saveFileEcoRisk = ecoriskFile, 
                                 varnames = vars_ecorisk,
-                                timespan_full_ref = NULL, # does not need to be specified, as data is read from file
-                                timespan_full_scen = NULL, # does not need to be specified, as data is read from file
-                                timespan_focus_ref = time_span_reference,
-                                timespan_focus_scen = time_span_reference
+                                time_span_reference = time_span_reference,
+                                time_span_scenario = time_span_reference,
+                                dimensionsOnlyLocal = F
       )
     }else{
       load(ecoriskFile) #contains ecorisk list object
@@ -1772,6 +1832,8 @@ calculateWithinBiomeDiffs <- function(biome_classes,
 #' @param scale scaling factor for distribution. defaults to 1
 #' @param title character string title for plot, default empty
 #' @param legendtitle character string legend title, default empty
+#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg 
+#'        color scheme white-blue-yellow-red
 #'
 #' @return None
 #'
@@ -1781,12 +1843,12 @@ calculateWithinBiomeDiffs <- function(biome_classes,
 #' }
 #' @export
 plotBiomeInternalDistributionToScreen <- function(data, biomes_abbrv,title = "", 
-                                                  legendtitle = "", scale = 1) {
+                                                  legendtitle = "", scale = 1, palette = NULL) {
   di = dim(data)
   bins = di["bin"]
   res = 1/bins
   biomes = di["biome"]
-  palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
+  if (is.null(palette)) palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
   colIndex <- floor(seq(res/2,1-res/2,res)*10) + 1
   par(mar=c(2,4,0,0),oma=c(0,0,0,0))#bltr
   plot(NA, xlim=c(0,1), ylim=c(0,20), xlab = "EcoRisk", main = title, axes = F, ylab = "")
@@ -1815,6 +1877,8 @@ plotBiomeInternalDistributionToScreen <- function(data, biomes_abbrv,title = "",
 #' @param title character string title for plot, default empty
 #' @param legendtitle character string legend title, default empty
 #' @param eps write as eps or png (default: F -> png)
+#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg 
+#'        color scheme white-blue-yellow-red
 #'
 #' @return None
 #'
@@ -1823,7 +1887,7 @@ plotBiomeInternalDistributionToScreen <- function(data, biomes_abbrv,title = "",
 #'
 #' }
 #' @export
-plotBiomeInternalDistribution <- function(data, file, biomes_abbrv, scale, title = "", legendtitle = "", eps = FALSE) {
+plotBiomeInternalDistribution <- function(data, file, biomes_abbrv, scale, title = "", legendtitle = "", eps = FALSE, palette = NULL) {
    if (eps) {
       file <- strsplit(file,".",fixed = TRUE)[[1]]
       file <- paste(c(file[1:(length(file) - 1)],"eps"),collapse = ".")
@@ -1832,7 +1896,7 @@ plotBiomeInternalDistribution <- function(data, file, biomes_abbrv, scale, title
    }else{
       png(file, width = 3, height = 6, units = "in", res = 300, pointsize = 6,type = "cairo")
    }
-   plotBiomeInternalDistributionToScreen(data = data, biomes_abbrv = biomes_abbrv, scale = scale, title = title, legendtitle = legendtitle)
+   plotBiomeInternalDistributionToScreen(data = data, biomes_abbrv = biomes_abbrv, scale = scale, title = title, legendtitle = legendtitle, palette = palette)
    dev.off()
 }
 #' Plot EcoRisk map to screen
@@ -1846,6 +1910,8 @@ plotBiomeInternalDistribution <- function(data, file, biomes_abbrv, scale, title
 #' @param legendtitle character string legend title
 #' @param legYes logical. whether to plot legend or not. defaults to TRUE
 #' @param legScale scaling factor for legend. defaults to 1
+#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg 
+#'        color scheme white-blue-yellow-red
 #'
 #' @return None
 #'
@@ -1855,11 +1921,11 @@ plotBiomeInternalDistribution <- function(data, file, biomes_abbrv, scale, title
 #' }
 #' @export
 plotEcoRiskmapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
-                                 title = "", legendtitle = "", titleSize = 1, legYes = T) {
+                                 title = "", legendtitle = "", titleSize = 1, legYes = T, palette = NULL) {
    brks <- seq(0,1,0.1)
    data[data < brks[1]] <- brks[1]
    data[data > brks[length(brks)]] <- brks[length(brks)]
-   palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
+   if (is.null(palette)) palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
    if (!is.null(focusBiome)){
      focus <- data
      focus[!(biome_classes == focusBiome)] <- NA
@@ -1898,6 +1964,8 @@ plotEcoRiskmapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
 #' @param eps write as eps or png
 #' @param legYes logical. whether to plot legend or not. defaults to TRUE
 #' @param legScale scaling factor for legend. defaults to 1
+#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg 
+#'        color scheme white-blue-yellow-red
 #'
 #' @return None
 #'
@@ -1907,7 +1975,8 @@ plotEcoRiskmapToScreen <- function(data,focusBiome = NULL, biome_classes = NULL,
 #' }
 #' @export
 plotEcoRiskmap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
-                         title = "", legendtitle = "", eps = FALSE, titleSize = 1, legYes = T) {
+                         title = "", legendtitle = "", eps = FALSE, 
+                         titleSize = 1, legYes = T, palette = NULL) {
   outFol <- dirname(file)
   dir.create(file.path(outFol),showWarnings = F)
   if (eps) {
@@ -1918,7 +1987,9 @@ plotEcoRiskmap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
   }else{
       png(file, width = 7.25, height = 3.5, units = "in", res = 300, pointsize = 6,type = "cairo")
   }
-  plotEcoRiskmapToScreen(data = data, focusBiome = focusBiome, biome_classes = biome_classes, title = title, legendtitle = legendtitle, titleSize = titleSize, legYes = legYes)
+  plotEcoRiskmapToScreen(data = data, focusBiome = focusBiome, 
+      biome_classes = biome_classes, title = title, legendtitle = legendtitle, 
+      titleSize = titleSize, legYes = legYes, palette = palette)
   dev.off()
 }
 #' Plot radial EcoRisk plot to screen
@@ -1949,53 +2020,76 @@ plotEcoRiskradialToScreen <- function(data,
                                       titleline = -2,
                                       quantile = T
                                       ) {
-   suppressPackageStartupMessages(require(circlize))
-   require(RColorBrewer)
-   ecorisk_dims <- length(data[,1])
-   if (ecorisk_dims == 10) {
-     names <- c( ecorisk = "m-eco", deltav = "vegetation\nstructure",
-                 local = "local\nchange", global = "global\nimportance",
-                 balance =  "ecosystem\nbalance", cstocks = "carbon stocks", cfluxes = "carbon fluxes",
-                 wfluxes = "water fluxes", nstocks = "nitrogen\nstocks", nfluxes = "nitrogen fluxes")
-     set <- brewer.pal(12, "Set3") #c(blue-green, yellow,violet,red,blue,orange,green,pink,grey,purple,green-blue,yellow-orange)
-     colz <- set[c(4,7,8,11,1,3,10,5,12,6)]
-     #set <- brewer.pal(9, "Set1") #c(red,blue,green,purple,orange,yellow,brown,pink,grey)
-     #colz <- c("limegreen", "darkgreen", "maroon","orchid4","bisque4",
-     #         "orangered","sienna",brewer.pal(6, "PuBu")[6], "yellow" , "orange")
-     #                  ecorisk    vegetation_structure_change      lc       gi      eb          cs      cf       wf       ns      nf
-     angles <- matrix(c(90,270, 216,252,  180,216, 144,180, 108,144,  -18,18, -54,-18, -90,-54,  54,90, 18,54 ),byrow = T,nrow = length(colz))
-   }else if (ecorisk_dims == 8) {
-     names <- c( ecorisk = "m-eco", deltav = "vegetation\nstructure",
-                 local = "local\nchange", global = "global\nimportance",
-                 balance =  "ecosystem\nbalance", cstocks = "carbon stocks",
-                 cfluxes = "carbon fluxes", wfluxes = "water fluxes")
-     colz <- c("darkgoldenrod", brewer.pal(5,"Greens")[5], brewer.pal(6, "Set1")[seq(2, 6, by = 2)],
-               rev(brewer.pal(6, "Oranges")[c(4,5)]), brewer.pal(6, "PuBu")[6])
-     angles <- matrix(c(234,270, 198,234, 162,198, 126,162, 90,126,     18,54, -18,18, -54,-18),byrow = T,nrow = length(colz))
-   }else{
-     stop(paste("Unknown number of dimensions for ecorisk data:",ecorisk_dims))
-   }
-   par(oma = c(0,0,0,0), mar = c(0,0,0,0))
-   plot(c(-zoom, zoom), c(-zoom, zoom), type = "n", axes = FALSE, ann = FALSE, asp = 1, main = "")
-   title(main = title, line = titleline, cex.main = titleSize)
-   if (type == "legend1") {
+    suppressPackageStartupMessages(require(circlize))
+    require(RColorBrewer)
+    ecorisk_dims <- length(data[,1])
+    if (ecorisk_dims == 11) {
+      names <- c( ecorisk = "ecorisk", 
+                  deltav = "vegetation\nstructure", local = "local\nchange", 
+                  global = "global\nimportance", balance =  "ecosystem\nbalance", 
+                  cstocks = "carbon\nstocks", cfluxes = "carbon\nfluxes", 
+                  wstocks = "water stocks", wfluxes = "water fluxes", 
+                  nstocks = "nitrogen\nstocks", nfluxes = "nitrogen\nfluxes")
+      set <- brewer.pal(12, "Set3") #c(blue-green, yellow,violet,red,blue,orange,green,pink,grey,purple,green-blue,yellow-orange)
+      colz <- set[c(4,7,8,11,2,3,10,5,1,12,6)] # missing 2,9
+      #set <- brewer.pal(9, "Set1") #c(red,blue,green,purple,orange,yellow,brown,pink,grey)
+      #colz <- c("limegreen", "darkgreen", "maroon","orchid4","bisque4",
+      #         "orangered","sienna",brewer.pal(6, "PuBu")[6], "yellow" , "orange")
+      #                  ecorisk    vs       lc       gi      eb          cs      cf     ws       wf       ns      nf
+      angles <- matrix(c(90,270, 216,252,  180,216, 144,180, 108,144,  0,30,   -30,0, -60,-30, -90,-60,  60,90, 30,60 ),byrow = T,nrow = length(colz))
+    }else if (ecorisk_dims == 10) {
+      names <- c( ecorisk = "ecorisk", deltav = "vegetation\nstructure",
+                  local = "local\nchange", global = "global\nimportance",
+                  balance =  "ecosystem\nbalance", cstocks = "carbon stocks", 
+                  cfluxes = "carbon fluxes", wfluxes = "water fluxes", 
+                  nstocks = "nitrogen\nstocks", nfluxes = "nitrogen fluxes")
+      set <- brewer.pal(12, "Set3") #c(blue-green, yellow,violet,red,blue,orange,green,pink,grey,purple,green-blue,yellow-orange)
+      colz <- set[c(4,7,8,11,1,3,10,5,12,6)]
+      #set <- brewer.pal(9, "Set1") #c(red,blue,green,purple,orange,yellow,brown,pink,grey)
+      #colz <- c("limegreen", "darkgreen", "maroon","orchid4","bisque4",
+      #         "orangered","sienna",brewer.pal(6, "PuBu")[6], "yellow" , "orange")
+      #                  ecorisk    vs      lc       gi       eb         cs      cf       wf       ns      nf
+      angles <- matrix(c(90,270, 216,252, 180,216, 144,180, 108,144,  -18,18, -54,-18, -90,-54,  54,90, 18,54 ),byrow = T,nrow = length(colz))
+    }else if (ecorisk_dims == 8) {
+      names <- c( ecorisk = "ecorisk", deltav = "vegetation\nstructure",
+                  local = "local\nchange", global = "global\nimportance",
+                  balance =  "ecosystem\nbalance", cstocks = "carbon\nstocks",
+                  cfluxes = "carbon fluxes", wfluxes = "water fluxes")
+      colz <- c("darkgoldenrod", brewer.pal(5,"Greens")[5], brewer.pal(6, "Set1")[seq(2, 6, by = 2)],
+                rev(brewer.pal(6, "Oranges")[c(4,5)]), brewer.pal(6, "PuBu")[6])
+      angles <- matrix(c(234,270, 198,234, 162,198, 126,162, 90,126,     18,54, -18,18, -54,-18),byrow = T,nrow = length(colz))
+    }else{
+      stop(paste("Unknown number of dimensions for ecorisk data:",ecorisk_dims))
+    }
+    par(oma = c(0,0,0,0), mar = c(0,0,0,0))
+    plot(c(-zoom, zoom), c(-zoom, zoom), type = "n", axes = FALSE, ann = FALSE, asp = 1, main = "")
+    title(main = title, line = titleline, cex.main = titleSize)
+    if (type == "legend1") {
       draw.sector(0, 360, rou1 = 1)
-     ro = c(1,1.1,0.8,1.1,0.8, 1,1,1,1,1)
+      ro = c(1,1.1,0.8,1.1,0.8, 1,1,1,1, 1,1)
       for (i in 1:length(angles[,1])) {
          draw.sector(start.degree = angles[i,1] + 90, end.degree = angles[i,2] + 90, col = colz[i], clock.wise = F, rou1 = 0, rou2 = ro[i],border = "black")
       }
-     if (ecorisk_dims == 10) {
-       text(names,x = c(1.1,1.0,0.2,-0.8,-1.6, -0.4,0.7,1.05,   -1.7,-1.5),y = c(-0.15,-0.9,-1.3,-1.3,-0.9, 1.2,1,0.25,  0.3,1), adj = 0)
-     }else if (ecorisk_dims == 8) {
-       text(names,x = c(1.1,0.6,-0.2,-1.2,-1.7, -1.5,-0.4,0.7),y = c(-0.3,-1.1,-1.3,-1,-0.5, 1,1.2,1),adj = 0)
-     }else{
-       stop(paste("Unknown number of dimensions for ecorisk data:",ecorisk_dims))
-     }
-     draw.sector(start.degree = (angles[3,1]+angles[3,2])/2+90, end.degree = (angles[3,1]+angles[3,2])/2+90, rou1 = 0.7, rou2 = 1.1)# line lc
-     draw.sector(start.degree = -9, end.degree = -9, rou1 = 0.9, rou2 = 1.05)# line m-eco
-     draw.sector(start.degree = (angles[5,1]+angles[5,2])/2+90, end.degree = (angles[5,1]+angles[5,2])/2+90, rou1 = 0.7, rou2 = 1.1)# line eb
-     draw.sector(start.degree = 180, end.degree = 180, clock.wise = F, rou1 = -1.2, rou2 = 1.2, border = "black",lwd = 2)
-   }else if (type == "legend2") {
+      if (ecorisk_dims == 11) {
+        text(names,
+        #       er    vs   lc   gi   eb   cs   cf   ws   wf   ns  nf
+        x = c( 1.1,  1.0, 0.2,-0.8,-1.6, -0.6,0.1, 0.8,1.05,  -1.7,-1.4),
+        y = c(-0.15,-0.9,-1.3,-1.3,-0.9,  1.2,1.2, 0.85,0.25,  0.3, 0.85), 
+                   adj = 0)
+      
+      }else if (ecorisk_dims == 10) {
+        text(names,x = c(1.1,1.0,0.2,-0.8,-1.6, -0.4,0.7,1.05,   -1.7,-1.5),
+              y = c(-0.15,-0.9,-1.3,-1.3,-0.9, 1.2,1,0.25,  0.3,1), adj = 0)
+      }else if (ecorisk_dims == 8) {
+        text(names,x = c(1.1,0.6,-0.2,-1.2,-1.7, -1.5,-0.4,0.7),y = c(-0.3,-1.1,-1.3,-1,-0.5, 1,1.2,1),adj = 0)
+      }else{
+        stop(paste("Unknown number of dimensions for ecorisk data:",ecorisk_dims))
+      }
+      draw.sector(start.degree = (angles[3,1]+angles[3,2])/2+90, end.degree = (angles[3,1]+angles[3,2])/2+90, rou1 = 0.7, rou2 = 1.1)# line lc
+      draw.sector(start.degree = -9, end.degree = -9, rou1 = 0.9, rou2 = 1.05)# line ecorisk
+      draw.sector(start.degree = (angles[5,1]+angles[5,2])/2+90, end.degree = (angles[5,1]+angles[5,2])/2+90, rou1 = 0.7, rou2 = 1.1)# line eb
+      draw.sector(start.degree = 180, end.degree = 180, clock.wise = F, rou1 = -1.2, rou2 = 1.2, border = "black",lwd = 2)
+    }else if (type == "legend2") {
       text("+",x = 0, y = 0)
       draw.sector(0, 360, rou1 = 1)
       draw.sector(0, 360, rou1 = 0.65)
@@ -2107,7 +2201,7 @@ plotOvertimeToScreen <- function(data, timerange, yrange = c(0,1), legYes = T, l
   ecorisk_dims <- dim(data)[1]
   if (is.null(varnames)){
     if (ecorisk_dims == 10) {
-      names <- c( ecorisk = "m-eco", deltav = "vegetation structure",
+      names <- c( ecorisk = "ecorisk", deltav = "vegetation structure",
                   local = "local change", global = "global importance",
                   balance =  "ecosystem balance", cstocks = "carbon stocks",
                   cfluxes =  "carbon fluxes", wfluxes = "water fluxes", 
@@ -2115,7 +2209,7 @@ plotOvertimeToScreen <- function(data, timerange, yrange = c(0,1), legYes = T, l
       set <- brewer.pal(12, "Set3") #c(blue-green, yellow,violet,red,blue,orange,green,pink,grey,purple,green-blue,yellow-orange)
       colz <- set[c(4,7,8,11,1,3,10,5,12,6)]
     } else if (ecorisk_dims == 8) {
-      names <- c( ecorisk = "m-eco", deltav = "vegetation structure",
+      names <- c( ecorisk = "ecorisk", deltav = "vegetation structure",
                   local = "local change", global = "global importance",
                   balance =  "ecosystem balance", cstocks = "carbon stocks",
                   cfluxes = "carbon fluxes", wfluxes = "water fluxes")
@@ -2404,6 +2498,8 @@ plotBiomes <- function(biome_ids, biomeNameLength = 1, orderLegend = "plants",fi
 #' @param title character string title for plot, default empty
 #' @param titleSize character string title for plot
 #' @param leg_scale character string title for plot
+#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg 
+#'        color scheme white-blue-yellow-red
 #'
 #' @return None
 #'
@@ -2413,14 +2509,14 @@ plotBiomes <- function(biome_ids, biomeNameLength = 1, orderLegend = "plants",fi
 #' }
 #' @export
 plotBiomeAveragesToScreen <- function(data, biome_class_names, title = "",
-                               titleSize = 2, leg_scale = 0.5) {
+                               titleSize = 2, leg_scale = 0.5, palette = NULL) {
   require(raster)
   require(RColorBrewer)
   #---- setting up colors and biome names ----------------------------------------------------------------#
   brks <- seq(0,1,0.1)
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
-  palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
+  if (is.null(palette)) palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
   colIndex <- floor(data[,2]*10) + 1
   if (!(length(biome_class_names) == dim(data)[1])) stop("Size of biome class names and data input do not match.")
   #---- plotting ----------------------------------------------------------------#
@@ -2440,6 +2536,8 @@ plotBiomeAveragesToScreen <- function(data, biome_class_names, title = "",
 #' @param titleSize character string title for plot
 #' @param leg_scale character string title for plot
 #' @param eps write as eps, replacing png in filename (default: True)
+#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg 
+#'        color scheme white-blue-yellow-red
 #'
 #' @return None
 #'
@@ -2449,7 +2547,7 @@ plotBiomeAveragesToScreen <- function(data, biome_class_names, title = "",
 #' }
 #' @export
 plotBiomeAverages <- function(data, file, biome_class_names, title = "", titleSize = 2,
-                      leg_scale = 1, eps = FALSE) {
+                      leg_scale = 1, eps = FALSE, palette = NULL) {
   outFol <- dirname(file)
   dir.create(file.path(outFol),showWarnings = F)
   if (eps) {
@@ -2460,7 +2558,9 @@ plotBiomeAverages <- function(data, file, biome_class_names, title = "", titleSi
   }else{
     png(file, width = 4, height = 3, units = "in", res = 300, pointsize = 6,type = "cairo")
   }
-  plotBiomeAveragesToScreen(data = data, biome_class_names = biome_class_names, title = title, titleSize = titleSize, leg_scale = leg_scale)
+  plotBiomeAveragesToScreen(data = data, biome_class_names = biome_class_names, 
+                            title = title, titleSize = titleSize, 
+                            leg_scale = leg_scale, palette = palette)
   dev.off()
 }
 
@@ -2471,6 +2571,8 @@ plotBiomeAverages <- function(data, file, biome_class_names, title = "", titleSi
 #'
 #' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
 #' @param lmar left margin for plot in lines (default: 3)
+#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg 
+#'        color scheme white-blue-yellow-red
 #'
 #' @return None
 #'
@@ -2479,14 +2581,14 @@ plotBiomeAverages <- function(data, file, biome_class_names, title = "", titleSi
 #'
 #' }
 #' @export
-plotEcoRiskcrossTableToScreen <- function(data, lmar = 3) {
+plotEcoRiskcrossTableToScreen <- function(data, lmar = 3, palette = NULL) {
   #data prep
   data <- round(data,digits = 2)
   x = 1:ncol(data)
   y = 1:nrow(data)
   centers <- expand.grid(y,x)
   #coloring
-  palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
+  if (is.null(palette)) palette <- c("white","steelblue1","royalblue",RColorBrewer::brewer.pal(7,"YlOrRd"))
   brks <- seq(0,1,0.1)
   #color.picker <- function(z){
   #  if(is.na(z)){return("black")}
@@ -2525,6 +2627,8 @@ plotEcoRiskcrossTableToScreen <- function(data, lmar = 3) {
 #' @param file to write into
 #' @param lmar left margin for plot in lines (default: 3)
 #' @param eps write as eps or png
+#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg 
+#'        color scheme white-blue-yellow-red
 #'
 #' @return None
 #'
@@ -2533,7 +2637,7 @@ plotEcoRiskcrossTableToScreen <- function(data, lmar = 3) {
 #'
 #' }
 #' @export
-plotEcoRiskcrossTable <- function(data, file, lmar=3, eps = FALSE) {
+plotEcoRiskcrossTable <- function(data, file, lmar=3, eps = FALSE, palette = NULL) {
   outFol <- dirname(file)
   dir.create(file.path(outFol),showWarnings = F)
   if (eps) {
@@ -2544,6 +2648,6 @@ plotEcoRiskcrossTable <- function(data, file, lmar=3, eps = FALSE) {
   }else{
     png(file, width = 6, height = 3, units = "in", res = 300, pointsize = 6,type = "cairo")
   }
-  plotEcoRiskcrossTableToScreen(data = data, lmar = lmar)
+  plotEcoRiskcrossTableToScreen(data = data, lmar = lmar, palette = palette)
   dev.off()
 }

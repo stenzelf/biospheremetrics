@@ -2,7 +2,7 @@
 % Please edit documentation in R/MECO.R
 \name{calculateWithinBiomeDiffs}
 \alias{calculateWithinBiomeDiffs}
-\title{Calculate meco with each biomes average cell}
+\title{Calculate ecorisk with each biomes average cell}
 \usage{
 calculateWithinBiomeDiffs(
   biome_classes,
@@ -13,14 +13,14 @@ calculateWithinBiomeDiffs(
   plotting = FALSE,
   plot_folder,
   time_span_reference,
-  vars_meco
+  vars_ecorisk
 )
 }
 \arguments{
 \item{biome_classes}{biome classes object as returned by classify biomes, 
 calculated for dataFile_base}
 
-\item{dataFile_base}{base MECO to compute differences with (only ref is relevant)}
+\item{dataFile_base}{base EcoRisk to compute differences with (only ref is relevant)}
 
 \item{intra_biome_distrib_file}{file to additionally write results to}
 
@@ -35,10 +35,10 @@ calculated for dataFile_base}
 \item{time_span_reference}{suitable 30 year reference period (e.g. c(1901,1930), c(1550,1579))}
 }
 \value{
-data object with distibution - dim: c(biomes,meco_variables,bins)
+data object with distibution - dim: c(biomes,ecorisk_variables,bins)
 }
 \description{
-Function to calculate meco with each biomes average cell
+Function to calculate ecorisk with each biomes average cell
 as a measure of internal variability
 }
 \examples{

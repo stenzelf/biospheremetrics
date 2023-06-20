@@ -11,7 +11,8 @@ plotBiomeInternalDistribution(
   scale,
   title = "",
   legendtitle = "",
-  eps = FALSE
+  eps = FALSE,
+  palette = NULL
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ calculateWithInBiomeDiffs. dim: c(biomes,bins)}
 \item{legendtitle}{character string legend title, default empty}
 
 \item{eps}{write as eps or png (default: F -> png)}
+
+\item{palette}{color palette to plot EcoRisk with, defaults to the Ostberg 
+color scheme white-blue-yellow-red}
 }
 \value{
 None

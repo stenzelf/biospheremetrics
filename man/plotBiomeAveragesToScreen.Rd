@@ -2,14 +2,15 @@
 % Please edit documentation in R/MECO.R
 \name{plotBiomeAveragesToScreen}
 \alias{plotBiomeAveragesToScreen}
-\title{Plot radial MECO plot to file with 4/16 biomes}
+\title{Plot radial EcoRisk plot to file with 4/16 biomes}
 \usage{
 plotBiomeAveragesToScreen(
   data,
   biome_class_names,
   title = "",
   titleSize = 2,
-  leg_scale = 0.5
+  leg_scale = 0.5,
+  palette = NULL
 )
 }
 \arguments{
@@ -22,12 +23,15 @@ plotBiomeAveragesToScreen(
 \item{titleSize}{character string title for plot}
 
 \item{leg_scale}{character string title for plot}
+
+\item{palette}{color palette to plot EcoRisk with, defaults to the Ostberg 
+color scheme white-blue-yellow-red}
 }
 \value{
 None
 }
 \description{
-Function to plot an aggregated radial status of MECO values [0-1]
+Function to plot an aggregated radial status of EcoRisk values [0-1]
 for the different sub-categories to file
 }
 \examples{

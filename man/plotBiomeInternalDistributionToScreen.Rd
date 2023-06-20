@@ -9,12 +9,13 @@ plotBiomeInternalDistributionToScreen(
   biomes_abbrv,
   title = "",
   legendtitle = "",
-  scale = 1
+  scale = 1,
+  palette = NULL
 )
 }
 \arguments{
 \item{data}{data object with distibution - as returned by 
-calculateWithInBiomeDiffs for each subcategory of meco.
+calculateWithInBiomeDiffs for each subcategory of ecorisk.
 dim: c(biomes,bins)}
 
 \item{biomes_abbrv}{to mask the focusBiome from}
@@ -24,6 +25,9 @@ dim: c(biomes,bins)}
 \item{legendtitle}{character string legend title, default empty}
 
 \item{scale}{scaling factor for distribution. defaults to 1}
+
+\item{palette}{color palette to plot EcoRisk with, defaults to the Ostberg 
+color scheme white-blue-yellow-red}
 }
 \value{
 None

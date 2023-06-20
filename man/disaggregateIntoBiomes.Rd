@@ -2,7 +2,7 @@
 % Please edit documentation in R/MECO.R
 \name{disaggregateIntoBiomes}
 \alias{disaggregateIntoBiomes}
-\title{Averages MECO values across regions}
+\title{Averages EcoRisk values across regions}
 \usage{
 disaggregateIntoBiomes(
   data,
@@ -23,12 +23,12 @@ disaggregateIntoBiomes(
 "4biomes" (tropics/temperate/boreal/arctic) or "allbiomes"}
 }
 \description{
-Returns the average value across either 4 regions or all (19) biomes for MECO
+Returns the average value across either 4 regions or all (19) biomes for EcoRisk
 and each of the subcomponents for each
 }
 \examples{
 \dontrun{
-disaggregateIntoBiomes(meco = meco,
+disaggregateIntoBiomes(ecorisk = ecorisk,
                    biome_class = biome_classes,
                    type = "quantile",classes = "4biomes")
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/MECO.R
 \name{replaceRefDataWithAverageRefBiomeCell}
 \alias{replaceRefDataWithAverageRefBiomeCell}
-\title{Create modified MECO data file}
+\title{Create modified EcoRisk data file}
 \usage{
 replaceRefDataWithAverageRefBiomeCell(
   dataFileIn,
@@ -22,7 +22,7 @@ replaceRefDataWithAverageRefBiomeCell(
 be compared to}
 }
 \description{
-Function to create a modified MECO data file where each reference cell is 
+Function to create a modified EcoRisk data file where each reference cell is 
 compared to the average reference biome cell. The scenario period is
 overwritten with the original reference period and all reference cells are 
 set to the average cell of the prescribed reference biome refBiom

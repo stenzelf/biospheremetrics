@@ -2,7 +2,7 @@
 % Please edit documentation in R/MECO.R
 \name{plotOvertimeToScreen}
 \alias{plotOvertimeToScreen}
-\title{Plot timeline of MECO variables to screen}
+\title{Plot timeline of EcoRisk variables to screen}
 \usage{
 plotOvertimeToScreen(
   data,
@@ -14,8 +14,8 @@ plotOvertimeToScreen(
 )
 }
 \arguments{
-\item{data}{MECO data array 
-c(4/19[biomes],8/10[nMECOcomponents],3[min,mean,max],timeslices)}
+\item{data}{EcoRisk data array 
+c(4/19[biomes],8/10[nEcoRiskcomponents],3[min,mean,max],timeslices)}
 
 \item{timerange}{of the data input}
 
@@ -27,7 +27,7 @@ c(4/19[biomes],8/10[nMECOcomponents],3[min,mean,max],timeslices)}
 None
 }
 \description{
-Function to plot timeline of MECO variables to screen
+Function to plot timeline of EcoRisk variables to screen
 }
 \examples{
 \dontrun{

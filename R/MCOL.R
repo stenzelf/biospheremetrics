@@ -487,37 +487,40 @@ plotBioCol <- function(biocolData, outFol, plotyears, minVal, maxVal, legendpos,
   mapindex <- mapyear - startyr
   print(paste0("Plotting BioCol figures"))
   dir.create(file.path(outFol),showWarnings = F)
-  lpjmliotools::plotGlobal(data = rowMeans(biocolData$biocol[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+  plotGlobal(data = rowMeans(biocolData$biocol[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
              file = paste0(outFol,"BioCol_absolute_",mapyear,".png"), type = "exp",
-             title = paste0("BioCol_abs in ",mapyear), pow2min = 0, pow2max = 12,
+             title = "",# paste0("BioCol_abs in ",mapyear), 
+             pow2min = 0, pow2max = 12,
              legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
-  lpjmliotools::plotGlobal(data = rowMeans(biocolData$biocol_luc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+  plotGlobal(data = rowMeans(biocolData$biocol_luc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                            file = paste0(outFol,"BioCol_luc_",mapyear,".png"), type = "exp",
-                           title = paste0("BioCol_luc in ",mapyear), pow2min = 0, pow2max = 12,
+                           title = "",#paste0("BioCol_luc in ",mapyear), 
+                           pow2min = 0, pow2max = 12,
                            legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
-  #lpjmliotools::plotGlobal(data = rowMeans(biocolData$biocol_luc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-  #                         file = paste0(outFol,"BioCol_luc_piref_",mapyear,".png"), type = "exp",
-  #                         title = paste0("BioCol_luc piref in ",mapyear), pow2min = 0, pow2max = 12,
-  #                         legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
-  lpjmliotools::plotGlobal(data = rowMeans(biocolData$biocol_harvest[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+  plotGlobal(data = rowMeans(biocolData$biocol_harvest[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                            file = paste0(outFol,"BioCol_harv_",mapyear,".png"), type = "exp",
-                           title = paste0("BioCol_harv in ",mapyear), pow2min = 0, pow2max = 12,
+                           title = "", #paste0("BioCol_harv in ",mapyear), 
+                           pow2min = 0, pow2max = 12,
                            legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
   plotBioColovertime(biocolData = biocolData, file = paste0(outFol,"BioCol_overtime_LPJmL_",plotyears[1],"-",plotyears[2],".png"),
                   firstyr = startyr, plotyrs = plotyears, minVal = minVal, ref = "pi",
                   legendpos = legendpos, maxVal = maxVal, eps = eps, highlightyrs = highlightyear)
   plotBioColmap(data = rowMeans(biocolData$biocol_perc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                file = paste0(outFol,"BioCol_LPJmL_",mapyear,".png"),legendtitle = "% of NPPpot", eps = eps,
-               title = paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer) )
+               title = "", #paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer) 
+               )
   plotBioColmap(data = rowMeans(biocolData$biocol_perc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-               file = paste0(outFol,"BioCol_piref_LPJmL_",mapyear,".png"),
-               title = paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),legendtitle = "% of NPPpi", eps = eps)
-  lpjmliotools::plotGlobalMan(data = rowMeans(biocolData$npp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-                file = paste0(outFol,"NPP_LPJmL_",mapyear,".png"), brks = seq(0,1000,100),
-                palette = c("orangered4","orangered","orange","gold","greenyellow","limegreen","green4","darkcyan","darkslategrey","navy"),
-                title = paste0("NPP average ",mapyear-mapyear_buffer, "-",mapyear+mapyear_buffer),
-                legendtitle = "gC/m2",legYes = T)
-  
+               file = paste0(outFol,"BioCol_perc_piref_LPJmL_",mapyear,".png"),
+               title = "",# paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),
+               legendtitle = "% of NPPref", eps = eps)
+  #lpjmliotools::plotGlobalMan(data = rowMeans(biocolData$npp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+  #              file = paste0(outFol,"NPP_LPJmL_",mapyear,".png"), brks = seq(0,1000,100),
+  #              palette = c("orangered4","orangered","orange","gold","greenyellow","limegreen","green4","darkcyan","darkslategrey","navy"),
+  #              title = "",# paste0("NPP average ",mapyear-mapyear_buffer, "-",mapyear+mapyear_buffer),
+  #              legendtitle = "gC/m2",legYes = T)
+  plotGlobal(data = rowMeans(biocolData$npp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+              file = paste0(outFol,"NPP_LPJmL_",mapyear,".png"), type= "lin", onlyPos = T,
+              title = "", legendtitle = "gC/m2",legYes = T, min = 0, max = 1800)
 } # end of plotBioCol
 
 #' Plot global map of BioCol to file
@@ -628,12 +631,11 @@ plotBioColovertime <- function(biocolData, file, firstyr, plotyrs, highlightyrs 
   par(bty="n",oma=c(0,0,0,0),mar=c(4,5,1,3), new = T)
   if (ref == "pi") {
     plot(x=seq(firstyr,lastyr,1),y=biocolData$biocol_overtime_perc_piref,ylab="",xlab="",xlim=plotyrs,
-         ylim=c(0, 30),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
+         ylim=c(0, 35),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
   } else if (ref == "act") {
     plot(x=seq(firstyr,lastyr,1),y=biocolData$biocol_overtime,ylab="",xlab="",xlim=plotyrs,
-         ylim=c(0, 30),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
+         ylim=c(0, 35),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
   }else stop(paste0("Unknown value for parameter ref: ",ref," - Aborting."))
-
   axis(side = 4, col = colz[6],col.axis = colz[6])
   mtext(text = "%", col=colz[6], side = 4,line = 2)
 
@@ -642,6 +644,6 @@ plotBioColovertime <- function(biocolData, file, firstyr, plotyrs, highlightyrs 
       lines(x=c(y,y),y=c(minVal,maxVal),col="grey40")
     }
   }
-  legend(legendpos,legend = c("NPPpot (PNV)","NPPact (landuse)","NPPeco","NPPluc","M-COLabs","M-COL [% NPPpi]","harvestc","rharvest","firec","timber_harvest","wood_harvest"),col=colz ,lty=1,cex=1)
+  legend(legendpos,legend = c("NPPpot (PNV)","NPPact (landuse)","NPPeco","NPPluc","HANPP","BioCol [% NPPpi]","harvestc","rharvest","firec","timber_harvest","wood_harvest"),col=colz ,lty=1,cex=1)
   dev.off()
 }

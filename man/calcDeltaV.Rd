@@ -2,7 +2,7 @@
 % Please edit documentation in R/MECO.R
 \name{calcDeltaV}
 \alias{calcDeltaV}
-\title{Calculates changes in vegetation structure (deltaV)}
+\title{Calculates changes in vegetation structure (vegetation_structure_change)}
 \usage{
 calcDeltaV(
   fpcRef,
@@ -27,18 +27,18 @@ calcDeltaV(
 
 \item{cftScen}{scenario cft array (dim: [ncells,ncfts])}
 
-\item{weighting}{apply "old" (Ostberg-like), "new", or "equal" weighting of deltaV weights (default "equal")}
+\item{weighting}{apply "old" (Ostberg-like), "new", or "equal" weighting of vegetation_structure_change weights (default "equal")}
 }
 \value{
-deltaV array of size ncells with the deltaV value [0,1] for each cell
+vegetation_structure_change array of size ncells with the vegetation_structure_change value [0,1] for each cell
 }
 \description{
-Utility function to calculate changes in vegetation structure (deltaV)
-for calculation of MECO
+Utility function to calculate changes in vegetation structure (vegetation_structure_change)
+for calculation of EcoRisk
 }
 \examples{
 \dontrun{
-deltaV <- calcDeltaV(fpcRef = fpc_ref_mean,fpcScen = apply(fpc_scen,c(1,2),mean),
+vegetation_structure_change <- calcDeltaV(fpcRef = fpc_ref_mean,fpcScen = apply(fpc_scen,c(1,2),mean),
           bftRef = bft_ref_mean,bftScen = apply(bft_scen,c(1,2),mean),
           cftRef = cft_ref_mean, cftScen = apply(cft_scen,c(1,2),mean),
           weighting = "equal")

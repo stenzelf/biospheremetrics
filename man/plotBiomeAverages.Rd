@@ -2,7 +2,7 @@
 % Please edit documentation in R/MECO.R
 \name{plotBiomeAverages}
 \alias{plotBiomeAverages}
-\title{Plot radial MECO plot to file with 4/16 biomes}
+\title{Plot radial EcoRisk plot to file with 4/16 biomes}
 \usage{
 plotBiomeAverages(
   data,
@@ -11,11 +11,12 @@ plotBiomeAverages(
   title = "",
   titleSize = 2,
   leg_scale = 1,
-  eps = FALSE
+  eps = FALSE,
+  palette = NULL
 )
 }
 \arguments{
-\item{data}{MECO data array c(4[biomes],[nMECOcomponents],3[min,median,max])}
+\item{data}{EcoRisk data array c(4[biomes],[nEcoRiskcomponents],3[min,median,max])}
 
 \item{file}{to write into}
 
@@ -28,12 +29,15 @@ plotBiomeAverages(
 \item{leg_scale}{character string title for plot}
 
 \item{eps}{write as eps, replacing png in filename (default: True)}
+
+\item{palette}{color palette to plot EcoRisk with, defaults to the Ostberg 
+color scheme white-blue-yellow-red}
 }
 \value{
 None
 }
 \description{
-Function to plot an aggregated radial status of MECO values [0-1]
+Function to plot an aggregated radial status of EcoRisk values [0-1]
 for the different sub-categories to file
 }
 \examples{
