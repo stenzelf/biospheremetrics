@@ -1754,7 +1754,8 @@ calculateWithinBiomeDiffs <- function(biome_classes,
                                       plotting = FALSE, 
                                       plot_folder, 
                                       time_span_reference, 
-                                      vars_ecorisk
+                                      vars_ecorisk, 
+                                      nitrogen = TRUE
                                       ) {
   biomes_abbrv <- get_biome_names(1)
   intra_biome_distrib <- array(0,dim = c(length(biome_classes$biome_names),10,1/res)) # nbiomes,nEcoRiskvars,nHISTclasses
@@ -1778,7 +1779,8 @@ calculateWithinBiomeDiffs <- function(biome_classes,
                                 varnames = vars_ecorisk,
                                 time_span_reference = time_span_reference,
                                 time_span_scenario = time_span_reference,
-                                dimensionsOnlyLocal = F
+                                dimensionsOnlyLocal = F,
+                                nitrogen = nitrogen
       )
     }else{
       load(ecoriskFile) #contains ecorisk list object
