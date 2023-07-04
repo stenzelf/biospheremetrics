@@ -1,0 +1,34 @@
+Package: biospheremetrics
+Type: Package
+Title: Biosphere integrity metrics for LPJmL
+Version: 0.3.0
+Author: Fabian Stenzel, Johanna Braun, Jannes Breier
+Maintainer: Fabian Stenzel <stenzel@pik-potsdam.de>
+Description: Functions to compute Biosphere integrity metrics BioCol and EcoRisk
+    based on output from LPJmL.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
+Imports:
+    lpjmlkit,
+    rlang,
+    tidyr,
+    dplyr,
+    readr,
+    magrittr,
+    yaml,
+    stats,
+    zoo,
+    utils,
+    abind,
+    fields,
+    fBasics,
+    RColorBrewer,
+    raster,
+    circlize,
+    rgdal,
+    graphics,
+    grDevices,
+    sp,
+    maps

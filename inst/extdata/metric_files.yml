@@ -1,0 +1,577 @@
+# ---------------------------------------------------------------------------- #
+# Metrics required LPJmL outputs and boundaries functions
+# ---------------------------------------------------------------------------- #
+metric:
+    # Biome classification
+    biome:
+        # LPJmL output IDs with required resolution
+        output: &biome_output
+            grid:
+                resolution: "annual"
+                optional: false
+            fpc:
+                resolution: "annual"
+                optional: false
+            vegc:
+                resolution: "annual"
+                optional: true
+            pft_lai:
+                resolution: "annual"
+                optional: true
+            temp: 
+                resolution: "annual"
+                optional: true
+        # Called boundaries functions
+        fun: &biome_fun
+            - classify_biomes
+
+    # Calculate bluewater boundary
+    bluewater: &bluewater
+        # LPJmL output IDs with required resolution
+        output:
+            grid:
+                resolution: "annual"
+                optional: false
+            discharge:
+                resolution: "monthly"
+                optional: false
+            irrig: 
+                resolution: "monthly"
+                optional: true
+        # Called boundaries functions
+        fun:
+            - calc_bluewater_status
+
+    # Calculate greenwater boundary
+    greenwater: &greenwater
+        # LPJmL output IDs with required resolution
+        output:
+            grid:
+                resolution: "annual"
+                optional: false
+            rootmoist:
+                resolution: "monthly"
+                optional: false
+            swc:
+                resolution: "monthly"
+                optional: true
+        # Called boundaries functions
+        fun:
+            - calc_greenwater_status
+
+    # Calculate nitrogen boundary
+    nitrogen: &nitrogen
+        # LPJmL output IDs with required resolution
+        output:
+            grid:
+                resolution: "annual"
+                optional: false
+            runoff:
+                resolution: "monthly"
+                optional: false
+            leaching:
+                resolution: "monthly"
+                optional: false
+            pet:
+                resolution: "monthly"
+                optional: false
+            prec:
+                resolution: "monthly"
+                optional: true
+        # Called boundaries functions
+        fun: &nitrogen_fun
+            - calc_nitrogen_status
+
+    # Calculate lsc boundary
+    lsc: &lsc
+        # LPJmL output IDs with required resolution
+        output:
+            <<: *biome_output
+        fun:
+            - *biome_fun
+            - calc_lsc_status
+
+
+    # Calculate meco
+    meco:
+        # LPJmL output IDs with required resolution
+        output: &meco_output
+            grid:
+                resolution: "annual"
+                optional: false
+            fpc:
+                resolution: "annual"
+                optional: false
+            fpc_bft:
+                resolution: "annual"
+                optional: false
+            cftfrac:
+                resolution: "annual"
+                optional: false
+            firec:
+                resolution: "annual"
+                optional: false
+            npp:
+                resolution: "annual"
+                optional: false
+            runoff:
+                resolution: "annual"
+                optional: false
+            transp:
+                resolution: "annual"
+                optional: false
+            vegc:
+                resolution: "annual"
+                optional: false
+            firef:
+                resolution: "annual"
+                optional: false
+            rh:
+                resolution: "annual"
+                optional: false
+            harvestc:
+                resolution: "annual"
+                optional: false
+            evap:
+                resolution: "annual"
+                optional: false
+            interc:
+                resolution: "annual"
+                optional: false
+            soilc:
+                resolution: "annual"
+                optional: false
+            litc:
+                resolution: "annual"
+                optional: false
+            swc:
+                resolution: "annual"
+                optional: false
+        # Called boundaries functions
+        fun: &meco_output
+            []
+
+    # Calculate meco_nitrogen
+    meco_nitrogen:
+        # LPJmL output IDs with required resolution
+        output:
+            <<: *meco_output
+            vegn:
+                resolution: "annual"
+                optional: false
+            soilnh4:
+                resolution: "annual"
+                optional: false
+            soilno3:
+                resolution: "annual"
+                optional: false
+            leaching:
+                resolution: "annual"
+                optional: false
+            n2o_denit:
+                resolution: "annual"
+                optional: false
+            n2o_nit:
+                resolution: "annual"
+                optional: false
+            n2_emis:
+                resolution: "annual"
+                optional: false
+            bnf:
+                resolution: "annual"
+                optional: false
+            n_volatilization:
+                resolution: "annual"
+                optional: false
+        # Called boundaries functions
+        fun:
+            []
+
+    # Calculate mcol
+    mcol:
+        # LPJmL output IDs with required resolution
+        output:
+            grid:
+                resolution: "annual"
+                optional: false
+            npp:
+                resolution: "annual"
+                optional: false
+            pft_npp:
+                resolution: "annual"
+                optional: false
+            pft_harvestc:
+                resolution: "annual"
+                optional: false
+            pft_rharvestc:
+                resolution: "annual"
+                optional: false
+            firec:
+                resolution: "annual"
+                optional: false
+            timber_harvestc:
+                resolution: "annual"
+                optional: false
+            cftfrac:
+                resolution: "annual"
+                optional: false
+            fpc:
+                resolution: "annual"
+                optional: false
+        # Called boundaries functions
+        fun:
+            []
+
+    benchmark:
+        grid:
+            resolution: "annual"
+            optional: false
+        fpc:
+            resolution: "annual"
+            optional: false
+        globalflux:
+            resolution: "annual"
+            optional: false
+        npp:
+            resolution: "annual"
+            optional: false
+        gpp:
+            resolution: "annual"
+            optional: false
+        rh:
+            resolution: "annual"
+            optional: false
+        fapar:
+            resolution: "annual"
+            optional: false
+        transp:
+            resolution: "annual"
+            optional: false
+        runoff:
+            resolution: "annual"
+            optional: false
+        evap:
+            resolution: "annual"
+            optional: false
+        interc:
+            resolution: "annual"
+            optional: false
+        swc1:
+            resolution: "annual"
+            optional: false
+        swc2:
+            resolution: "annual"
+            optional: false
+        firef:
+            resolution: "annual"
+            optional: false
+        vegc:
+            resolution: "annual"
+            optional: false
+        soilc:
+            resolution: "annual"
+            optional: false
+        litc:
+            resolution: "annual"
+            optional: false
+        flux_estabc:
+            resolution: "annual"
+            optional: false
+        pft_vegc:
+            resolution: "annual"
+            optional: false
+        phen_tmin:
+            resolution: "annual"
+            optional: false
+        phen_tmax:
+            resolution: "annual"
+            optional: false
+        phen_light:
+            resolution: "annual"
+            optional: false
+        phen_water:
+            resolution: "annual"
+            optional: false
+        vegn:
+            resolution: "annual"
+            optional: false
+        soiln:
+            resolution: "annual"
+            optional: false
+        litn:
+            resolution: "annual"
+            optional: false
+        soiln_layer:
+            resolution: "annual"
+            optional: false
+        soilno3_layer:
+            resolution: "annual"
+            optional: false
+        soilnh4_layer:
+            resolution: "annual"
+            optional: false
+        soiln_slow:
+            resolution: "annual"
+            optional: false
+        soilnh4:
+            resolution: "annual"
+            optional: false
+        soilno3:
+            resolution: "annual"
+            optional: false
+        pft_nuptake:
+            resolution: "annual"
+            optional: false
+        nuptake:
+            resolution: "annual"
+            optional: false
+        leaching:
+            resolution: "annual"
+            optional: false
+        n2o_denit:
+            resolution: "annual"
+            optional: false
+        n2o_nit:
+            resolution: "annual"
+            optional: false
+        n2_emis:
+            resolution: "annual"
+            optional: false
+        bnf:
+            resolution: "annual"
+            optional: false
+        n_immo:
+            resolution: "annual"
+            optional: false
+        pft_ndemand:
+            resolution: "annual"
+            optional: false
+        firen:
+            resolution: "annual"
+            optional: false
+        n_mineralization:
+            resolution: "annual"
+            optional: false
+        n_volatilization:
+            resolution: "annual"
+            optional: false
+        pft_nlimit:
+            resolution: "annual"
+            optional: false
+        pft_vegn:
+            resolution: "annual"
+            optional: false
+        pft_cleaf:
+            resolution: "annual"
+            optional: false
+        pft_nleaf:
+            resolution: "annual"
+            optional: false
+        pft_laimax:
+            resolution: "annual"
+            optional: false
+        pft_croot:
+            resolution: "annual"
+            optional: false
+        pft_nroot:
+            resolution: "annual"
+            optional: false
+        pft_csapw:
+            resolution: "annual"
+            optional: false
+        pft_nsapw:
+            resolution: "annual"
+            optional: false
+        pft_chawo:
+            resolution: "annual"
+            optional: false
+        pft_nhawo:
+            resolution: "annual"
+            optional: false
+        firec:
+            resolution: "annual"
+            optional: false
+        discharge:
+            resolution: "annual"
+            optional: false
+        wateramount:
+            resolution: "annual"
+            optional: false
+        harvestc:
+            resolution: "annual"
+            optional: false
+        sdate:
+            resolution: "annual"
+            optional: false
+        pft_harvestc:
+            resolution: "annual"
+            optional: false
+        pft_rharvestc:
+            resolution: "annual"
+            optional: false
+        cftfrac:
+            resolution: "annual"
+            optional: false
+        seasonality:
+            resolution: "annual"
+            optional: false
+        pet:
+            resolution: "annual"
+            optional: false
+        albedo:
+            resolution: "annual"
+            optional: false
+        maxthaw_depth:
+            resolution: "annual"
+            optional: false
+        perc:
+            resolution: "annual"
+            optional: false
+        soiltemp1:
+            resolution: "annual"
+            optional: false
+        soiltemp2:
+            resolution: "annual"
+            optional: false
+        soiltemp3:
+            resolution: "annual"
+            optional: false
+        soilc_layer:
+            resolution: "annual"
+            optional: false
+        agb:
+            resolution: "annual"
+            optional: false
+        agb_tree:
+            resolution: "annual"
+            optional: false
+        return_flow_b:
+            resolution: "annual"
+            optional: false
+        transp_b:
+            resolution: "annual"
+            optional: false
+        evap_b:
+            resolution: "annual"
+            optional: false
+        interc_b:
+            resolution: "annual"
+            optional: false
+        prod_turnover:
+            resolution: "annual"
+            optional: false
+        deforest_emis:
+            resolution: "annual"
+            optional: false
+        conv_loss_evap:
+            resolution: "annual"
+            optional: false
+        conv_loss_drain:
+            resolution: "annual"
+            optional: false
+        irrig:
+            resolution: "annual"
+            optional: false
+        harvestn:
+            resolution: "annual"
+            optional: false
+        pft_harvestn:
+            resolution: "annual"
+            optional: false
+        pft_rharvestn:
+            resolution: "annual"
+            optional: false
+        bnf_agr:
+            resolution: "annual"
+            optional: false
+        nfert_agr:
+            resolution: "annual"
+            optional: false
+        nmanure_agr:
+            resolution: "annual"
+            optional: false
+        ndepo_agr:
+            resolution: "annual"
+            optional: false
+        nmineralization_agr:
+            resolution: "annual"
+            optional: false
+        nimmobilization_agr:
+            resolution: "annual"
+            optional: false
+        nuptake_agr:
+            resolution: "annual"
+            optional: false
+        nleaching_agr:
+            resolution: "annual"
+            optional: false
+        n2o_denit_agr:
+            resolution: "annual"
+            optional: false
+        n2o_nit_agr:
+            resolution: "annual"
+            optional: false
+        nh3_agr:
+            resolution: "annual"
+            optional: false
+        n2_agr:
+            resolution: "annual"
+            optional: false
+        harvestn_agr:
+            resolution: "annual"
+            optional: false
+        harvestc_agr:
+            resolution: "annual"
+            optional: false
+        seedn_agr:
+            resolution: "annual"
+            optional: false
+        cellfrac_agr:
+            resolution: "annual"
+            optional: false
+        litfalln_agr:
+            resolution: "annual"
+            optional: false
+
+
+# ---------------------------------------------------------------------------- #
+# Allowed output file names for LPJmL output IDs
+# ---------------------------------------------------------------------------- #
+file_name:
+    grid: ["grid"]
+    discharge: ["discharge", "mdischarge"]
+    irrig: ["irrig", "mirrig"]
+    rootmoist:  ["rootmoist", "mrootmoist"]
+    swc: ["swc", "mswc"]
+    fpc: ["fpc"]
+    fpc_bft: ["fpc_bft"]
+    cftfrac: ["cftfrac"]
+    firec: ["firec", "mfirec"]
+    npp: ["npp", "mnpp"]
+    runoff: ["runoff", "mrunoff"]
+    transp: ["transp", "mtransp"]
+    vegc: ["vegc"]
+    firef: ["firef", "mfiref"]
+    rh: ["rh"]
+    harvestc: ["harvestc"]
+    evap: ["evap", "mevap"]
+    interc: ["interc", "minterc"]
+    soilc: ["soilc"]
+    litc: ["litc"]
+    vegn: ["vegn"]
+    soilnh4: ["soilnh4"]
+    soilno3: ["soilno3"]
+    leaching: ["leaching", "mleaching"]
+    n2o_denit: ["n2o_denit", "mn2o_denit"]
+    n2o_nit: ["n2o_nit", "mn2o_nit"]
+    n2_emis: ["n2_emis", "mn2_emis"]
+    bnf: ["bnf", "mbnf"]
+    n_volatilization: ["n_volatilization", "mn_volatilization"]
+    pft_npp: ["pft_npp"]
+    pft_harvestc: ["pft_harvestc"]
+    pft_rharvestc: ["pft_rharvestc"]
+    timber_harvestc: ["timber_harvestc"]
+    pft_lai: ["pft_lai", "mpft_lai"]
+    temp: ["temp", "mtemp"]
+    pet: ["pet", "mpet"]
+    prec: ["prec","mprec"]
