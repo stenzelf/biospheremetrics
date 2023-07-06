@@ -483,7 +483,12 @@ read_calc_biocol <- function( # nolint
   # NPPpi as ref
   biocol_perc_piref <- biocol / rowMeans(npp_ref) * 100
 
+  # take the abs of biocol and sum that up for overtime
+  biocol_abs_frac <- colSums(abs(biocol * cellarea)) / 
+                mean(colSums(npp_ref * cellarea))
+
   return(list(biocol_overtime = biocol_overtime,
+              biocol_abs_frac = biocol_abs_frac,
               biocol = biocol,
               biocol_perc = biocol_perc,
               biocol_overtime_perc_piref = biocol_overtime_perc_piref,
