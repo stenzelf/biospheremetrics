@@ -28,7 +28,7 @@ alternatively, you can also load it from source:
 devtools::load_all("/p/projects/open/Fabian/LPJbox/biospheremetrics_paper/")
 ```
 
-## Example
+## Scripts
 
 The `./scripts` folder contains scripts to be used on the PIK cluster to 
 compute longer timeseries with higher RAM demand.
@@ -40,8 +40,6 @@ The following application example calculates the metrics BioCol and EcoRisk:
 ```R
 library(devtools)
 library(lpjmlkit)
-library(sf)
-library(terra)
 
 devtools::load_all("/p/projects/open/Fabian/LPJbox/biospheremetrics_paper/")
 
@@ -51,7 +49,7 @@ out_folder <- "/p/projects/open/Fabian/Metrics/"
 lpj_input <- "/p/projects/lpjml/input/historical/"
 
 # read grid
-grid <- lpjmlkit::read_io(paste0(run_folder,"grid.bin.json"))
+grid <- lpjmlkit::read_io(paste0(run_folder,"grid.bin.json"))$data
 # calculate cell area
 lat <- grid[, , 2]
 lon <- grid[, , 1]
