@@ -51,7 +51,7 @@
 #'        timeline of maps for LUH2_v2h woodharvest 
 #'
 #' @return list data object containing BioCol and components as arrays: biocol, 
-#'         biocol_overtime, biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, 
+#'         biocol_overtime, biocol_overtime_piref, biocol_frac, biocol_piref, 
 #'         npp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
 #'         harvest_cft_overtime, npp_luc_overtime, rharvest_cft_overtime, 
 #'         fire_overtime, timber_harvest_overtime, harvest_cft, biocol_harvest,
@@ -301,7 +301,7 @@ read_calc_biocol <- function( files_scenario,
       wood_harvest_overtime
   }
   
-  biocol_overtime_perc_piref <- biocol_overtime/mean(colSums(npp_ref*cellarea)/10^15)*100
+  biocol_overtime_piref <- biocol_overtime/mean(colSums(npp_ref*cellarea)/10^15)
   biocol_luc <- npp_potential - npp
   # pick a PI window that excludes onset effects, but is reasonable early
   #biocol_luc_piref <- rep(rowMeans(npp_potential[,pi_window]),times = length(npp[1,])) - npp # not used, but handed over for checking comparison to pi_ref
@@ -313,16 +313,16 @@ read_calc_biocol <- function( files_scenario,
   }
   biocol <- biocol_harvest + biocol_luc
   biocol[abs(npp_potential)<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
-  biocol_perc <- biocol/npp_potential*100 #actual NPPpot as ref
+  biocol_frac <- biocol/npp_potential #actual NPPpot as ref
   
   
-  biocol_perc_piref <- biocol/rowMeans(npp_ref)*100 # NPPpi as ref
+  biocol_piref <- biocol/rowMeans(npp_ref) # NPPpi as ref
   
   # todo: return biocol variables for wrapper functions
 
-  return(list(biocol_overtime = biocol_overtime, biocol = biocol, biocol_perc = biocol_perc,
-              biocol_overtime_perc_piref = biocol_overtime_perc_piref, npp = npp,
-              biocol_perc_piref = biocol_perc_piref, npp_potential = npp_potential,
+  return(list(biocol_overtime = biocol_overtime, biocol = biocol, biocol_frac = biocol_frac,
+              biocol_overtime_piref = biocol_overtime_piref, npp = npp,
+              biocol_piref = biocol_piref, npp_potential = npp_potential,
               npp_act_overtime = npp_act_overtime, npp_pot_overtime = npp_pot_overtime,
               npp_eco_overtime = npp_eco_overtime, npp_ref = npp_ref,
               harvest_cft_overtime = harvest_cft_overtime, npp_luc_overtime = npp_luc_overtime,
@@ -373,7 +373,7 @@ read_calc_biocol <- function( files_scenario,
 #'        timeline of maps for LUH2_v2h woodharvest 
 #'
 #' @return list data object containing BioCol and components as arrays: biocol, 
-#'         biocol_overtime, biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, 
+#'         biocol_overtime, biocol_overtime_piref, biocol_frac, biocol_piref, 
 #'         npp_potential, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
 #'         harvest_cft_overtime, npp_luc_overtime, rharvest_cft_overtime, 
 #'         fire_overtime, timber_harvest_overtime, harvest_cft, biocol_harvest,
@@ -462,7 +462,7 @@ calcBioCol <- function( inFol_lu,
 #' @param biocolData biocol data list object (returned from calcBioCol) containing
 #'                 biocol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
 #'                 npp_bioenergy_overtime, biocol_overtime, npp_harv_overtime,
-#'                 biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, npp
+#'                 biocol_overtime_piref, biocol_frac, biocol_piref, npp
 #'                 all in GtC
 #' @param outFol folder to write into
 #' @param plotyears range of years to plot over time
@@ -505,14 +505,14 @@ plotBioCol <- function(biocolData, outFol, plotyears, minVal, maxVal, legendpos,
   plotBioColovertime(biocolData = biocolData, file = paste0(outFol,"BioCol_overtime_LPJmL_",plotyears[1],"-",plotyears[2],".png"),
                   firstyr = startyr, plotyrs = plotyears, minVal = minVal, ref = "pi",
                   legendpos = legendpos, maxVal = maxVal, eps = eps, highlightyrs = highlightyear)
-  plotBioColmap(data = rowMeans(biocolData$biocol_perc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-               file = paste0(outFol,"BioCol_LPJmL_",mapyear,".png"),legendtitle = "% of NPPpot", eps = eps,
-               title = "", #paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer) 
+  plotBioColmap(data = rowMeans(biocolData$biocol_frac[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+               file = paste0(outFol,"BioCol_LPJmL_",mapyear,".png"),legendtitle = "fraction of NPPpot", eps = eps,
+               title = "", #paste0("biocol_frac ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer) 
                )
-  plotBioColmap(data = rowMeans(biocolData$biocol_perc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-               file = paste0(outFol,"BioCol_perc_piref_LPJmL_",mapyear,".png"),
-               title = "",# paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),
-               legendtitle = "% of NPPref", eps = eps)
+  plotBioColmap(data = rowMeans(biocolData$biocol_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+               file = paste0(outFol,"Biocol_piref_LPJmL_",mapyear,".png"),
+               title = "",# paste0("biocol_frac ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),
+               legendtitle = "fraction of NPPref", eps = eps)
   #lpjmliotools::plotGlobalMan(data = rowMeans(biocolData$npp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
   #              file = paste0(outFol,"NPP_LPJmL_",mapyear,".png"), brks = seq(0,1000,100),
   #              palette = c("orangered4","orangered","orange","gold","greenyellow","limegreen","green4","darkcyan","darkslategrey","navy"),
@@ -542,12 +542,19 @@ plotBioCol <- function(biocolData, outFol, plotyears, minVal, maxVal, legendpos,
 #' \dontrun{
 #' }
 #' @export
-plotBioColmap <- function(data, file, title = "", legendtitle = "", zeroThreshold = 0.1, eps = FALSE) {
+plotBioColmap <- function(data, file, title = "", legendtitle = "", 
+                       zeroThreshold = 0.001, eps = FALSE, haberllegend = FALSE) {
   outFol <- dirname(file)
   dir.create(file.path(outFol),showWarnings = F)
-  brks <- c(-400,-200,-100,-50,-zeroThreshold,zeroThreshold,10,20,30,40,50,60,70,80,100)
-  classes <- c("<-200","-200 - -100","-100 - -50",paste0("-50 - -",zeroThreshold),paste0("-",zeroThreshold," - ",zeroThreshold),paste0(zeroThreshold," - 10"),"10 - 20","20 - 30","30 - 40","40 - 50","50 - 60","60 - 70","70 - 80","80 - 100")
-  palette <- c("navy","royalblue3","royalblue1","skyblue1","grey80","yellowgreen","greenyellow","yellow","gold","orange","orangered","orangered4","brown4","black")
+  if (haberllegend){
+    brks <- c(-400,-200,-100,-50,-zeroThreshold,zeroThreshold,10,20,30,40,50,60,70,80,100)
+    classes <- c("<-200","-200 - -100","-100 - -50",paste0("-50 - -",zeroThreshold),paste0("-",zeroThreshold," - ",zeroThreshold),paste0(zeroThreshold," - 10"),"10 - 20","20 - 30","30 - 40","40 - 50","50 - 60","60 - 70","70 - 80","80 - 100")
+    palette <- c("navy","royalblue3","royalblue1","skyblue1","grey80","yellowgreen","greenyellow","yellow","gold","orange","orangered","orangered4","brown4","black")
+  } else{
+    brks <- c(-400,seq(-100,-10,10),-zeroThreshold,zeroThreshold,seq(10,100,10),400)/100
+    classes <- c("<-1","-1 - -0.9","-0.9 - -0.8","-0.8 - -0.7","-0.7 - -0.6","-0.6 - -0.5","-0.5 - -0.4","-0.4 - -0.3","-0.3 - -0.2","-0.2 - -0.1",paste("-0.1 - -",zeroThreshold),paste("-",zeroThreshold," - ",zeroThreshold),paste(zeroThreshold," - 0.1"),"0.1 - 0.2","0.2 - 0.3","0.3 - 0.4","0.4 - 0.5","0.5 - 0.6","0.6 - 0.7","0.7 - 0.8","0.8 - 0.9","0.9 - 1",">1")    
+    palette <- colorRampPalette(rev(RColorBrewer::brewer.pal(11,"RdBu")))(length(brks)-1)
+  }
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
   if (eps) {
@@ -578,7 +585,7 @@ plotBioColmap <- function(data, file, title = "", legendtitle = "", zeroThreshol
 #' @param biocolData biocol data list object (returned from calcBioCol) containing
 #'                  biocol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
 #'                  npp_bioenergy_overtime, biocol_overtime, npp_harv_overtime,
-#'                  biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, npp
+#'                  biocol_overtime_piref, biocol_frac, biocol_piref, npp
 #'                 all in GtC
 #' @param file character string for location/file to save plot to
 #' @param firstyr first year of biocol object
@@ -589,7 +596,7 @@ plotBioColmap <- function(data, file, title = "", legendtitle = "", zeroThreshol
 #' @param legendpos position of legend (default: "topleft")
 #' @param highlightyrs year(s) that should be highlighted in overtime plot (default: 2000)
 #' @param ref reference period for biocol ("pi" or "act"), to either use
-#'        biocolData$biocol_overtime_perc_piref or biocolData$biocol_overtime
+#'        biocolData$biocol_overtime_piref or biocolData$biocol_overtime
 #' @param eps write plots as eps, instead of png (default = FALSE)
 #'
 #' @return none
@@ -630,14 +637,14 @@ plotBioColovertime <- function(biocolData, file, firstyr, plotyrs, highlightyrs 
   
   par(bty="n",oma=c(0,0,0,0),mar=c(4,5,1,3), new = T)
   if (ref == "pi") {
-    plot(x=seq(firstyr,lastyr,1),y=biocolData$biocol_overtime_perc_piref,ylab="",xlab="",xlim=plotyrs,
-         ylim=c(0, 35),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
+    plot(x=seq(firstyr,lastyr,1),y=biocolData$biocol_overtime_piref,ylab="",xlab="",xlim=plotyrs,
+         ylim=c(0, 0.35),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
   } else if (ref == "act") {
     plot(x=seq(firstyr,lastyr,1),y=biocolData$biocol_overtime,ylab="",xlab="",xlim=plotyrs,
-         ylim=c(0, 35),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
+         ylim=c(0, 0.35),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
   }else stop(paste0("Unknown value for parameter ref: ",ref," - Aborting."))
   axis(side = 4, col = colz[6],col.axis = colz[6])
-  mtext(text = "%", col=colz[6], side = 4,line = 2)
+  mtext(text = "fraction of piref", col=colz[6], side = 4,line = 2)
 
   if (!is.null(highlightyrs)) {
     for (y in highlightyrs) {

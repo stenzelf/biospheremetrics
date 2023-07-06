@@ -94,7 +94,6 @@ ecoriskWrapper <- function(folderRef,
     litc = paste0(folderScen,varnames["litc","outname"]),
     swc = paste0(folderScen,varnames["swc","outname"]),
     vegn = paste0(folderScen,varnames["vegn","outname"]),
-    
     soilnh4 = paste0(folderScen,varnames["soilnh4","outname"]),
     soilno3 = paste0(folderScen,varnames["soilno3","outname"]),
     leaching = paste0(folderScen,varnames["leaching","outname"]),
