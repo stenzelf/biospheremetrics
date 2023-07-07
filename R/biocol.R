@@ -53,12 +53,12 @@
 #'        timeline of maps for LUH2_v2h woodharvest
 #'
 #' @return list data object containing BioCol and components as arrays: biocol,
-#'         biocol_overtime, biocol_overtime_perc_piref, biocol_perc,
-#'         biocol_perc_piref, npp_potential, npp_act_overtime, npp_pot_overtime,
-#'         npp_eco_overtime, harvest_cft_overtime, npp_luc_overtime,
-#'         rharvest_cft_overtime, fire_overtime, timber_harvest_overtime,
-#'         harvest_cft, biocol_harvest, grassland_scaling_factor_cellwise,
-#'         biocol_luc, biocol_luc_piref
+#'         biocol_overtime, biocol_overtime_piref, biocol_frac, npp_potential,
+#'         biocol_overtime_abs_frac_piref, biocol_frac_piref, npp_act_overtime,
+#'         npp_pot_overtime, npp_eco_overtime, npp_ref, harvest_cft_overtime,
+#'         npp_luc_overtime, rharvest_cft_overtime, fire_overtime,
+#'         timber_harvest_overtime, harvest_cft, rharvest_cft,
+#'         wood_harvest_overtime, biocol_harvest, biocol_luc
 #'
 #' @export
 read_calc_biocol <- function( # nolint
@@ -456,8 +456,11 @@ read_calc_biocol <- function( # nolint
       wood_harvest_overtime
   }
 
-  biocol_overtime_perc_piref <- (
-    biocol_overtime / mean(colSums(npp_ref * cellarea) / 10^15) * 100
+  biocol_overtime_frac_piref <- (
+    biocol_overtime / mean(colSums(npp_ref * cellarea) / 10^15)
+  )
+  biocol_overtime_frac <- (
+    biocol_overtime / npp_pot_overtime 
   )
   biocol_luc <- npp_potential - npp
   # pick a PI window that excludes onset effects, but is reasonable early
@@ -478,22 +481,23 @@ read_calc_biocol <- function( # nolint
   # set to 0 below lower threshold of NPP
   biocol[abs(npp_potential) < npp_threshold] <- 0
   # actual NPPpot as ref
-  biocol_perc <- biocol / npp_potential * 100
+  biocol_frac <- biocol / npp_potential
 
   # NPPpi as ref
-  biocol_perc_piref <- biocol / rowMeans(npp_ref) * 100
+  biocol_frac_piref <- biocol / rowMeans(npp_ref)
 
   # take the abs of biocol and sum that up for overtime
-  biocol_abs_frac <- colSums(abs(biocol * cellarea)) / 
+  biocol_overtime_abs_frac_piref <- colSums(abs(biocol * cellarea)) / 
                 mean(colSums(npp_ref * cellarea))
 
-  return(list(biocol_overtime = biocol_overtime,
-              biocol_abs_frac = biocol_abs_frac,
+  return(list(biocol_overtime = biocol_overtime, #absolute 
+              biocol_overtime_abs_frac_piref = biocol_overtime_abs_frac_piref,
+              biocol_overtime_frac_piref = biocol_overtime_frac_piref,
+              biocol_overtime_frac = biocol_overtime_frac,
               biocol = biocol,
-              biocol_perc = biocol_perc,
-              biocol_overtime_perc_piref = biocol_overtime_perc_piref,
+              biocol_frac = biocol_frac,
               npp = npp,
-              biocol_perc_piref = biocol_perc_piref,
+              biocol_frac_piref = biocol_frac_piref,
               npp_potential = npp_potential,
               npp_act_overtime = npp_act_overtime,
               npp_pot_overtime = npp_pot_overtime,
@@ -554,12 +558,12 @@ read_calc_biocol <- function( # nolint
 #'        timeline of maps for LUH2_v2h woodharvest
 #'
 #' @return list data object containing BioCol and components as arrays: biocol,
-#'         biocol_overtime, biocol_overtime_perc_piref, biocol_perc,
-#'         biocol_perc_piref, npp_potential, npp_act_overtime, npp_pot_overtime,
-#'         npp_eco_overtime, harvest_cft_overtime, npp_luc_overtime,
-#'         rharvest_cft_overtime, fire_overtime, timber_harvest_overtime,
-#'         harvest_cft, biocol_harvest, grassland_scaling_factor_cellwise,
-#'         biocol_luc, biocol_luc_piref
+#'         biocol_overtime, biocol_overtime_piref, biocol_frac, npp_potential,
+#'         biocol_overtime_abs_frac_piref, biocol_frac_piref, npp_act_overtime,
+#'         npp_pot_overtime, npp_eco_overtime, npp_ref, harvest_cft_overtime,
+#'         npp_luc_overtime, rharvest_cft_overtime, fire_overtime,
+#'         timber_harvest_overtime, harvest_cft, rharvest_cft,
+#'         wood_harvest_overtime, biocol_harvest, biocol_luc
 #'
 #' @export
 calc_biocol <- function(
@@ -766,26 +770,37 @@ plot_biocol <- function(
     highlight_years = highlightyear
   )
 
-  plot_biocol_map(
+  plot_global(
     data = rowMeans(
-      biocol_data$biocol_perc[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_frac[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
     ),
-    file = paste0(path_write, "BioCol_LPJmL_", mapyear, ".png"),
-    legendtitle = "% of NPPpot",
-    eps = eps,
-    title = "",
-    # paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer)
+    file = paste0(path_write, "BioCol_frac_LPJmL_", mapyear, ".png"),
+    legendtitle = "frac of NPPpot",
+    type = "lin",
+    min=-1,
+    max=1,
+    col_pos = "Reds",
+    col_neg = "Blues",
+    leg_yes = TRUE,
+    eps = FALSE,
+    n_legend_ticks = 11
   )
 
-  plot_biocol_map(
+  plot_global(
     data = rowMeans(
-      biocol_data$biocol_perc_piref[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_frac_piref[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
     ),
-    file = paste0(path_write, "BioCol_perc_piref_LPJmL_", mapyear, ".png"),
+    file = paste0(path_write, "BioCol_frac_piref_LPJmL_", mapyear, ".png"),
     title = "",
-    # paste0("BioCol_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),
-    legendtitle = "% of NPPref",
-    eps = eps
+    legendtitle = "frac of NPPref",
+    type = "lin",
+    min=-1,
+    max=1,
+    col_pos = "Reds",
+    col_neg = "Blues",
+    leg_yes = TRUE,
+    eps = FALSE,
+    n_legend_ticks = 11
   )
 
   plot_global(
@@ -825,23 +840,39 @@ plot_biocol_map <- function(
   data, file,
   title = "",
   legendtitle = "",
-  zero_threshold = 0.1,
-  eps = FALSE
+  zero_threshold = 0.001,
+  eps = FALSE,
+  haberllegend = FALSE
 ) {
   path_write <- dirname(file)
   dir.create(file.path(path_write), showWarnings = FALSE)
 
-  brks <- c(-400, -200, -100, -50, -zero_threshold,
-            zero_threshold, 10, 20, 30, 40, 50, 60, 70, 80, 100)
-  classes <- c("<-200", "-200 - -100", "-100 - -50",
-               paste0("-50 - -", zero_threshold),
-               paste0("-", zero_threshold, " - ", zero_threshold),
-               paste0(zero_threshold, " - 10"), "10 - 20", "20 - 30", "30 - 40",
-               "40 - 50", "50 - 60", "60 - 70", "70 - 80", "80 - 100")
-  palette <- c("navy", "royalblue3", "royalblue1", "skyblue1",
-               "grey80", "yellowgreen", "greenyellow", "yellow",
-               "gold", "orange", "orangered", "orangered4", "brown4",
-               "black")
+  if (haberllegend){
+    brks <- c(-400, -200, -100, -50, -zeroThreshold,
+              zeroThreshold, 10, 20, 30, 40, 50, 60, 70, 80, 100)
+    classes <- c("<-200", "-200 - -100", "-100 - -50",
+                 paste0("-50 - -",zeroThreshold),
+                 paste0("-",zeroThreshold," - ",zeroThreshold),
+                 paste0(zeroThreshold," - 10"), "10 - 20", "20 - 30", "30 - 40", 
+                 "40 - 50", "50 - 60", "60 - 70", "70 - 80", "80 - 100")
+    palette <- c("navy", "royalblue3", "royalblue1", "skyblue1",
+                 "grey80", "yellowgreen", "greenyellow", "yellow",
+                 "gold", "orange", "orangered", "orangered4",
+                 "brown4", "black")
+  } else{
+    brks <- c(-400,seq(-100,-10,10),-zeroThreshold,
+              zeroThreshold,seq(10,100,10),400)/100
+    classes <- c("<-1", "-1 - -0.9", "-0.9 - -0.8", "-0.8 - -0.7", 
+                 "-0.7 - -0.6", "-0.6 - -0.5", "-0.5 - -0.4", "-0.4 - -0.3", 
+                 "-0.3 - -0.2", "-0.2 - -0.1",paste("-0.1 - -",zeroThreshold),
+                 paste("-",zeroThreshold," - ",zeroThreshold),
+                 paste(zeroThreshold," - 0.1"),"0.1 - 0.2", "0.2 - 0.3", 
+                 "0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
+                 "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1", ">1")    
+    palette <- grDevices::colorRampPalette(rev(
+               RColorBrewer::brewer.pal(11,"RdBu")))(length(brks)-1)
+  }
+
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
 
@@ -997,11 +1028,11 @@ plot_biocol_ts <- function(
   if (ref == "pi") {
     graphics::plot(
       x = seq(first_year, last_year, 1),
-      y = biocol_data$biocol_overtime_perc_piref,
+      y = biocol_data$biocol_overtime_abs_frac_piref,
       ylab = "",
       xlab = "",
       xlim = plot_years,
-      ylim = c(0, 35),
+      ylim = c(0, 0.4),
       type = "l",
       col = colz[6],
       xaxs = "i",
@@ -1015,7 +1046,7 @@ plot_biocol_ts <- function(
       ylab = "",
       xlab = "",
       xlim = plot_years,
-      ylim = c(0, 35),
+      ylim = c(0, 0.4),
       type = "l",
       col = colz[6],
       xaxs = "i",
@@ -1027,7 +1058,7 @@ plot_biocol_ts <- function(
   }
 
   graphics::axis(side = 4, col = colz[6], col.axis = colz[6])
-  graphics::mtext(text = "%", col = colz[6], side = 4, line = 2)
+  graphics::mtext(text = "fraction of NPPref", col = colz[6], side = 4, line = 2)
 
   if (!is.null(highlight_years)) {
     for (y in highlight_years) {
@@ -1039,7 +1070,7 @@ plot_biocol_ts <- function(
     legendpos,
     legend = c(
       "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "HANPP",
-      "BioCol [% NPPpi]", "harvestc", "rharvest", "firec", "timber_harvest",
+      "BioCol [frac NPPref]", "harvestc", "rharvest", "firec", "timber_harvest",
       "wood_harvest"
     ), col = colz, lty = 1, cex = 1)
   grDevices::dev.off()

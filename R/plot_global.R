@@ -58,7 +58,8 @@ plot_global <- function(data,
                         legendtitle = "",
                         leg_yes = TRUE,
                         only_pos = FALSE,
-                        eps = FALSE) {
+                        eps = FALSE,
+                        n_legend_ticks = 20) {
   if (eps) {
     file <- strsplit(file, ".", fixed = TRUE)[[1]]
     file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
@@ -76,7 +77,7 @@ plot_global <- function(data,
     data = data, title = title, pow2max = pow2max, type = type,
     pow2min = pow2min, min = min, max = max, col_pos = col_pos,
     col_neg = col_neg, legendtitle = legendtitle, leg_yes = leg_yes,
-    only_pos = only_pos
+    only_pos = only_pos, n_legend_ticks = n_legend_ticks
   )
   grDevices::dev.off()
 }
@@ -136,7 +137,9 @@ plot_global_to_screen <- function(data,
                                   col_neg = "YlOrRd",
                                   legendtitle = "",
                                   leg_yes = TRUE,
-                                  only_pos = FALSE) {
+                                  only_pos = FALSE,
+                                  n_legend_ticks = 20,
+                                  min_0 = 0.01) {
   if (only_pos) {
     if (type == "exp") {
       if (is.null(pow2max) | is.null(pow2min)) {
@@ -151,7 +154,7 @@ plot_global_to_screen <- function(data,
       if (is.null(max) | is.null(min)) {
         stop("For linear legend, min and max need to be specified.")
       }
-      legendticks <- seq(min, max, length.out = 10)
+      legendticks <- seq(min, max, length.out = n_legend_ticks)
       brks <- legendticks
     }
     palette <- c(
@@ -172,7 +175,12 @@ plot_global_to_screen <- function(data,
       if (is.null(max) | is.null(min)) {
         stop("For linear legend, min and max need to be specified.")
       }
-      legendticks <- seq(min, max, length.out = 20)
+      if (n_legend_ticks%%2 == 0) {
+        n_legend_ticks <- n_legend_ticks + 1
+      }
+      legendticks <- c( seq(min, 0, length.out = n_legend_ticks),
+                        seq(0, max, length.out = n_legend_ticks) )
+      legendticks[c(n_legend_ticks,(n_legend_ticks+1))] <- c(-min_0,min_0)
       brks <- legendticks
     }
     palette <- c(
