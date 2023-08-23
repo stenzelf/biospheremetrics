@@ -682,6 +682,7 @@ calc_biocol <- function(
 #' @param max_val y-axis maximum value for plot over time
 #' @param legendpos position of legend
 #' @param start_year first year of biocol_data object
+#' @param details show all harvest components or not
 #' @param mapyear year to plot biocol map for
 #' @param mapyear_buffer +- years around mapyear to average biocol
 #' (make sure these years exist in biocol_data)
@@ -697,6 +698,7 @@ plot_biocol <- function(
   min_val,
   max_val,
   legendpos,
+  details = FALSE,
   start_year,
   mapyear,
   mapyear_buffer = 5,
@@ -705,7 +707,7 @@ plot_biocol <- function(
 ) {
   mapindex <- mapyear - start_year
   print(paste0("Plotting BioCol figures"))
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   plot_global(
     data = rowMeans(
@@ -765,6 +767,7 @@ plot_biocol <- function(
     min_val = min_val,
     ref = "pi",
     legendpos = legendpos,
+    details = details,
     max_val = max_val,
     eps = eps,
     highlight_years = highlightyear
@@ -845,7 +848,7 @@ plot_biocol_map <- function(
   haberllegend = FALSE
 ) {
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (haberllegend){
     brks <- c(-400, -200, -100, -50, -zeroThreshold,
@@ -921,6 +924,7 @@ plot_biocol_map <- function(
 #' @param legendpos position of legend (default: "topleft")
 #' @param highlight_years year(s) that should be highlighted in overtime plot
 #' (default: 2000)
+#' @param details show all harvest components or not
 #' @param ref reference period for biocol ("pi" or "act"), to either use
 #'        biocol_data$biocol_overtime_perc_piref or biocol_data$biocol_overtime
 #' @param eps write plots as eps, instead of png (default = FALSE)
@@ -934,6 +938,7 @@ plot_biocol_ts <- function(
   first_year,
   plot_years,
   highlight_years = 2000,
+  details = FALSE,
   min_val = 0,
   max_val = 100,
   legendpos = "topleft",
@@ -942,7 +947,7 @@ plot_biocol_ts <- function(
   ref = "pi"
 ) {
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   last_year <- first_year + length(biocol_data$npp_act_overtime) - 1
   colz <- c("slateblue", "gold", "green3", "darkorange", "black",
@@ -1000,30 +1005,31 @@ plot_biocol_ts <- function(
     type = "l",
     col = colz[7]
   )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$rharvest_cft_overtime,
-    type = "l",
-    col = colz[8]
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$fire_overtime,
-    type = "l", col = colz[9]
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$timber_harvest_overtime,
-    type = "l",
-    col = colz[10]
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$wood_harvest_overtime,
-    type = "l",
-    col = colz[11]
-  )
-
+  if (details) {
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$rharvest_cft_overtime,
+      type = "l",
+      col = colz[8]
+    )
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$fire_overtime,
+      type = "l", col = colz[9]
+    )
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$timber_harvest_overtime,
+      type = "l",
+      col = colz[10]
+    )
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$wood_harvest_overtime,
+      type = "l",
+      col = colz[11]
+    )
+  }
   graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(4, 5, 1, 3), new = TRUE)
   if (ref == "pi") {
     graphics::plot(
@@ -1065,7 +1071,7 @@ plot_biocol_ts <- function(
       lines(x = c(y, y), y = c(min_val, max_val), col = "grey40")
     }
   }
-
+  if (details) {
   graphics::legend(
     legendpos,
     legend = c(
@@ -1073,5 +1079,13 @@ plot_biocol_ts <- function(
       "BioCol [frac NPPref]", "harvestc", "rharvest", "firec", "timber_harvest",
       "wood_harvest"
     ), col = colz, lty = 1, cex = 1)
+  } else {
+      graphics::legend(
+    legendpos,
+    legend = c(
+      "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "HANPP",
+      "BioCol [frac NPPref]", "harvestc"
+    ), col = colz[1:7], lty = 1, cex = 1)
+  }
   grDevices::dev.off()
 }

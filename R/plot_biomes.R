@@ -92,8 +92,7 @@ plot_biomes <- function(biome_data,
   brk <- seq(min(biome_mapping$id) - 0.5,
              max(biome_mapping$id, na.rm = TRUE) + 0.5, 1)
   graphics::par(mar = c(4, 0, 0, 0), xpd = TRUE, bg = bg_col)
-
-  graphics::image(biomes_lpjml, asp = 1, xaxt = "n", yaxt = "n",
+  raster::image(biomes_lpjml, asp = 1, xaxt = "n", yaxt = "n",
                   xlab = "", ylab = "", col = biome_cols, breaks = brk,
                   lwd = 0.1, bty = "n")
   raster::plot(countries, add = TRUE, lwd = 0.3,

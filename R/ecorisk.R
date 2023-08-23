@@ -55,30 +55,31 @@ ecorisk_wrapper <- function(path_ref,
     print("variable name list not provided, using standard list, which might
           not be applicable for this case ...")
     varnames <- data.frame(
-      row.names = c(
-        "grid", "fpc", "fpc_bft", "cftfrac", "firec", "rh_harvest", "npp",
-        "evapinterc", "runoff", "transp", "soillitc", "vegc", "swcsum", "firef",
-        "rh", "harvestc", "rharvestc", "pft_harvestc", "pft_rharvestc", "evap",
-        "interc", "discharge", "soilc", "litc", "swc", "vegn", "soilnh4",
-        "soilno3", "leaching", "n2o_denit", "n2o_nit", "n2o_denit", "n2_emis",
-        "bnf", "n_volatilization"
-      ),
-      outname = c(
-        "grid.bin", "fpc.bin", "fpc_bft.bin", "cftfrac.bin", "firec.bin",
-        "rh_harvest.bin", "npp.bin", "evapinterc.bin", "runoff.bin",
-        "transp.bin", "soillitc.bin", "vegc.bin", "swcsum.bin", "firef.bin",
-        "rh.bin", "flux_harvest.bin", "flux_rharvest.bin",
-        "pft_harvest.pft.bin", "pft_rharvest.pft.bin", "evap.bin", "interc.bin",
-        "discharge.bin", "soilc.bin", "litc.bin", "swc.bin", "vegn.bin",
-        "soilnh4.bin", "soilno3.bin", "leaching.bin", "n2o_denit.bin",
-        "n2o_nit.bin", "n2o_denit.bin", "n2_emis.bin", "bnf.bin",
-        "n_volatilization.bin"
-      ),
-      timestep = c(
-        "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y",
-        "Y", "Y", "Y", "Y", "Y", "Y", "Y", , "Y", "Y", "Y", "Y", , "Y", "Y",
-        "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y"
-      )
+        row.names = c("grid","fpc", "fpc_bft", "cftfrac", "firec", "npp", "runoff",
+                "transp", "vegc", "firef", "rh", "harvestc", "rharvestc",
+                "pft_harvestc", "pft_rharvestc", "evap", "interc", "discharge",
+                "soilc", "litc", "swc", "vegn", "soilnh4", "soilno3",
+                "leaching", "n2o_denit", "n2o_nit", "n2_emis", "bnf",
+                "n_volatilization", "gpp", "res_storage", "lakevol", "ndepos",
+                "rd", "prec", "terr_area", "irrig", "nfert_agr", "nmanure_agr", 
+                "firen", "harvestn", "rivervol", "irrig_stor"),
+        outname = c("grid.bin.json", "fpc.bin.json", "fpc_bft.bin.json",
+              "cftfrac.bin.json", "firec.bin.json", "mnpp.bin.json",
+              "mrunoff.bin.json", "mtransp.bin.json", "vegc.bin.json",
+              "firef.bin.json", "mrh.bin.json", "harvestc.bin.json",
+              "rharvestc.bin.json", "pft_harvest.pft.bin.json",
+              "pft_rharvest.pft.bin.json", "mevap.bin.json",
+              "minterc.bin.json", "mdischarge.bin.json", "soilc.bin.json",
+              "litc.bin.json", "mswc.bin.json", "vegn.bin.json",
+              "soilnh4.bin.json", "soilno3.bin.json", "mleaching.bin.json",
+              "mn2o_denit.bin.json", "mn2o_nit.bin.json", "mn2_emis.bin.json",
+              "mbnf.bin.json", "mn_volatilization.bin.json", "mgpp.bin.json", 
+              "res_storage.bin.json", "lakevol.bin.json", "ndepos.bin.json", 
+              "rd.bin.json","mprec.bin.json", "terr_area.bin.json", 
+              "mirrig.bin.json", "nfert_agr.bin.json", "nmanure_agr.bin.json",
+              "firen.bin.json","harvestn.bin.json", "rivervol.bin.json", 
+              "irrig_stor.bin.json"),
+        timestep = rep("Y",44)
     )
   }
 
@@ -118,7 +119,23 @@ ecorisk_wrapper <- function(path_ref,
     n2o_nit = paste0(path_scen, varnames["n2o_nit", "outname"]),
     n2_emis = paste0(path_scen, varnames["n2_emis", "outname"]),
     bnf = paste0(path_scen, varnames["bnf", "outname"]),
-    n_volatilization = paste0(path_scen, varnames["n_volatilization", "outname"])
+    n_volatilization = paste0(path_scen, varnames["n_volatilization", "outname"]),
+    gpp = paste0(path_scen, varnames["gpp", "outname"]),
+    res_storage = paste0(path_scen, varnames["res_storage", "outname"]),
+    lakevol = paste0(path_scen, varnames["lakevol", "outname"]),
+    ndepos = paste0(path_scen, varnames["ndepos", "outname"]),
+    rd = paste0(path_scen, varnames["rd", "outname"]),
+    prec = paste0(path_scen, varnames["prec", "outname"]),
+    terr_area = paste0(path_scen, varnames["terr_area", "outname"]),
+    irrig = paste0(path_scen, varnames["irrig", "outname"]),
+    nfert_agr = paste0(path_scen, varnames["nfert_agr", "outname"]),
+    nmanure_agr = paste0(path_scen, varnames["nmanure_agr", "outname"]),
+    ndepos = paste0(path_scen, varnames["ndepos", "outname"]),
+    firen = paste0(path_scen, varnames["firen", "outname"]),
+    harvestn = paste0(path_scen, varnames["harvestn", "outname"]),
+    irrig_stor = paste0(path_scen, varnames["irrig_stor", "outname"]),
+    rivervol = paste0(path_scen, varnames["rivervol", "outname"])
+    
   )
   files_reference <- list(
     grid = paste0(path_ref, varnames["grid", "outname"]),
@@ -150,7 +167,23 @@ ecorisk_wrapper <- function(path_ref,
     n2o_nit = paste0(path_ref, varnames["n2o_nit", "outname"]),
     n2_emis = paste0(path_ref, varnames["n2_emis", "outname"]),
     bnf = paste0(path_ref, varnames["bnf", "outname"]),
-    n_volatilization = paste0(path_ref, varnames["n_volatilization", "outname"])
+    n_volatilization = paste0(path_ref, varnames["n_volatilization", "outname"]),
+    gpp = paste0(path_ref, varnames["gpp", "outname"]),
+    res_storage = paste0(path_ref, varnames["res_storage", "outname"]),
+    lakevol = paste0(path_ref, varnames["lakevol", "outname"]),
+    ndepos = paste0(path_ref, varnames["ndepos", "outname"]),
+    rd = paste0(path_ref, varnames["rd", "outname"]),
+    prec = paste0(path_ref, varnames["prec", "outname"]),
+    terr_area = paste0(path_ref, varnames["terr_area", "outname"]),
+    irrig = paste0(path_ref, varnames["irrig", "outname"]),
+    nfert_agr = paste0(path_ref, varnames["nfert_agr", "outname"]),
+    nmanure_agr = paste0(path_ref, varnames["nmanure_agr", "outname"]),
+    ndepos = paste0(path_ref, varnames["ndepos", "outname"]),
+    firen = paste0(path_ref, varnames["firen", "outname"]),
+    harvestn = paste0(path_ref, varnames["harvestn", "outname"]),
+    irrig_stor = paste0(path_ref, varnames["irrig_stor", "outname"]),
+    rivervol = paste0(path_ref, varnames["rivervol", "outname"])
+
   )
 
   if (overtime && window != nyears) stop("Overtime is enabled, but window \
@@ -355,15 +388,20 @@ calc_ecorisk <- function(fpc_ref,
   #
   ####
   ############## calc EcoRisk components ################
-  # variable names for the state vector
-  # 1:3 carbon fluxes
-  # 4:6 water fluxes
-  # 7:8 carbon pools/stocks,
-  # 9:10 water pools
-  # 11 additional variables for global/local difference, but not included in
-  #   stocks/fluxes
-  # 12:13 nitrogen pools/stocks
-  # 14:16 nitrogen fluxes
+  # dimensions in the state vector
+  # 1 "vegetation_carbon_pool"     
+  # 2 "soil_carbon_pool"          
+  # 3 "carbon_influx"              
+  # 4 "carbon_outflux"            
+  # 5 "soil_water_pool"            
+  # 6 "surface_water_pool"        
+  # 7 "water_influx"               
+  # 8 "water_outflux"             
+  # 9 "other"                      
+  # 10 "vegetation_nitrogen_pool"  
+  # 11 "soil_mineral_nitrogen_pool" 
+  # 12 "nitrogen_influx"           
+  # 13 "nitrogen_outflux"
 
   delta <- vegetation_structure_change * s_change_to_var_ratio(
     vegetation_structure_change,
@@ -390,34 +428,33 @@ calc_ecorisk <- function(fpc_ref,
   ) # ecosystem balance
 
   if (dimensions_only_local == TRUE) {
-
-    # carbon fluxes (local change)
-    cf <- calc_component(
-      ref = state_ref[, , 1:3],
-      scen = state_scen[, , 1:3],
-      local = TRUE,
-      cell_area = cell_area)
-
     # carbon stocks (local change)
     cs <- calc_component(
-      ref = state_ref[, , 7:8],
-      scen = state_scen[, , 7:8],
+      ref = state_ref[, , c("vegetation_carbon_pool","soil_carbon_pool")],
+      scen = state_scen[, , c("vegetation_carbon_pool","soil_carbon_pool")],
       local = TRUE,
       cell_area = cell_area
     )
 
+    # carbon fluxes (local change)
+    cf <- calc_component(
+      ref = state_ref[, , c("carbon_influx","carbon_outflux")],
+      scen = state_scen[, , c("carbon_influx","carbon_outflux")],
+      local = TRUE,
+      cell_area = cell_area)
+
     # water fluxes (local change)
     wf <- calc_component(
-      ref = state_ref[, , 4:6],
-      scen = state_scen[, , 4:6],
+      ref = state_ref[, , c("water_influx","water_outflux")],
+      scen = state_scen[, , c("water_influx","water_outflux")],
       local = TRUE,
       cell_area = cell_area
     ) 
 
     # water pools (local change)
     ws <- calc_component(
-      ref = state_ref[, , 9:10],
-      scen = state_scen[, , 9:10],
+      ref = state_ref[, , c("soil_water_pool","surface_water_pool")],
+      scen = state_scen[, , c("soil_water_pool","surface_water_pool")],
       local = TRUE,
       cell_area = cell_area
     )
@@ -425,16 +462,16 @@ calc_ecorisk <- function(fpc_ref,
     # nitrogen stocks (local change)
     if (nitrogen) {
       ns <- calc_component(
-        ref = state_ref[, , 12:13],
-        scen = state_scen[, , 12:13],
+        ref = state_ref[, , c("vegetation_nitrogen_pool","soil_mineral_nitrogen_pool")],
+        scen = state_scen[, , c("vegetation_nitrogen_pool","soil_mineral_nitrogen_pool")],
         local = TRUE,
         cell_area = cell_area
       )
 
       # nitrogen fluxes (local change)
       nf <- calc_component(
-        ref = state_ref[, , 14:16],
-        scen = state_scen[, , 14:16],
+        ref = state_ref[, , c("nitrogen_influx","nitrogen_outflux")],
+        scen = state_scen[, , c("nitrogen_influx","nitrogen_outflux")],
         local = TRUE,
         cell_area = cell_area
       )
@@ -443,79 +480,79 @@ calc_ecorisk <- function(fpc_ref,
   } else {
     cf <- (
       calc_component(
-        ref = state_ref[, , 1:3],
-        scen = state_scen[, , 1:3],
+        ref = state_ref[, , c("carbon_influx","carbon_outflux")],
+        scen = state_scen[, , c("carbon_influx","carbon_outflux")],
         local = TRUE,
         cell_area = cell_area
       ) + # carbon fluxes
       calc_component(
-        ref = state_ref[, , 1:3],
-        scen = state_scen[, , 1:3],
+        ref = state_ref[, , c("carbon_influx","carbon_outflux")],
+        scen = state_scen[, , c("carbon_influx","carbon_outflux")],
         local = FALSE,
         cell_area = cell_area
       ) +
       calc_ecosystem_balance(
-        ref = state_ref[, , 1:3],
-        scen = state_scen[, , 1:3]
+        ref = state_ref[, , c("carbon_influx","carbon_outflux")],
+        scen = state_scen[, , c("carbon_influx","carbon_outflux")]
       )
     ) / 3
 
     # carbon stocks
     cs <- (
       calc_component(
-        ref = state_ref[, , 7:8],
-        scen = state_scen[, , 7:8],
+        ref = state_ref[, , c("vegetation_carbon_pool","soil_carbon_pool")],
+        scen = state_scen[, , c("vegetation_carbon_pool","soil_carbon_pool")],
         local = TRUE,
         cell_area = cell_area
       ) +
       calc_component(
-        ref = state_ref[, , 7:8],
-        scen = state_scen[, , 7:8],
+        ref = state_ref[, , c("vegetation_carbon_pool","soil_carbon_pool")],
+        scen = state_scen[, , c("vegetation_carbon_pool","soil_carbon_pool")],
         local = FALSE,
         cell_area = cell_area
       ) +
       calc_ecosystem_balance(
-        ref = state_ref[, , 7:8],
-        scen = state_scen[, , 7:8]
+        ref = state_ref[, , c("vegetation_carbon_pool","soil_carbon_pool")],
+        scen = state_scen[, , c("vegetation_carbon_pool","soil_carbon_pool")]
       )
     ) / 3
 
     # water fluxes
     wf <- (
       calc_component(
-        ref = state_ref[, , 4:6],
-        scen = state_scen[, , 4:6],
+        ref = state_ref[, , c("water_influx","water_outflux")],
+        scen = state_scen[, , c("water_influx","water_outflux")],
         local = TRUE,
         cell_area = cell_area
       ) +
       calc_component(
-        ref = state_ref[, , 4:6],
-        scen = state_scen[, , 4:6],
+        ref = state_ref[, , c("water_influx","water_outflux")],
+        scen = state_scen[, , c("water_influx","water_outflux")],
         local = FALSE,
         cell_area = cell_area
       ) + calc_ecosystem_balance(
-        ref = state_ref[, , 4:6],
-        scen = state_scen[, , 4:6]
+        ref = state_ref[, , c("water_influx","water_outflux")],
+        scen = state_scen[, , c("water_influx","water_outflux")]
       )
     ) / 3
 
     # water pools
     ws <- (
       calc_component(
-        ref = state_ref[, , 9:10],
-        scen = state_scen[, , 9:10],
+        ref = state_ref[, , c("soil_water_pool","surface_water_pool")],
+        scen = state_scen[, , c("soil_water_pool","surface_water_pool")],
         local = TRUE,
         cell_area = cell_area
       ) +
       calc_component(
-        ref = state_ref[, , 9:10],
-        scen = state_scen[, , 9:10],
+        ref = state_ref[, , c("soil_water_pool","surface_water_pool")],
+        scen = state_scen[, , c("soil_water_pool","surface_water_pool")],
         local = FALSE,
         cell_area = cell_area
       ) +
       calc_ecosystem_balance(
-        ref = state_ref[, , 9:10],
-        scen = state_scen[, , 9:10]
+        ref = state_ref[, , c("soil_water_pool","surface_water_pool")],
+        scen = state_scen[, , c("soil_water_pool","surface_water_pool")]
       )
     ) / 3
 
@@ -524,39 +561,39 @@ calc_ecorisk <- function(fpc_ref,
       # nitrogen stocks (local change)
       ns <- (
         calc_component(
-          ref = state_ref[, , 12:13],
-          scen = state_scen[, , 12:13],
+          ref = state_ref[, , c("vegetation_nitrogen_pool","soil_mineral_nitrogen_pool")],
+          scen = state_scen[, , c("vegetation_nitrogen_pool","soil_mineral_nitrogen_pool")],
           local = TRUE,
           cell_area = cell_area
         ) +
         calc_component(
-          ref = state_ref[, , 12:13],
-          scen = state_scen[, , 12:13],
+          ref = state_ref[, , c("vegetation_nitrogen_pool","soil_mineral_nitrogen_pool")],
+          scen = state_scen[, , c("vegetation_nitrogen_pool","soil_mineral_nitrogen_pool")],
           local = FALSE, cell_area = cell_area
           ) +
         calc_ecosystem_balance(
-          ref = state_ref[, , 12:13],
-          scen = state_scen[, , 12:13]
+          ref = state_ref[, , c("vegetation_nitrogen_pool","soil_mineral_nitrogen_pool")],
+          scen = state_scen[, , c("vegetation_nitrogen_pool","soil_mineral_nitrogen_pool")]
         )
       ) / 3
 
       # nitrogen fluxes (local change)
       nf <- (
         calc_component(
-          ref = state_ref[, , 14:16],
-          scen = state_scen[, , 14:16],
+          ref = state_ref[, , c("nitrogen_influx","nitrogen_outflux")],
+          scen = state_scen[, , c("nitrogen_influx","nitrogen_outflux")],
           local = TRUE,
           cell_area = cell_area
         ) +
         calc_component(
-          ref = state_ref[, , 14:16],
-          scen = state_scen[, , 14:16],
+          ref = state_ref[, , c("nitrogen_influx","nitrogen_outflux")],
+          scen = state_scen[, , c("nitrogen_influx","nitrogen_outflux")],
           local = FALSE,
           cell_area = cell_area
         ) +
         calc_ecosystem_balance(
-          ref = state_ref[, , 14:16],
-          scen = state_scen[, , 14:16]
+          ref = state_ref[, , c("nitrogen_influx","nitrogen_outflux")],
+          scen = state_scen[, , c("nitrogen_influx","nitrogen_outflux")]
         )
       ) / 3
     }
@@ -631,12 +668,16 @@ read_ecorisk_data <- function(files_reference, # nolint
   if (file_type %in% c("json", "clm")) {
     # read grid
     grid <- lpjmlkit::read_io(
-      files_reference$grid,
+      files_reference$grid
     )
     # calculate cell area
-    cell_area <- lpjmlkit::calc_cellarea(grid)
+    cell_area <- drop(lpjmlkit::read_io(
+      filename = files_reference$terr_area
+      )$data) # in m2
     lat <- grid$data[, , 2]
     lon <- grid$data[, , 1]
+    ncells <- length(lat)
+    nyears <- length(time_span_scenario)
 
     ### read in lpjml output
     # for vegetation_structure_change (fpc,fpc_bft,cftfrac)
@@ -692,530 +733,75 @@ read_ecorisk_data <- function(files_reference, # nolint
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2))
 
-    # cffiles = ( firec rh_harvest npp ) yearly carbon fluxes
-    print("Reading in firec, rh_harvest, npp")
-
-    rh_scen <- lpjmlkit::read_io(
-      files_scenario$rh,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    if (file.exists(files_scenario$harvestc)) {
-      harvest_scen <- lpjmlkit::read_io(
-        files_scenario$harvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-    } else if (file.exists(files_scenario$pft_harvestc)) {
-      harvest_scen <- lpjmlkit::read_io(
-        files_scenario$pft_harvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-        drop()
-
-    } else {
-      stop("Missing harvestc output in scenario folder.")
-    }
-
-    if (file.exists(files_scenario$rharvestc)) {
-      rharvest_scen <- lpjmlkit::read_io(
-        files_scenario$rharvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-    } else if (file.exists(files_scenario$pft_rharvestc)) {
-      rharvest_scen <- lpjmlkit::read_io(
-        files_scenario$pft_rharvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-        drop()
-
-    } else {
-      stop("Missing rharvestc output in scenario folder.")
-    }
-
-    rh_harvest_scen <- rh_scen + harvest_scen + rharvest_scen
-
-    firec_scen <- lpjmlkit::read_io(
-      files_scenario$firec,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    npp_scen <- lpjmlkit::read_io(
-      files_scenario$npp,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    rh_ref <- lpjmlkit::read_io(
-      files_reference$rh,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    if (file.exists(files_reference$harvestc)) {
-      harvest_ref <- lpjmlkit::read_io(
-        files_reference$harvestc,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-    } else if (file.exists(files_reference$pft_harvestc)) {
-      harvest_ref <- lpjmlkit::read_io(
-        files_reference$pft_harvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-        drop()
-
-    } else {
-      print("No harvest output available for reference period, setting to 0.")
-      harvest_ref <- harvest_scen * 0
-    }
-
-    if (file.exists(files_reference$rharvestc)) {
-      rharvest_ref <- lpjmlkit::read_io(
-        files_reference$rharvestc,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-    } else if (file.exists(files_reference$pft_rharvestc)) {
-      rharvest_ref <- lpjmlkit::read_io(
-        files_reference$pft_rharvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-        drop()
-
-    } else {
-      print("No rharvest output available for reference period, setting to 0.")
-      rharvest_ref <- rharvest_scen * 0
-    }
-
-    rh_harvest_ref <- rh_ref + harvest_ref + rharvest_ref
-
-    firec_ref <- lpjmlkit::read_io(
-      files_reference$firec,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    npp_ref <- lpjmlkit::read_io(
-      files_reference$npp,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    # wffiles = (evapinterc runoff transp) - yearly water fluxes
-    print("Reading in evapinterc, runoff, transp")
-
-    evap_ref <- lpjmlkit::read_io(
-      files_reference$evap,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    interc_ref <- lpjmlkit::read_io(
-      files_reference$interc,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    evapinterc_ref <- evap_ref + interc_ref
-
-    runoff_ref <- lpjmlkit::read_io(
-      files_reference$runoff,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    transp_ref <- lpjmlkit::read_io(
-      files_reference$transp,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    evap_scen <- lpjmlkit::read_io(
-      files_scenario$evap,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    interc_scen <- lpjmlkit::read_io(
-      files_scenario$interc,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    evapinterc_scen <- evap_scen + interc_scen
-
-    runoff_scen <- lpjmlkit::read_io(
-      files_scenario$runoff,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    transp_scen <- lpjmlkit::read_io(
-      files_scenario$transp,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    # csfiles = ( soillitc vegc_avg ) #carbon pools
-    print("Reading in soillitc, vegc")
-
-    soil_ref <- lpjmlkit::read_io(
-      files_reference$soilc,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    litc_ref <- lpjmlkit::read_io(
-      files_reference$litc,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    soillitc_ref <- soil_ref + litc_ref
-
-    vegc_ref <- lpjmlkit::read_io(
-      files_reference$vegc,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    soil_scen <- lpjmlkit::read_io(
-      files_scenario$soilc,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    litc_scen <- lpjmlkit::read_io(
-      files_scenario$litc,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    soillitc_scen <- soil_scen + litc_scen
-
-    vegc_scen <- lpjmlkit::read_io(
-      files_scenario$vegc,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    # water pools = (swcsum discharge)
-    print("Reading in swcsum, discharge")
-    swcsum_ref <- lpjmlkit::read_io(
-      files_reference$swc,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-      drop()
-
-    swcsum_scen <- lpjmlkit::read_io(
-      files_scenario$swc,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-      drop()
-
-    discharge_ref <- lpjmlkit::read_io(
-      files_reference$discharge,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    discharge_scen <- lpjmlkit::read_io(
-      files_scenario$discharge,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    print("Reading in firef")
-
-    firef_ref <- lpjmlkit::read_io(
-      files_reference$firef,
-      subset = list(year = as.character(time_span_reference))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-    firef_scen <- lpjmlkit::read_io(
-      files_scenario$firef,
-      subset = list(year = as.character(time_span_scenario))
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-      drop()
-
-
-    # nitrogen variables
-    if (nitrogen) {
-      print(
-        paste0(
-          "Reading in n-pools: soilnh4, soilno3 + fluxes: leaching, bnf, ",
-          "n_volatilization, n2o_nit, n2o_denit n2_emis"
-        )
-      )
-
-      # reference state
-      # pools: soilnh4, soilno3
-      soilnh4_ref <- lpjmlkit::read_io(
-        files_reference$soilnh4,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      soilno3_ref <- lpjmlkit::read_io(
-        files_reference$soilno3,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      vegn_ref <- lpjmlkit::read_io(
-        files_reference$vegn,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      # fluxes: leaching, n2o_nit, n2o_denit n2_emis, bnf, n_volatilization
-      leaching_ref <- lpjmlkit::read_io(
-        files_reference$leaching,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      n2o_denit_ref <- lpjmlkit::read_io(
-        files_reference$n2o_denit,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      n2o_nit_ref <- lpjmlkit::read_io(
-        files_reference$n2o_nit,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      n2_emis_ref <- lpjmlkit::read_io(
-        files_reference$n2_emis,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      bnf_ref <- lpjmlkit::read_io(
-        files_reference$bnf,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      n_volatilization_ref <- lpjmlkit::read_io(
-        files_reference$n_volatilization,
-        subset = list(year = as.character(time_span_reference))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      # Calculating compound n emissions vector
-      aggregated_n_emissions_ref <- (
-        n_volatilization_ref + n2o_nit_ref + n2o_denit_ref + n2_emis_ref
-      )
-      soiln_ref <- soilno3_ref + soilnh4_ref
-
-      # scenario state
-      # pools: soilnh4, soilno3
-      soilnh4_scen <- lpjmlkit::read_io(
-        files_scenario$soilnh4,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      soilno3_scen <- lpjmlkit::read_io(
-        files_scenario$soilno3,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      vegn_scen <- lpjmlkit::read_io(
-        files_scenario$vegn,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      # fluxes: leaching, n2o_nit, n2o_denit n2_emis, bnf, n_volatilization
-      leaching_scen <- lpjmlkit::read_io(
-        files_scenario$leaching,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      n2o_denit_scen <- lpjmlkit::read_io(
-        files_scenario$n2o_denit,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      n2o_nit_scen <- lpjmlkit::read_io(
-        files_scenario$n2o_nit,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      n2_emis_scen <- lpjmlkit::read_io(
-        files_scenario$n2_emis,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      bnf_scen <- lpjmlkit::read_io(
-        files_scenario$bnf,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      n_volatilization_scen <- lpjmlkit::read_io(
-        files_scenario$n_volatilization,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()
-
-      # Calculating compound n emissions vector
-      aggregated_n_emissions_scen <- (
-        n_volatilization_scen + n2o_nit_scen + n2o_denit_scen + n2_emis_scen
-      )
-      soiln_scen <- soilno3_scen + soilnh4_scen
-
-
-      if (debug) {
-        nitrogen_scen <- list(
-          n_volatilization = n_volatilization_scen,
-          n2o_nit = n2o_nit_scen,
-          n2o_denit = n2o_denit_scen,
-          n2_emis = n2_emis_scen,
-          leaching = leaching_scen,
-          bnf = bnf_scen
-        )
-        nitrogen_ref <- list(
-          n_volatilization = n_volatilization_ref,
-          n2o_nit = n2o_nit_ref,
-          n2o_denit = n2o_denit_ref,
-          n2_emis = n2_emis_ref,
-          leaching = leaching_ref,
-          bnf = bnf_ref
-        )
-
-        save(
-          nitrogen_scen,
-          nitrogen_ref,
-          file = paste0(
-            dirname(save_file),
-            "nitrogen_states_debug.RData"
-          )
-        )
+    #### new input reading ###
+    metric_files <- system.file(
+                    "extdata",
+                    "metric_files.yml",
+                    package = "biospheremetrics"
+                  ) %>%
+                    yaml::read_yaml()
+    nclasses <- length(metric_files$metric$ecorisk_nitrogen$metric_class)
+    nstate_dimensions <- 0
+    for (i in 1:nclasses) nstate_dimensions <- nstate_dimensions + 
+                length(metric_files$metric$ecorisk_nitrogen$metric_class[[i]])
+    state_ref <- array(0,dim=c(ncells,nyears,nstate_dimensions))
+    state_scen <- array(0,dim=c(ncells,nyears,nstate_dimensions))
+    class_names <- 1:nstate_dimensions
+    index <- 1
+    # iterate over main classes (carbon pools, water fluxes ...)
+    for (c in 1:nclasses) {
+      classe <- metric_files$metric$ecorisk_nitrogen$metric_class[[c]]
+      nsubclasses <- length(classe)
+      # iterate over subclasses (vegetation carbon, soil water ...)
+      for (s in 1:nsubclasses) {
+        subclass <- classe[s]
+        class_names[index] <- names(subclass)
+        vars <- split_sign(unlist(subclass))
+        for (v in 1:length(vars[,1])) {
+          path_scen_file <- files_scenario[[vars[v, "variable"]]]
+          if (file.exists(path_scen_file)) {
+            header_scen <- lpjmlkit::read_meta(filename = path_scen_file)
+            print(paste("Reading in", path_scen_file,"with unit",header_scen$unit,
+                        "-> as part of",class_names[index]))
+            var_scen <- lpjmlkit::read_io(
+                path_scen_file,
+                subset = list(year = as.character(time_span_scenario))
+                ) %>%
+                lpjmlkit::transform(to = c("year_month_day")) %>%
+                lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
+                drop()
+          } else {
+            stop(paste("Couldn't read in:",path_scen_file," - stopping!"))
+          }
+          path_ref_file <- files_reference[[vars[v, "variable"]]]
+          if (file.exists(path_ref_file)) {
+            header_ref <- lpjmlkit::read_meta(path_ref_file)
+            print(paste("Reading in", path_ref_file,"with unit",header_ref$unit,
+                        "-> as part of",class_names[index]))
+            var_ref <- lpjmlkit::read_io(
+                  path_ref_file,
+                  subset = list(year = as.character(time_span_reference))
+                  ) %>%
+                  lpjmlkit::transform(to = c("year_month_day")) %>%
+                  lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
+                  drop()
+          } else {
+            stop(paste("Couldn't read in:",path_ref_file," - stopping!"))
+          }
+          if (vars[v,"sign"] == "+"){
+            state_scen[,,index] <- state_scen[,,index] + var_scen
+            state_ref[,,index] <- state_ref[,,index] + var_ref
+          } else { # vars[v,"sign"] == "-"
+            state_scen[,,index] <- state_scen[,,index] - var_scen
+            state_ref[,,index] <- state_ref[,,index] - var_ref
+          }
+        }
+        index <- index + 1
       }
-    } # end if nitrogen
+    }
+    
+    dimnames(state_scen) <- list(cell = 0:(ncells-1), year = as.character(time_span_scenario), class = class_names)
+    dimnames(state_ref) <- list(cell = 0:(ncells-1), year = as.character(time_span_reference), class = class_names)
 
   } else if (file_type == "nc") { # to be added
     stop(
@@ -1224,97 +810,6 @@ read_ecorisk_data <- function(files_reference, # nolint
     )
   } else {
     stop("Unrecognized file type (", file_type, ")")
-  }
-
-  if (nitrogen) {
-    state_ref <- abind::abind(
-      firec_ref, #  1
-      rh_harvest_ref, #  2
-      npp_ref, #  3
-      evapinterc_ref, #  4
-      runoff_ref, #  5
-      transp_ref, #  6
-      soillitc_ref, #  7
-      vegc_ref, #  8
-      swcsum_ref, #  9
-      discharge_ref, #  10
-      firef_ref, #  11
-      soiln_ref, #  12
-      vegn_ref, #  13
-      leaching_ref, #  14
-      bnf_ref, #  15
-      aggregated_n_emissions_ref, #  16
-      along = 3
-    )
-
-    state_scen <- abind::abind(
-      firec_scen, #  1
-      rh_harvest_scen, #  2
-      npp_scen, #  3
-      evapinterc_scen, #  4
-      runoff_scen, #  5
-      transp_scen, #  6
-      soillitc_scen, #  7
-      vegc_scen, #  8
-      swcsum_scen, #  9
-      discharge_scen, #  10
-      firef_scen, #  11
-      soiln_scen, #  12
-      vegn_scen, #  13
-      leaching_scen, #  14
-      bnf_scen, #  15
-      aggregated_n_emissions_scen, #  16
-      along = 3
-    )
-    di <- dimnames(state_ref)
-    var_names <- c(
-      "firec", "rh_harvest", "npp", "evapinterc", "runoff", "transp",
-      "soillitc", "vegc", "swcsum", "discharge", "firef", "soiln", "vegn",
-      "leaching", "bnf", "aggregated_n_emissions"
-    )
-    di[[3]] <- var_names
-    dimnames(state_ref) <- di
-    dimnames(state_scen) <- di
-
-  } else {
-    state_ref <- abind::abind(
-      firec_ref,
-      rh_harvest_ref,
-      npp_ref,
-      evapinterc_ref,
-      runoff_ref,
-      transp_ref,
-      soillitc_ref,
-      vegc_ref,
-      swcsum_ref,
-      discharge_ref,
-      firef_ref,
-      along = 3
-    )
-
-    state_scen <- abind::abind(
-      firec_scen,
-      rh_harvest_scen,
-      npp_scen,
-      evapinterc_scen,
-      runoff_scen,
-      transp_scen,
-      soillitc_scen,
-      vegc_scen,
-      swcsum_scen,
-      discharge_scen,
-      firef_scen,
-      along = 3
-    )
-
-    di <- dimnames(state_ref)
-    var_names <- c(
-      "firec", "rh_harvest", "npp", "evapinterc", "runoff",
-      "transp", "soillitc", "vegc", "swcsum", "discharge", "firef"
-    )
-    di[[3]] <- var_names
-    dimnames(state_ref) <- di
-    dimnames(state_scen) <- di
   }
 
   if (!(is.null(save_file))) {
@@ -2950,7 +2445,7 @@ plot_ecorisk_map <- function(
   palette = NULL
 ) {
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (eps) {
     file <- strsplit(file, ".", fixed = TRUE)[[1]]
@@ -3306,7 +2801,7 @@ plot_ecorisk_radial <- function(data,
   #   for value legend, or 'regular' (default setting) for the regular EcoRisk
   #   plot
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
   if (length(which(data < 0 | data > 1)) > 0) {
     print(
       "Warning: there are values in data outside the expected EcoRisk range [0..1]." # nolint
@@ -3445,7 +2940,7 @@ plot_ecorisk_over_time_panel <- function(data, # nolint
                                           eps = FALSE,
                                           varnames = NULL) {
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (length(which(data < 0 | data > 1)) > 0) {
     print("Warning: values in data outside the expected EcoRisk range [0..1].")
@@ -3549,7 +3044,7 @@ plot_ecorisk_radial_panel <- function(data,
                                       use_quantile = TRUE,
                                       eps = FALSE) {
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (length(which(data < 0 | data > 1)) > 0) {
     print("Warning: values in data outside the expected EcoRisk range [0..1].")
@@ -3732,7 +3227,7 @@ plot_biomes <- function(biome_ids,
                         leg_scale = 1,
                         eps = FALSE) {
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (eps) {
     file <- strsplit(file, ".", fixed = TRUE)[[1]]
@@ -3832,7 +3327,7 @@ plot_biome_averages <- function(data,
                                 eps = FALSE,
                                 palette = NULL) {
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (eps) {
     file <- strsplit(file, ".", fixed = TRUE)[[1]]
@@ -3936,7 +3431,7 @@ plot_ecorisk_cross_table <- function(data,
                                      eps = FALSE,
                                      palette = NULL) {
   path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE)
+  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (eps) {
     file <- strsplit(file, ".", fixed = TRUE)[[1]]
