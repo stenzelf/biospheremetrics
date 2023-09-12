@@ -35,8 +35,8 @@
 #'        In the boreal zone, there is no woodland, everything below the
 #'        boreal forest threshold will be classified as boreal tundra.
 #' @param avg_nyear_args list of arguments to be passed to
-#'        \link[biospheremetrics]{average_nyear_window} (see for more info).
-#'        To be used for time series analysis
+#'        \link[biospheremetrics]{average_nyear_window} (see for more info). To be used for # nolint
+#'        time series analysis
 #' @return list object containing biome_id (main biome per grid cell [dim=c(ncells)]), # nolint
 #' and list of respective biome_names[dim=c(nbiomes)]
 #'
@@ -222,6 +222,36 @@ classify_biomes <- function(path_reference = NULL,
   # but maybe ok to use external data here?
   dimnames(avg_fpc)$band <- c("natural stand fraction", fpc_names)
 
+  fpc_temperate_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & zone == "temperate" & category == "natural"
+  )$pft
+
+  fpc_tropical_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & zone == "tropical" & category == "natural"
+  )$pft
+
+  fpc_boreal_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & zone == "boreal" & category == "natural"
+  )$pft
+
+  fpc_needle_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & category == "needle"
+  )$pft
+
+  fpc_evergreen_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & category == "evergreen"
+  )$pft
+
+  fpc_grass <- dplyr::filter(
+    pft_categories,
+    type == "grass" & category == "natural"
+  )$pft
+
   fpc_trees <- dplyr::filter(
     pft_categories,
     type == "tree" & category == "natural"
@@ -239,6 +269,42 @@ classify_biomes <- function(path_reference = NULL,
     sum,
     na.rm = TRUE
   )
+  fpc_tree_tropical <- apply(
+    lpjmlkit::asub(avg_fpc, band = fpc_tropical_trees),
+    c("cell", third_dim),
+    sum,
+    na.rm = TRUE
+  )
+  fpc_tree_temperate <- apply(
+    lpjmlkit::asub(avg_fpc, band = fpc_temperate_trees),
+    c("cell", third_dim),
+    sum,
+    na.rm = TRUE
+  )
+  fpc_tree_boreal <- apply(
+    lpjmlkit::asub(avg_fpc, band = fpc_boreal_trees),
+    c("cell", third_dim),
+    sum,
+    na.rm = TRUE
+  )
+  fpc_tree_needle <- apply(
+    lpjmlkit::asub(avg_fpc, band = fpc_needle_trees),
+    c("cell", third_dim),
+    sum,
+    na.rm = TRUE
+  )
+  fpc_tree_evergreen <- apply(
+    lpjmlkit::asub(avg_fpc, band = fpc_evergreen_trees),
+    c("cell", third_dim),
+    sum,
+    na.rm = TRUE
+  )
+  fpc_grass_total <- apply(
+    lpjmlkit::asub(avg_fpc, band = fpc_grass),
+    c("cell", third_dim),
+    sum,
+    na.rm = TRUE
+  )
   fpc_total <- apply(
     lpjmlkit::asub(avg_fpc, band = -1),
     c("cell", third_dim),
@@ -251,6 +317,8 @@ classify_biomes <- function(path_reference = NULL,
     max,
     na.rm = TRUE
   )
+
+  fpc_tree_broadleaf <- fpc_tree_total - fpc_tree_needle
 
   # use vegc 7500 gC/m2 or natLAI 6 as proxy threshold for forest/savanna
   #   "boundary
@@ -490,58 +558,40 @@ classify_biomes <- function(path_reference = NULL,
   # CLASSIFY BIOMES ---------------------------------------------------------- #
 
   # initiate biome_class array
+  #TODO can be removed if time dimension is always kept
+  if (class(fpc_total) == "numeric") {
+    dims <- length(fpc_total)
+  } else {
+    dims <- dim(fpc_total)
+  }
+
   biome_class <- array(NA,
-                       dim = c(grid$meta$ncell),
+                       dim = dims,
                        dimnames = dimnames(fpc_total))
 
   biome_class[is_desert] <- biome_names["Desert"]
 
   # forests
-  biome_class[is_boreal_evergreen] <- biome_names["Boreal Evergreen Forest"]
-  biome_class[is_boreal_broad_deciduous] <- (
-    biome_names["Boreal Broadleaved Deciduous Forest"]
-  )
-  biome_class[is_boreal_needle_deciduous] <- (
-    biome_names["Boreal Needleleaved Deciduous Forest"]
-  )
-  biome_class[is_temperate_coniferous] <- (
-    biome_names["Temperate Coniferous Forest"]
-  )
-  biome_class[is_temperate_broadleaved_evergreen] <- (
-    biome_names["Temperate Broadleaved Evergreen Forest"]
-  )
-  biome_class[is_temperate_broadleaved_deciduous] <- (
-    biome_names["Temperate Broadleaved Deciduous Forest"]
-  )
+  biome_class[is_boreal_evergreen] <- biome_names["Boreal Needleleaved Evergreen Forest"]
+  biome_class[is_boreal_broad_deciduous] <- biome_names["Boreal Broadleaved Deciduous Forest"]
+  biome_class[is_boreal_needle_deciduous] <- biome_names["Boreal Needleleaved Deciduous Forest"]
+  biome_class[is_temperate_coniferous] <- biome_names["Temperate Needleleaved Evergreen Forest"] # nolint
+  biome_class[is_temperate_broadleaved_evergreen] <- biome_names["Temperate Broadleaved Evergreen Forest"] # nolint
+  biome_class[is_temperate_broadleaved_deciduous] <- biome_names["Temperate Broadleaved Deciduous Forest"] # nolint
   biome_class[is_tropical_evergreen] <- biome_names["Tropical Rainforest"]
-  biome_class[is_tropical_raingreen] <- (
-    biome_names["Tropical Seasonal & Deciduous Forest"]
-  )
-  biome_class[is_tropical_forest_savanna] <- (
-    biome_names["Warm Woody Savanna, Woodland & Shrubland"]
-  )
+  biome_class[is_tropical_raingreen] <- biome_names["Tropical Seasonal & Deciduous Forest"] # nolint
+  biome_class[is_tropical_forest_savanna] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
 
   # woody savanna
-  biome_class[is_temperate_woody_savanna] <- (
-    biome_names["Temperate Woody Savanna, Woodland & Shrubland"]
-  )
-  biome_class[is_tropical_woody_savanna] <- (
-    biome_names["Warm Woody Savanna, Woodland & Shrubland"]
-  )
+  biome_class[is_temperate_woody_savanna] <- biome_names["Temperate Woody Savanna, Woodland & Shrubland"] # nolint
+  biome_class[is_tropical_woody_savanna] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
 
   # open shrubland / savanna
-  biome_class[is_temperate_shrubland] <- (
-    biome_names["Temperate Savanna & Open Shrubland"]
-  )
-
-  biome_class[is_tropical_shrubland] <- (
-    biome_names["Warm Savanna & Open Shrubland"]
-  )
+  biome_class[is_temperate_shrubland] <- biome_names["Temperate Savanna & Open Shrubland"] # nolint
+  biome_class[is_tropical_shrubland] <- biome_names["Warm Savanna & Open Shrubland"] # nolint
 
   # grassland
-  biome_class[is_temperate_grassland] <- (
-    biome_names["Temperate Grassland"]
-  )
+  biome_class[is_temperate_grassland] <- biome_names["Temperate Grassland"]
   biome_class[is_tropical_grassland] <- biome_names["Warm Grassland"]
 
   biome_class[is_arctic_tundra] <- biome_names["Arctic Tundra"]
