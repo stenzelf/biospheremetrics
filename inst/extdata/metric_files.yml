@@ -110,8 +110,8 @@ metric:
             carbon_fluxes:
                 carbon_influx:
                     gpp
-                carbon_outflux:
-                    rd + rh + firec + harvestc # harvestc contains residues
+                carbon_outflux: # gpp - npp is better than rh + rd (miss rg, re)
+                    gpp - npp + firec + harvestc # harvestc contains residues
             water_pools:
                 soil_water_pool:
                     swc

@@ -8,21 +8,22 @@
 #' Function to calculate BioCol based on a PNV run and LU run of LPJmL
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files are
-#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")
-#' @param files_reference list with variable names and corresponding file paths
-#' (character string) of the reference LPJmL run. All needed files are
-#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
+#' provided in XXX. E.g.: list(npp = "/temp/npp.bin.json")
+#' @param files_baseline list with variable names and corresponding file paths
+#' (character string) of the baseline LPJmL run. All needed files are
+#' provided in XXX. E.g.: list(npp = "/temp/npp.bin.json"). If not
 #' needed for the applied method, set to NULL.
+#' @param files_reference list with npp file path (character string) of the
+#' reference LPJmL run (usually Holocene/preindustrial).
+#' E.g.: list(npp = "/temp/npp.bin.json"). If NULL uses baseline npp.
 #' @param time_span_scenario time span to be used for the scenario run, defined
-#' as a character string, e.g. `as.character(1982:2011)` (default)
-#' @param time_span_reference time span to be used for the scenario run, defined
-#' as an integer vector, e.g. `as.character(1901:1930)`. Can differ in offset
+#' as a character vector, e.g. `as.character(1982:2011)` (required)
+#' @param time_span_baseline time span to be used for the baseline run, defined
+#' as a character vector, e.g. `as.character(1901:1930)`. Can differ in offset
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
-#' @param reference_npp_time_span time span to read reference npp from, using
+#' @param time_span_reference time span to read reference npp from, using
 #'     index years 10:39 from potential npp input if set to NULL (default: NULL)
-#' @param reference_npp_file file to read reference npp from, using
-#'        potential npp input if set to NULL (default: NULL)
 #' @param gridbased logical are pft outputs gridbased or pft-based?
 #' @param read_saved_data flag whether to read previously saved data
 #'        instead of reading it in from output files (default FALSE)
@@ -63,11 +64,11 @@
 #' @export
 read_calc_biocol <- function( # nolint
   files_scenario,
-  files_reference,
+  files_baseline,
+  files_reference = NULL,
   time_span_scenario,
+  time_span_baseline = NULL,
   time_span_reference = NULL,
-  reference_npp_time_span = NULL,
-  reference_npp_file = NULL,
   gridbased = TRUE,
   read_saved_data = FALSE,
   save_data = FALSE,
@@ -81,23 +82,28 @@ read_calc_biocol <- function( # nolint
   external_fire_file = "human_ignition_fraction.RData",
   external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData"
 ) {
-  if (is.null(time_span_reference)) time_span_reference <- time_span_scenario
+  if (is.null(files_reference))
+    files_reference <- list(npp = baseline_npp_file)
+  if (is.null(time_span_baseline))
+    time_span_baseline <- time_span_scenario
+  if (is.null(time_span_reference))
+    time_span_reference <- time_span_scenario[3:12]  
   if (grass_scaling && !file.exists(grass_harvest_file)) {
     stop(
-      paste0("Grass harvest scaling enabled, but grass_harvest_file does not exist in: ", # nolint
-             grass_harvest_file)
+      paste0("Grass harvest scaling enabled, but grass_harvest_file \ 
+              does not exist in: ", grass_harvest_file)
     )
   }
   if (external_wood_harvest && !file.exists(external_wood_harvest_file)) {
     stop(
-      paste0("External wood harvest enabled, but external_wood_harvest_file does not exist in: ", # nolint
-             external_wood_harvest_file)
+      paste0("External wood harvest enabled, but external_wood_harvest_file \
+              does not exist in: ", external_wood_harvest_file)
     )
   }
   if (external_fire && !file.exists(external_fire_file)) {
     stop(
-      paste0("External fire fraction file enabled, but external_fire_file does not exist in: ", # nolint
-             external_fire_file)
+      paste0("External fire fraction file enabled, but external_fire_file \
+              does not exist in: ", external_fire_file)
     )
   }
   # reading required data
@@ -125,15 +131,17 @@ read_calc_biocol <- function( # nolint
   } else {
     print("Reading in data from outputs")
 
-    file_type <- tools::file_ext(files_reference$grid)
+    file_type <- tools::file_ext(files_baseline$grid)
 
     if (file_type %in% c("json", "clm")) {
       # read grid
       grid <- lpjmlkit::read_io(
-        files_reference$grid
+        files_baseline$grid
       )
       # calculate cell area
-      cellarea <- lpjmlkit::calc_cellarea(grid)
+      cellarea <- drop(lpjmlkit::read_io(
+        filename = files_baseline$terr_area
+        )$data) # in m2
       lat <- grid$data[, , 2]
       lon <- grid$data[, , 1]
 
@@ -143,10 +151,10 @@ read_calc_biocol <- function( # nolint
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop() # gC/m2
 
-      if (!is.null(reference_npp_file)) {
+      if (!is.null(files_reference)) {
         npp_ref <- lpjmlkit::read_io(
-          reference_npp_file,
-          subset = list(year = as.character(reference_npp_time_span))) %>%
+          files_reference$npp,
+          subset = list(year = as.character(time_span_reference))) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)
         ) %>% drop() # remaining bands
@@ -256,8 +264,8 @@ read_calc_biocol <- function( # nolint
       )
 
       npp_potential <- lpjmlkit::read_io(
-        files_reference$npp,
-        subset = list(year = as.character(time_span_reference))) %>%
+        files_baseline$npp,
+        subset = list(year = as.character(time_span_baseline))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)
       ) %>% drop() # gC/m2
@@ -288,7 +296,7 @@ read_calc_biocol <- function( # nolint
     nat_bands <- 1:pftbands
 
     if (!gridbased) { # needs to be scaled with standfrac
-      pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, , 2:(pftbands + 1)]
+      pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, , 1]
       pftnpp[, , -c(nat_bands)] <- pftnpp[, , -c(nat_bands)] * cftfrac
       harvest <- harvest * cftfrac
     }
@@ -313,7 +321,7 @@ read_calc_biocol <- function( # nolint
     pftnpp_nat <- apply(
       pftnpp[, , nat_bands], c(1, 2), sum) # gC/m2
 
-    if (is.null(reference_npp_file)){
+    if (is.null(files_reference)){
       pi_window <- 3:32
       npp_ref <- npp_potential[, pi_window]
     } # npp_ref
@@ -631,7 +639,7 @@ calc_biocol <- function(
     cftfrac = paste0(path_lu, varnames["cftfrac", "outname"]),
     fpc = paste0(path_lu, varnames["fpc", "outname"])
   )
-  files_reference <- list(
+  files_baseline <- list(
     grid = paste0(path_pnv, varnames["grid", "outname"]),
     npp = paste0(path_pnv, varnames["npp", "outname"]),
     pft_npp = paste0(path_pnv, varnames["pft_npp", "outname"]),
@@ -642,14 +650,17 @@ calc_biocol <- function(
     cftfrac = paste0(path_pnv, varnames["cftfrac", "outname"]),
     fpc = paste0(path_pnv, varnames["fpc", "outname"])
   )
+  files_reference <- list(
+        npp = reference_npp_file
+  )
   return(
     read_calc_biocol(
       files_scenario = files_scenario,
+      files_baseline = files_baseline,
       files_reference = files_reference,
       time_span_scenario = as.character(start_year:stop_year),
-      time_span_reference = as.character(start_year:stop_year),
-      reference_npp_time_span = reference_npp_time_span,
-      reference_npp_file = reference_npp_file,
+      time_span_baseline = as.character(start_year:stop_year),
+      time_span_reference = reference_npp_time_span,
       gridbased = gridbased,
       read_saved_data = read_saved_data,
       save_data = save_data,
