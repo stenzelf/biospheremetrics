@@ -1760,14 +1760,20 @@ replace_ref_data_with_average_ref_biome_cell <- function( # nolint
   }
   state_ref <- rep(av_year_state, each = di_state[1])
   dim(state_ref) <- di_state
+  dimnames(state_ref) <- dimnames(state_scen)
+
 
   # is the same for each year, thus for the mean just take one year
   # mean_state_ref <- rep(colMeans(av_year_state), each = di_state[1])
   # FS: mean states were removed from data file, removing also here
 
   dim(fpc_ref) <- di_fpc
+  dimnames(fpc_ref) <- dimnames(fpc_scen)
   dim(bft_ref) <- di_bft
+  dimnames(bft_ref) <- dimnames(bft_scen)
   dim(cft_ref) <- di_cft
+  dimnames(cft_ref) <- dimnames(cft_scen)
+
 
   # and write out the modified data
   # save(state_ref,mean_state_ref,state_scen,mean_state_scen,fpc_ref,fpc_scen,
@@ -1878,6 +1884,22 @@ ecorisk_cross_table <- function(data_file_in,
   dim(bft_scen) <- c(nbiomes * nbiomes, dim(bft_scen_sav)[2:3])
   dim(cft_ref) <- c(nbiomes * nbiomes, dim(cft_scen_sav)[2:3])
   dim(cft_scen) <- c(nbiomes * nbiomes, dim(cft_scen_sav)[2:3])
+  dimnames(state_ref) <- list(cell = as.character(1:(nbiomes*nbiomes)),
+                              year = dimnames(state_scen_sav)$year,
+                              class = dimnames(state_scen_sav)$class)
+  dimnames(state_scen) <- dimnames(state_ref)
+  dimnames(fpc_ref) <- list(cell = as.character(1:(nbiomes*nbiomes)),
+                            band = dimnames(fpc_scen_sav)$band,
+                            year = dimnames(fpc_scen_sav)$year)
+  dimnames(fpc_scen) <- dimnames(fpc_ref)
+  dimnames(bft_ref) <- list(cell = as.character(1:(nbiomes*nbiomes)),
+                            band = dimnames(bft_scen_sav)$band,
+                            year = dimnames(bft_scen_sav)$year)
+  dimnames(bft_scen) <- dimnames(bft_ref)
+  dimnames(cft_ref) <- list(cell = as.character(1:(nbiomes*nbiomes)),
+                            band = dimnames(cft_scen_sav)$band,
+                            year = dimnames(cft_scen_sav)$year)
+  dimnames(cft_scen) <- dimnames(cft_ref)
 
   lat <- rep(0, nbiomes * nbiomes)
   lon <- rep(1, nbiomes * nbiomes)
@@ -2110,17 +2132,18 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
                                          data_file_base,
                                          intra_biome_distrib_file,
                                          create = FALSE,
+                                         nitrogen = TRUE,
                                          res = 0.05,
                                          plotting = FALSE,
                                          plot_folder,
                                          time_span_reference,
                                          vars_ecorisk) {
   biomes_abbrv <- get_biome_names(1)
-
+  ecorisk_components <- 11
   # nbiomes, nEcoRiskvars, nHISTclasses
   intra_biome_distrib <- array(
     0,
-    dim = c(length(biome_classes$biome_names), 10, 1 / res)
+    dim = c(length(biome_classes$biome_names), ecorisk_components, 1 / res)
   )
 
   # start
@@ -2152,6 +2175,8 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
         # does not need to be specified, as data is read from file
         path_scen = NULL,
         read_saved_data = TRUE,
+        nitrogen = nitrogen,
+        weighting = "equal",
         save_data = data_file,
         save_ecorisk = ecorisk_file,
         varnames = vars_ecorisk,
@@ -2178,7 +2203,7 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
     if (plotting) {
       plot_ecorisk_map(
         file = paste0(
-          plot_folder, "EcoRisk/compare_ecorisk_to_", biomes_abbrv[b], ".png"
+          plot_folder, "/compare_ecorisk_to_", biomes_abbrv[b], ".png"
         ),
         focus_biome = b, biome_classes = biome_classes$biome_id,
         data = ecorisk$ecorisk_total, title = biome_classes$biome_names[b],
@@ -2190,7 +2215,7 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
 
       plot_ecorisk_map(
         file = paste0(
-          plot_folder, "EcoRisk/compare_vegetation_structure_change_to_", biomes_abbrv[b], ".png" # nolint
+          plot_folder, "/compare_vegetation_structure_change_to_", biomes_abbrv[b], ".png" # nolint
         ),
         focus_biome = b, biome_classes = biome_classes$biome_id,
         data = ecorisk$vegetation_structure_change,
@@ -2203,7 +2228,7 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
 
       plot_ecorisk_map(
         file = paste0(
-          plot_folder, "EcoRisk/compare_gi_to_", biomes_abbrv[b], ".png"
+          plot_folder, "/compare_gi_to_", biomes_abbrv[b], ".png"
         ),
         focus_biome = b,
         biome_classes = biome_classes$biome_id,
@@ -2217,7 +2242,7 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
 
       plot_ecorisk_map(
         file = paste0(
-          plot_folder, "EcoRisk/compare_lc_to_", biomes_abbrv[b], ".png"
+          plot_folder, "/compare_lc_to_", biomes_abbrv[b], ".png"
         ),
         focus_biome = b,
         biome_classes = biome_classes$biome_id,
@@ -2231,7 +2256,7 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
 
       plot_ecorisk_map(
         file = paste0(
-          plot_folder, "EcoRisk/compare_eb_to_", biomes_abbrv[b], ".png"
+          plot_folder, "/compare_eb_to_", biomes_abbrv[b], ".png"
         ),
         focus_biome = b,
         biome_classes = biome_classes$biome_id,
@@ -2245,13 +2270,9 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
     } # end if plotting
   }
 
-  ecorisk_dimensions <- c(
-    "ecorisk_total", "vegetation_structure_change", "local_change",
-    "global_importance", "ecosystem_balance", "carbon_stocks", "carbon_fluxes",
-    "water_fluxes", "nitrogen_stocks", "nitrogen_fluxes"
-  )
+  ecorisk_dimensions <- names(ecorisk)
 
-  dim(intra_biome_distrib) <- c(biome = 19, variable = 10, bin = 1 / res)
+  dim(intra_biome_distrib) <- c(biome = length(biome_classes$biome_names), variable = ecorisk_components, bin = 1 / res)
   dimnames(intra_biome_distrib) <- list(
     biome = biomes_abbrv, variable = ecorisk_dimensions, bin = seq(res, 1, res)
   )
