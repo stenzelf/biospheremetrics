@@ -630,6 +630,7 @@ calc_biocol <- function(
   # translate varnames and folders to files_scenarios/reference lists
   files_scenario <- list(
     grid = paste0(path_lu, varnames["grid", "outname"]),
+    terr_area = paste0(path_lu, varnames["terr_area", "outname"]),
     npp = paste0(path_lu, varnames["npp", "outname"]),
     pft_npp = paste0(path_lu, varnames["pft_npp", "outname"]),
     pft_harvestc = paste0(path_lu, varnames["pft_harvest", "outname"]),
@@ -641,6 +642,7 @@ calc_biocol <- function(
   )
   files_baseline <- list(
     grid = paste0(path_pnv, varnames["grid", "outname"]),
+    terr_area = paste0(path_pnv, varnames["terr_area", "outname"]),
     npp = paste0(path_pnv, varnames["npp", "outname"]),
     pft_npp = paste0(path_pnv, varnames["pft_npp", "outname"]),
     pft_harvestc = paste0(path_pnv, varnames["pft_harvest", "outname"]),
