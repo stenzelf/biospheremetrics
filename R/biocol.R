@@ -42,6 +42,7 @@
 #' @param npp_threshold lower threshold for npp (to mask out non-lu areas
 #'        according to Haberl et al. 2007). Below BioCol will be set to 0.
 #'        (default: 20 gC/m2)
+#' @param epsilon minimum value for npp, below which it will be set to 0
 #' @param grass_harvest_file file containing grazing data to rescale the
 #'        grassland harvests according to Herrero et al. 2013. File contains:
 #'        grazing_data list object with $name and $id of 29 world regions, and
@@ -78,6 +79,7 @@ read_calc_biocol <- function( # nolint
   external_wood_harvest = FALSE,
   grass_scaling = FALSE,
   npp_threshold = 20,
+  epsilon = 0.001, # gC/m2
   grass_harvest_file = "grazing_data.RData",
   external_fire_file = "human_ignition_fraction.RData",
   external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData"
@@ -150,6 +152,7 @@ read_calc_biocol <- function( # nolint
         subset = list(year = as.character(time_span_scenario))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop() # gC/m2
+      npp[npp<epsilon] <- 0
 
       if (!is.null(files_reference)) {
         npp_ref <- lpjmlkit::read_io(
@@ -158,6 +161,8 @@ read_calc_biocol <- function( # nolint
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)
         ) %>% drop() # remaining bands
+        npp_ref[npp_ref<epsilon] <- 0
+
       }
 
       pftnpp <- lpjmlkit::read_io(
@@ -166,6 +171,8 @@ read_calc_biocol <- function( # nolint
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)
       )
+      pftnpp[pftnpp<epsilon] <- 0
+
 
       harvest <- lpjmlkit::read_io(
         files_scenario$pft_harvestc,
@@ -269,6 +276,7 @@ read_calc_biocol <- function( # nolint
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)
       ) %>% drop() # gC/m2
+      npp_potential[npp_potential<epsilon] <- 0
 
       fpc <- lpjmlkit::read_io(
         files_scenario$fpc,
@@ -453,17 +461,16 @@ read_calc_biocol <- function( # nolint
   ) / 10^15 # gC/m2 to GtC
 
   if (include_fire) {
-    biocol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
+    npp_harv_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
       harvest_grasslands_overtime + harvest_bioenergy_overtime +
-      timber_harvest_overtime + fire_overtime + npp_luc_overtime +
-      wood_harvest_overtime
+      timber_harvest_overtime + fire_overtime + wood_harvest_overtime
   } else {
-    biocol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
+    npp_harv_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
       harvest_grasslands_overtime + harvest_bioenergy_overtime +
-      timber_harvest_overtime + npp_luc_overtime +
-      wood_harvest_overtime
+      timber_harvest_overtime + wood_harvest_overtime
+      
   }
-
+  biocol_overtime <- npp_harv_overtime + npp_luc_overtime
   biocol_overtime_frac_piref <- (
     biocol_overtime / mean(colSums(npp_ref * cellarea) / 10^15)
   )
@@ -495,30 +502,37 @@ read_calc_biocol <- function( # nolint
   biocol_frac_piref <- biocol / rowMeans(npp_ref)
 
   # take the abs of biocol and sum that up for overtime
-  biocol_overtime_abs_frac_piref <- colSums(abs(biocol * cellarea)) / 
-                mean(colSums(npp_ref * cellarea))
+  biocol_overtime_abs <- colSums(abs(biocol * cellarea)) / 10^15
+  biocol_overtime_abs_frac_piref <- biocol_overtime_abs * 10^15 /
+                                      mean(colSums(npp_ref * cellarea))
+  biocol_overtime_abs_frac <- biocol_overtime_abs / npp_pot_overtime
 
-  return(list(biocol_overtime = biocol_overtime, #absolute 
+  return(list(biocol_overtime = biocol_overtime,
+              biocol_overtime_abs = biocol_overtime_abs,
               biocol_overtime_abs_frac_piref = biocol_overtime_abs_frac_piref,
               biocol_overtime_frac_piref = biocol_overtime_frac_piref,
               biocol_overtime_frac = biocol_overtime_frac,
+              biocol_overtime_abs_frac = biocol_overtime_abs_frac,
+              npp_harv_overtime = npp_harv_overtime,
+              npp_luc_overtime = npp_luc_overtime,
+              npp_act_overtime = npp_act_overtime,
+              npp_pot_overtime = npp_pot_overtime,
+              npp_eco_overtime = npp_eco_overtime,
+              harvest_grasslands_overtime = harvest_grasslands_overtime,
+              harvest_bioenergy_overtime = harvest_bioenergy_overtime,
+              harvest_cft_overtime = harvest_cft_overtime,
+              rharvest_cft_overtime = rharvest_cft_overtime,
+              fire_overtime = fire_overtime,
+              timber_harvest_overtime = timber_harvest_overtime,
+              wood_harvest_overtime = wood_harvest_overtime,
               biocol = biocol,
               biocol_frac = biocol_frac,
               npp = npp,
               biocol_frac_piref = biocol_frac_piref,
               npp_potential = npp_potential,
-              npp_act_overtime = npp_act_overtime,
-              npp_pot_overtime = npp_pot_overtime,
-              npp_eco_overtime = npp_eco_overtime,
               npp_ref = npp_ref,
-              harvest_cft_overtime = harvest_cft_overtime,
-              npp_luc_overtime = npp_luc_overtime,
-              rharvest_cft_overtime = rharvest_cft_overtime,
-              fire_overtime = fire_overtime,
-              timber_harvest_overtime = timber_harvest_overtime,
               harvest_cft = harvest_cft,
               rharvest_cft = rharvest_cft,
-              wood_harvest_overtime = wood_harvest_overtime,
               biocol_harvest = biocol_harvest,
               biocol_luc = biocol_luc)) #, biocol_luc_piref = biocol_luc_piref))
 
@@ -954,6 +968,7 @@ plot_biocol_ts <- function(
   details = FALSE,
   min_val = 0,
   max_val = 100,
+  max_val_right = 0.45,
   legendpos = "topleft",
   ext = FALSE,
   eps = FALSE,
@@ -963,9 +978,9 @@ plot_biocol_ts <- function(
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   last_year <- first_year + length(biocol_data$npp_act_overtime) - 1
-  colz <- c("slateblue", "gold", "green3", "darkorange", "black",
-            "red3", "green", "brown", "yellow", "turquoise",
-            "darkgreen")
+  colz <- c("slateblue", "gold", "green3",  "grey60", "red3",
+            "black", "grey40", "darkorange", "#ff8c009d", "blue",
+            "yellow", "turquoise", "darkgreen")
 
   if (eps) {
     file <- strsplit(file, ".", fixed = TRUE)[[1]]
@@ -1008,39 +1023,45 @@ plot_biocol_ts <- function(
   )
   graphics::lines(
     x = seq(first_year, last_year, 1),
-    y = biocol_data$biocol_overtime,
+    y = biocol_data$biocol_overtime_abs,
     type = "l",
-    col = colz[5]
+    col = colz[6]
   )
   graphics::lines(
     x = seq(first_year, last_year, 1),
-    y = biocol_data$harvest_cft_overtime,
+    y = biocol_data$biocol_overtime,
     type = "l",
     col = colz[7]
+  )
+  graphics::lines(
+    x = seq(first_year, last_year, 1),
+    y = biocol_data$npp_harv_overtime,
+    type = "l",
+    col = colz[5]
   )
   if (details) {
     graphics::lines(
       x = seq(first_year, last_year, 1),
       y = biocol_data$rharvest_cft_overtime,
       type = "l",
-      col = colz[8]
+      col = colz[10]
     )
     graphics::lines(
       x = seq(first_year, last_year, 1),
       y = biocol_data$fire_overtime,
-      type = "l", col = colz[9]
+      type = "l", col = colz[11]
     )
     graphics::lines(
       x = seq(first_year, last_year, 1),
       y = biocol_data$timber_harvest_overtime,
       type = "l",
-      col = colz[10]
+      col = colz[12]
     )
     graphics::lines(
       x = seq(first_year, last_year, 1),
       y = biocol_data$wood_harvest_overtime,
       type = "l",
-      col = colz[11]
+      col = colz[13]
     )
   }
   graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(4, 5, 1, 3), new = TRUE)
@@ -1051,9 +1072,21 @@ plot_biocol_ts <- function(
       ylab = "",
       xlab = "",
       xlim = plot_years,
-      ylim = c(0, 0.4),
+      ylim = c(0, max_val_right),
       type = "l",
-      col = colz[6],
+      col = colz[8],
+      xaxs = "i",
+      yaxs = "i",
+      axes = FALSE
+    )
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$biocol_overtime_frac_piref,
+      ylab = "",
+      xlab = "",
+      xlim = plot_years,
+      ylim = c(0, 0.4),
+      col = colz[9],
       xaxs = "i",
       yaxs = "i",
       axes = FALSE
@@ -1061,13 +1094,25 @@ plot_biocol_ts <- function(
   } else if (ref == "act") {
     graphics::plot(
       x = seq(first_year, last_year, 1),
-      y = biocol_data$biocol_overtime,
+      y = biocol_data$biocol_overtime_abs_frac,
+      ylab = "",
+      xlab = "",
+      xlim = plot_years,
+      ylim = c(0, max_val_right),
+      type = "l",
+      col = colz[8],
+      xaxs = "i",
+      yaxs = "i",
+      axes = FALSE
+    )
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$biocol_overtime_frac,
       ylab = "",
       xlab = "",
       xlim = plot_years,
       ylim = c(0, 0.4),
-      type = "l",
-      col = colz[6],
+      col = colz[9],
       xaxs = "i",
       yaxs = "i",
       axes = FALSE
@@ -1076,8 +1121,8 @@ plot_biocol_ts <- function(
     stop(paste0("Unknown value for parameter ref: ", ref, " - Aborting."))
   }
 
-  graphics::axis(side = 4, col = colz[6], col.axis = colz[6])
-  graphics::mtext(text = "fraction of NPPref", col = colz[6], side = 4, line = 2)
+  graphics::axis(side = 4, col = colz[8], col.axis = colz[8])
+  graphics::mtext(text = "fraction of NPPref", col = colz[8], side = 4, line = 2)
 
   if (!is.null(highlight_years)) {
     for (y in highlight_years) {
@@ -1088,17 +1133,17 @@ plot_biocol_ts <- function(
   graphics::legend(
     legendpos,
     legend = c(
-      "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "HANPP",
-      "BioCol [frac NPPref]", "harvestc", "rharvest", "firec", "timber_harvest",
-      "wood_harvest"
+      "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
+      "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]", "BioCol sum [frac NPPref]",
+      "rharvest", "firec", "timber_harvest", "wood_harvest"
     ), col = colz, lty = 1, cex = 1)
   } else {
       graphics::legend(
     legendpos,
     legend = c(
-      "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "HANPP",
-      "BioCol [frac NPPref]", "harvestc"
-    ), col = colz[1:7], lty = 1, cex = 1)
+      "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
+      "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]", "BioCol sum [frac NPPref]"
+    ), col = colz[1:9], lty = 1, cex = 1)
   }
   grDevices::dev.off()
 }

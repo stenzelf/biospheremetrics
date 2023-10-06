@@ -2,7 +2,7 @@
 
 
 *The goal of biospheremetrics is to provide functions to calculate and plot 
-the biosphere integrity metrics M-ECO and M-ECO in an R package based on 
+the biosphere integrity metrics BioCol and EcoRisk in an R package based on 
 outputs of [LPJmL](https://gitlab.pik-potsdam.de/lpjml/LPJmL_internal).
 biospheremetrics utilizes the read functions of the 
 [lpjmlkit package](https://gitlab.pik-potsdam.de/lpjml/lpjmlkit).*

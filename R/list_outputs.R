@@ -151,7 +151,7 @@ split_sign <- function(string) {
   } else {
     outarray <- array("", dim = c(round( (length(a)+1) / 2), 2))
   }
-  for (i in 1:length(a)){
+  for (i in seq_along(a)){
     i2 <- floor(i / 2 + 1)
     if (i == 1 && !(grepl(a[1], "+-", fixed = TRUE))) outarray[1, 1] <- "+"
 

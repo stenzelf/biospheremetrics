@@ -92,6 +92,9 @@ metric:
             swc:
                 resolution: "annual"
                 optional: false
+            swc_vol:
+                resolution: "annual"
+                optional: false
             res_storage:
                 resolution: "annual"
                 optional: false
@@ -99,6 +102,9 @@ metric:
                 resolution: "annual"
                 optional: false
             prec:
+                resolution: "annual"
+                optional: false
+            rootmoist:
                 resolution: "annual"
                 optional: false
         metric_class: &ecorisk_classes
@@ -114,9 +120,7 @@ metric:
                     gpp - npp + firec + harvestc # harvestc contains residues
             water_pools:
                 soil_water_pool:
-                    swc
-                surface_water_pool:
-                    irrig_stor + rivervol + lakevol + res_storage
+                    rootmoist # should be swc + snow water equiv. (swe) and litter water pool (litter.agtop_moist)
             water_fluxes:
                 water_influx:
                     prec + irrig
