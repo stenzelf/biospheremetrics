@@ -1,0 +1,281 @@
+# ---------------------------------------------------------------------------- #
+# Metrics required LPJmL outputs and boundaries functions
+# ---------------------------------------------------------------------------- #
+metric:
+    # Biome classification
+    biome:
+        # LPJmL output IDs with required resolution
+        output: &biome_output
+            grid:
+                resolution: "annual"
+                optional: false
+            fpc:
+                resolution: "annual"
+                optional: false
+            vegc:
+                resolution: "annual"
+                optional: true
+            pft_lai:
+                resolution: "annual"
+                optional: true
+            temp: 
+                resolution: "annual"
+                optional: true
+        # Called boundaries functions
+        fun: &biome_fun
+            - classify_biomes
+
+    # Calculate ecorisk
+    ecorisk:
+        # LPJmL output IDs with required resolution
+        output: &ecorisk_output
+            grid:
+                resolution: "annual"
+                optional: false
+            fpc:
+                resolution: "annual"
+                optional: false
+            fpc_bft:
+                resolution: "annual"
+                optional: false
+            cftfrac:
+                resolution: "annual"
+                optional: false
+            firec:
+                resolution: "annual"
+                optional: false
+            npp:
+                resolution: "annual"
+                optional: false
+            gpp:
+                resolution: "annual"
+                optional: false
+            ra:
+                resolution: "annual"
+                optional: false
+            runoff:
+                resolution: "annual"
+                optional: false
+            irrig:                
+                resolution: "annual"
+                optional: false
+            transp:
+                resolution: "annual"
+                optional: false
+            vegc:
+                resolution: "annual"
+                optional: false
+            firef:
+                resolution: "annual"
+                optional: false
+            rh:
+                resolution: "annual"
+                optional: false
+            harvestc:
+                resolution: "annual"
+                optional: false
+            rharvestc:
+                resolution: "annual"
+                optional: false
+            evap:
+                resolution: "annual"
+                optional: false
+            interc:
+                resolution: "annual"
+                optional: false
+            soilc:
+                resolution: "annual"
+                optional: false
+            litc:
+                resolution: "annual"
+                optional: false
+            swc:
+                resolution: "annual"
+                optional: false
+            swc_vol:
+                resolution: "annual"
+                optional: false
+            res_storage:
+                resolution: "annual"
+                optional: false
+            lakevol:
+                resolution: "annual"
+                optional: false
+            prec:
+                resolution: "annual"
+                optional: false
+            rootmoist:
+                resolution: "annual"
+                optional: false
+        metric_class: &ecorisk_classes
+            carbon_pools:
+                vegetation_carbon_pool:
+                    vegc
+                soil_carbon_pool:
+                    soilc + litc
+            carbon_fluxes:
+                carbon_influx:
+                    gpp
+                carbon_outflux: # gpp - npp is better than rh + rd (miss rg, re)
+                    gpp - npp + firec + harvestc # harvestc contains residues
+            water_pools:
+                soil_water_pool:
+                    rootmoist # should be swc + snow water equiv. (swe) and litter water pool (litter.agtop_moist)
+            water_fluxes:
+                water_influx:
+                    prec + irrig
+                water_outflux:
+                    transp + evap + interc + runoff
+            other:
+                other:
+                    firef
+        # Called boundaries functions
+        fun: &ecorisk_output
+            []
+
+    # Calculate meco_nitrogen
+    ecorisk_nitrogen:
+        # LPJmL output IDs with required resolution
+        output:
+            <<: *ecorisk_output
+            vegn:
+                resolution: "annual"
+                optional: false
+            harvestn:
+                resolution: "annual"
+                optional: false
+            pft_harvestn:
+                resolution: "annual"
+                optional: false
+            rharvestn:
+                resolution: "annual"
+                optional: false
+            pft_rharvestn:
+                resolution: "annual"
+                optional: false
+            soilnh4:
+                resolution: "annual"
+                optional: false
+            soilno3:
+                resolution: "annual"
+                optional: false
+            leaching:
+                resolution: "annual"
+                optional: false
+            n2o_denit:
+                resolution: "annual"
+                optional: false
+            n2o_nit:
+                resolution: "annual"
+                optional: false
+            n2_emis:
+                resolution: "annual"
+                optional: false
+            bnf:
+                resolution: "annual"
+                optional: false
+            n_volatilization:
+                resolution: "annual"
+                optional: false
+            nfert_agr:
+                resolution: "annual"
+                optional: false
+            nmanure_agr:
+                resolution: "annual"
+                optional: false
+            ndepo_agr:
+                resolution: "annual"
+                optional: false
+        metric_class: 
+            <<: *ecorisk_classes
+            nitrogen_pools:
+                vegetation_nitrogen_pool:
+                    vegn
+                soil_mineral_nitrogen_pool:
+                    soilnh4 + soilno3
+            nitrogen_fluxes:
+                nitrogen_influx:
+                    bnf + nfert_agr + nmanure_agr + ndepos
+                nitrogen_outflux:
+                    harvestn + firen + leaching + n2_emis + n2o_denit + n2o_nit + n_volatilization
+        # Called boundaries functions
+        fun:
+            []
+
+    # Calculate biocol
+    biocol:
+        # LPJmL output IDs with required resolution
+        output:
+            grid:
+                resolution: "annual"
+                optional: false
+            npp:
+                resolution: "annual"
+                optional: false
+            pft_npp:
+                resolution: "annual"
+                optional: false
+            pft_harvestc:
+                resolution: "annual"
+                optional: false
+            pft_rharvestc:
+                resolution: "annual"
+                optional: false
+            firec:
+                resolution: "annual"
+                optional: false
+            timber_harvestc:
+                resolution: "annual"
+                optional: false
+            cftfrac:
+                resolution: "annual"
+                optional: false
+            fpc:
+                resolution: "annual"
+                optional: false
+        # Called boundaries functions
+        fun:
+            []
+
+# ---------------------------------------------------------------------------- #
+# Allowed output file names for LPJmL output IDs
+# ---------------------------------------------------------------------------- #
+file_name:
+    grid: ["grid"]
+    discharge: ["discharge", "mdischarge"]
+    irrig: ["irrig", "mirrig"]
+    rootmoist:  ["rootmoist", "mrootmoist"]
+    swc: ["swc", "mswc"]
+    fpc: ["fpc"]
+    fpc_bft: ["fpc_bft"]
+    cftfrac: ["cftfrac"]
+    firec: ["firec", "mfirec"]
+    npp: ["npp", "mnpp"]
+    runoff: ["runoff", "mrunoff"]
+    transp: ["transp", "mtransp"]
+    vegc: ["vegc"]
+    firef: ["firef", "mfiref"]
+    rh: ["rh"]
+    rd: ["rd"]
+    harvestc: ["harvestc"]
+    evap: ["evap", "mevap"]
+    interc: ["interc", "minterc"]
+    soilc: ["soilc"]
+    litc: ["litc"]
+    vegn: ["vegn"]
+    soilnh4: ["soilnh4"]
+    soilno3: ["soilno3"]
+    leaching: ["leaching", "mleaching"]
+    n2o_denit: ["n2o_denit", "mn2o_denit"]
+    n2o_nit: ["n2o_nit", "mn2o_nit"]
+    n2_emis: ["n2_emis", "mn2_emis"]
+    bnf: ["bnf", "mbnf"]
+    n_volatilization: ["n_volatilization", "mn_volatilization"]
+    pft_npp: ["pft_npp"]
+    pft_harvestc: ["pft_harvestc"]
+    pft_rharvestc: ["pft_rharvestc"]
+    timber_harvestc: ["timber_harvestc"]
+    pft_lai: ["pft_lai", "mpft_lai"]
+    temp: ["temp", "mtemp"]
+    pet: ["pet", "mpet"]
+    prec: ["prec","mprec"]
