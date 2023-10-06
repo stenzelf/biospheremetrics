@@ -16,7 +16,9 @@ plot_global_to_screen(
   col_neg = "YlOrRd",
   legendtitle = "",
   leg_yes = TRUE,
-  only_pos = FALSE
+  only_pos = FALSE,
+  n_legend_ticks = 20,
+  min_0 = 0.01
 )
 }
 \arguments{

@@ -9,6 +9,7 @@ calculate_within_biome_diffs(
   data_file_base,
   intra_biome_distrib_file,
   create = FALSE,
+  nitrogen = TRUE,
   res = 0.05,
   plotting = FALSE,
   plot_folder,

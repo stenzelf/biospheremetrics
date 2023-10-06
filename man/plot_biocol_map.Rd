@@ -9,8 +9,9 @@ plot_biocol_map(
   file,
   title = "",
   legendtitle = "",
-  zero_threshold = 0.1,
-  eps = FALSE
+  zero_threshold = 0.001,
+  eps = FALSE,
+  haberllegend = FALSE
 )
 }
 \arguments{

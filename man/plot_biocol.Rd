@@ -11,6 +11,7 @@ plot_biocol(
   min_val,
   max_val,
   legendpos,
+  details = FALSE,
   start_year,
   mapyear,
   mapyear_buffer = 5,
@@ -33,6 +34,8 @@ biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, npp all in GtC}
 \item{max_val}{y-axis maximum value for plot over time}
 
 \item{legendpos}{position of legend}
+
+\item{details}{show all harvest components or not}
 
 \item{start_year}{first year of biocol_data object}
 

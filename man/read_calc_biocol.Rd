@@ -6,11 +6,11 @@
 \usage{
 read_calc_biocol(
   files_scenario,
-  files_reference,
+  files_baseline,
+  files_reference = NULL,
   time_span_scenario,
+  time_span_baseline = NULL,
   time_span_reference = NULL,
-  reference_npp_time_span = NULL,
-  reference_npp_file = NULL,
   gridbased = TRUE,
   read_saved_data = FALSE,
   save_data = FALSE,
@@ -20,6 +20,7 @@ read_calc_biocol(
   external_wood_harvest = FALSE,
   grass_scaling = FALSE,
   npp_threshold = 20,
+  epsilon = 0.001,
   grass_harvest_file = "grazing_data.RData",
   external_fire_file = "human_ignition_fraction.RData",
   external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData"
@@ -28,26 +29,27 @@ read_calc_biocol(
 \arguments{
 \item{files_scenario}{list with variable names and corresponding file paths
 (character string) of the scenario LPJmL run. All needed files are
-provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")}
+provided in XXX. E.g.: list(npp = "/temp/npp.bin.json")}
 
-\item{files_reference}{list with variable names and corresponding file paths
-(character string) of the reference LPJmL run. All needed files are
-provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
+\item{files_baseline}{list with variable names and corresponding file paths
+(character string) of the baseline LPJmL run. All needed files are
+provided in XXX. E.g.: list(npp = "/temp/npp.bin.json"). If not
 needed for the applied method, set to NULL.}
 
-\item{time_span_scenario}{time span to be used for the scenario run, defined
-as a character string, e.g. `as.character(1982:2011)` (default)}
+\item{files_reference}{list with npp file path (character string) of the
+reference LPJmL run (usually Holocene/preindustrial).
+E.g.: list(npp = "/temp/npp.bin.json"). If NULL uses baseline npp.}
 
-\item{time_span_reference}{time span to be used for the scenario run, defined
-as an integer vector, e.g. `as.character(1901:1930)`. Can differ in offset
+\item{time_span_scenario}{time span to be used for the scenario run, defined
+as a character vector, e.g. `as.character(1982:2011)` (required)}
+
+\item{time_span_baseline}{time span to be used for the baseline run, defined
+as a character vector, e.g. `as.character(1901:1930)`. Can differ in offset
 and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 is used}
 
-\item{reference_npp_time_span}{time span to read reference npp from, using
+\item{time_span_reference}{time span to read reference npp from, using
 index years 10:39 from potential npp input if set to NULL (default: NULL)}
-
-\item{reference_npp_file}{file to read reference npp from, using
-potential npp input if set to NULL (default: NULL)}
 
 \item{gridbased}{logical are pft outputs gridbased or pft-based?}
 
@@ -76,6 +78,8 @@ data given via grass_harvest_file (default FALSE)}
 according to Haberl et al. 2007). Below BioCol will be set to 0.
 (default: 20 gC/m2)}
 
+\item{epsilon}{minimum value for npp, below which it will be set to 0}
+
 \item{grass_harvest_file}{file containing grazing data to rescale the
 grassland harvests according to Herrero et al. 2013. File contains:
 grazing_data list object with $name and $id of 29 world regions, and
@@ -91,12 +95,12 @@ timeline of maps for LUH2_v2h woodharvest}
 }
 \value{
 list data object containing BioCol and components as arrays: biocol,
-        biocol_overtime, biocol_overtime_perc_piref, biocol_perc,
-        biocol_perc_piref, npp_potential, npp_act_overtime, npp_pot_overtime,
-        npp_eco_overtime, harvest_cft_overtime, npp_luc_overtime,
-        rharvest_cft_overtime, fire_overtime, timber_harvest_overtime,
-        harvest_cft, biocol_harvest, grassland_scaling_factor_cellwise,
-        biocol_luc, biocol_luc_piref
+        biocol_overtime, biocol_overtime_piref, biocol_frac, npp_potential,
+        biocol_overtime_abs_frac_piref, biocol_frac_piref, npp_act_overtime,
+        npp_pot_overtime, npp_eco_overtime, npp_ref, harvest_cft_overtime,
+        npp_luc_overtime, rharvest_cft_overtime, fire_overtime,
+        timber_harvest_overtime, harvest_cft, rharvest_cft,
+        wood_harvest_overtime, biocol_harvest, biocol_luc
 }
 \description{
 Function to calculate BioCol based on a PNV run and LU run of LPJmL
