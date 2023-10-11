@@ -2220,9 +2220,9 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
                                          plotting = FALSE,
                                          plot_folder,
                                          time_span_reference,
-                                         vars_ecorisk) {
+                                         vars_ecorisk,
+                                         ecorisk_components = 13) {
   biomes_abbrv <- get_biome_names(1)
-  ecorisk_components <- 11
   # nbiomes, nEcoRiskvars, nHISTclasses
   intra_biome_distrib <- array(
     0,
@@ -2352,7 +2352,6 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
       )
     } # end if plotting
   }
-
   ecorisk_dimensions <- names(ecorisk)
 
   dim(intra_biome_distrib) <- c(biome = length(biome_classes$biome_names), variable = ecorisk_components, bin = 1 / res)
@@ -2619,7 +2618,7 @@ plot_ecorisk_map <- function(
 #' Function to plot an aggregated radial status of EcoRisk values [0-1]
 #' for the different sub-categories to screen
 #'
-#' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
+#' @param data EcoRisk data array c([nEcoRiskcomponents],
 #'             3[min,mean,max])
 #' @param title character string title for plot, default empty
 #' @param zoom scaling factor for circle plot. defaults to 1
@@ -2640,71 +2639,27 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
                                           use_quantile = TRUE) {
 
   ecorisk_dims <- length(data[, 1])
-  if (ecorisk_dims == 11) {
-    names <- c(
-      ecorisk = "ecorisk",
-      deltav = "vegetation\nstructure", local = "local\nchange",
-      global = "global\nimportance", balance = "ecosystem\nbalance",
-      cstocks = "carbon\nstocks", cfluxes = "carbon\nfluxes",
-      wstocks = "water stocks", wfluxes = "water fluxes",
-      nstocks = "nitrogen\nstocks", nfluxes = "nitrogen\nfluxes"
-    )
-   # c(blue-green, yellow, violet, red, blue, orange, green, pink, grey,
-   #   purple, green-blue, yellow-orange)
+  if (ecorisk_dims == 8) {
+    #names <- c(
+    #  ecorisk = "ecorisk", deltav = "vegetation\nstructure",
+    #  local = "local\nchange", global = "global\nimportance",
+    #  balance = "ecosystem\nbalance", cstocks = "carbon\nstocks",
+    #  cfluxes = "carbon fluxes", wfluxes = "water fluxes"
+    #)
 
-    set <- RColorBrewer::brewer.pal(12, "Set3")
-    colz <- set[c(4, 7, 8, 11, 2, 3, 10, 5, 1, 12, 6)] # missing 2,9
-    # ecorisk vs lc gi eb cs cf ws wf ns nf
-    angles <- matrix(
-      c(90, 270, 216, 252, 180, 216, 144, 180, 108, 144, 0, 30, -30, 0, -60,
-        -30, -90, -60, 60, 90, 30, 60),
-      byrow = TRUE,
-      nrow = length(colz)
-    )
-
-  } else if (ecorisk_dims == 10) {
-    names <- c(
-      ecorisk = "ecorisk", deltav = "vegetation\nstructure",
-      local = "local\nchange", global = "global\nimportance",
-      balance = "ecosystem\nbalance", cstocks = "carbon stocks",
-      cfluxes = "carbon fluxes", wfluxes = "water fluxes",
-      nstocks = "nitrogen\nstocks", nfluxes = "nitrogen fluxes"
-    )
-
+    # take the names of the ecorisk list dimensions, removing "_total"
+    names <- gsub("_", "\n",gsub("_total","", dimnames(data)[[1]]))
     # c(blue-green, yellow, violet, red, blue, orange, green, pink, grey,
     #   purple, green-blue, yellow-orange)
 
     set <- RColorBrewer::brewer.pal(12, "Set3")
-    colz <- set[c(4, 7, 8, 11, 1, 3, 10, 5, 12, 6)]
-
-    # ecorisk vs lc gi eb cs cf wf ns nf
+    colz <- set[c(4, 7, 8, 11, 1, 10, 5, 6)]
+    #   ecorisk vs         lc        gi        eb        ct       wt         nt
     angles <- matrix(
-      c(90, 270, 216, 252, 180, 216, 144, 180, 108, 144, -18, 18, -54, -18, -90,
-        -54, 54, 90, 18, 54),
+      c(90, 270, 216, 252, 180, 216, 144, 180, 108, 144, -18, 18, -54, -18, 18, 54),
       byrow = TRUE,
       nrow = length(colz)
     )
-
-  } else if (ecorisk_dims == 8) {
-    names <- c(
-      ecorisk = "ecorisk", deltav = "vegetation\nstructure",
-      local = "local\nchange", global = "global\nimportance",
-      balance = "ecosystem\nbalance", cstocks = "carbon\nstocks",
-      cfluxes = "carbon fluxes", wfluxes = "water fluxes"
-    )
-    colz <- c(
-      "darkgoldenrod", RColorBrewer::brewer.pal(5, "Greens")[5],
-      RColorBrewer::brewer.pal(6, "Set1")[seq(2, 6, by = 2)],
-      rev(RColorBrewer::brewer.pal(6, "Oranges")[c(4, 5)]),
-      RColorBrewer::brewer.pal(6, "PuBu")[6]
-    )
-    angles <- matrix(
-      c(234, 270, 198, 234, 162, 198, 126, 162, 90, 126, 18, 54, -18, 18, -54,
-        -18),
-      byrow = TRUE,
-      nrow = length(colz)
-    )
-
   } else {
     stop("Unknown number of dimensions for ecorisk data:", ecorisk_dims)
   }
@@ -2730,28 +2685,12 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
       )
     }
 
-    if (ecorisk_dims == 11) {
+    if (ecorisk_dims == 8) {
       graphics::text(names,
-        #       er    vs   lc   gi   eb   cs   cf   ws   wf   ns  nf
-        x = c(1.1, 1.0, 0.2, -0.8, -1.6, -0.6, 0.1, 0.8, 1.05, -1.7, -1.4),
-        y = c(-0.15, -0.9, -1.3, -1.3, -0.9, 1.2, 1.2, 0.85, 0.25, 0.3, 0.85),
+        x = c(  1.1,  1.0,  0.2, -0.8, -1.6,-0.25, 0.7, -1.3),
+        y = c(-0.15, -0.9, -1.3, -1.3, -0.9,  1.2,   1,  1),
         adj = 0
       )
-
-    } else if (ecorisk_dims == 10) {
-      graphics::text(names,
-        x = c(1.1, 1.0, 0.2, -0.8, -1.6, -0.4, 0.7, 1.05, -1.7, -1.5),
-        y = c(-0.15, -0.9, -1.3, -1.3, -0.9, 1.2, 1, 0.25, 0.3, 1), adj = 0
-      )
-
-    } else if (ecorisk_dims == 8) {
-      graphics::text(
-        names,
-        x = c(1.1, 0.6, -0.2, -1.2, -1.7, -1.5, -0.4, 0.7),
-        y = c(-0.3, -1.1, -1.3, -1, -0.5, 1, 1.2, 1),
-        adj = 0
-      )
-
     } else {
       stop("Unknown number of dimensions for ecorisk data:", ecorisk_dims)
     }
@@ -2857,7 +2796,6 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
     }
 
   } else if (type == "regular") {
-
     circlize::draw.sector(180, 360, rou1 = 1, col = "gray80")
 
     for (i in seq_along(angles[, 1])) {
