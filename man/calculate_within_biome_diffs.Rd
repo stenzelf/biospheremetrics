@@ -14,7 +14,8 @@ calculate_within_biome_diffs(
   plotting = FALSE,
   plot_folder,
   time_span_reference,
-  vars_ecorisk
+  vars_ecorisk,
+  ecorisk_components = 13
 )
 }
 \arguments{

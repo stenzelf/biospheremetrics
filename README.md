@@ -7,7 +7,17 @@ outputs of [LPJmL](https://gitlab.pik-potsdam.de/lpjml/LPJmL_internal).
 biospheremetrics utilizes the read functions of the 
 [lpjmlkit package](https://gitlab.pik-potsdam.de/lpjml/lpjmlkit).*
 
-## Installation
+## Installation lpjmlkit
+The dependency package lpjmlkit is currently not available from CRAN, therefore it needs to be installed manually.
+
+Either install from PIK repository:
+```R
+install.packages('lpjmlkit', repos = c('https://pik-piam.r-universe.dev', 'https://cloud.r-project.org'))
+```
+
+or checkout and install from github (https://github.com/PIK-LPJmL/lpjmlkit).
+
+## Installation biospheremetrics
 
 You can install `biospheremetrics` by git cloning this repository:
 

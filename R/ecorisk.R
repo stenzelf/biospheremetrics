@@ -2492,7 +2492,7 @@ plot_biome_internal_distribution <- function( # nolint
 #' @return None
 #'
 #' @export
-plot_eco_riskmap_to_screen <- function(
+plot_ecorisk_map_to_screen <- function(
   data,
   focus_biome = NULL,
   biome_classes = NULL,
@@ -2517,24 +2517,24 @@ plot_eco_riskmap_to_screen <- function(
     focus <- data
     focus[!(biome_classes == focus_biome)] <- NA
     palette_low_sat <- grDevices::adjustcolor(palette, alpha.f = 0.25)
-    ra_f <- raster::raster(ncols = 720, nrows = 360)
-    ra_f[raster::cellFromXY(ra_f, cbind(lon, lat))] <- focus
+    ra_f <- terra::rast(ncols = 720, nrows = 360)
+    ra_f[terra::cellFromXY(ra_f, cbind(lon, lat))] <- focus
   }
 
-  ra <- raster::raster(ncols = 720, nrows = 360)
-  ra[raster::cellFromXY(ra, cbind(lon, lat))] <- data
+  ra <- terra::rast(ncols = 720, nrows = 360)
+  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
   range <- range(data)
-  extent <- raster::extent(c(-180, 180, -60, 90))
+  extent <- terra::ext(c(-180, 180, -60, 90))
   graphics::par(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n")
 
   if (is.null(focus_biome)) {
-    raster::plot(ra, ext = extent, breaks = brks, col = palette, main = "",
+    terra::plot(ra, ext = extent, breaks = brks, col = palette, main = "",
                  legend = FALSE, axes = FALSE)
 
   } else {
-    raster::plot(ra, ext = extent, breaks = brks, col = palette_low_sat,
+    terra::plot(ra, ext = extent, breaks = brks, col = palette_low_sat,
                  main = "", legend = FALSE, axes = FALSE)
-    raster::plot(ra_f, ext = extent, breaks = brks, col = palette, main = "",
+    terra::plot(ra_f, ext = extent, breaks = brks, col = palette, main = "",
                  legend = FALSE, axes = FALSE, add = TRUE)
   }
 
@@ -2543,7 +2543,7 @@ plot_eco_riskmap_to_screen <- function(
 
   if (leg_yes) {
     fields::image.plot(
-      legend.only = TRUE, zlim = range, col = palette, breaks = brks,
+      legend.only = TRUE, col = palette, breaks = brks, zlim = range,
       lab.breaks = brks, legend.shrink = 0.7,
       legend.args = list(legendtitle, side = 3, font = 2, line = 1)
     ) # removed zlim
@@ -2598,7 +2598,7 @@ plot_ecorisk_map <- function(
         pointsize = 6, type = "cairo")
   }
 
-  plot_eco_riskmap_to_screen(
+  plot_ecorisk_map_to_screen(
     data = data,
     focus_biome = focus_biome,
     biome_classes = biome_classes,
@@ -3257,12 +3257,12 @@ plot_biomes_to_screen <- function(biome_ids,
   brks <- seq(min(biome_ids, na.rm = TRUE) - 0.5,
               max(biome_ids, na.rm = TRUE) + 0.5,
               1)
-  ra <- raster::raster(ncols = 720, nrows = 360)
+  ra <- terra::rast(ncols = 720, nrows = 360)
   range <- range(biome_ids)
-  ra[raster::cellFromXY(ra, cbind(lon, lat))] <- biome_ids
-  extent <- raster::extent(c(-180, 180, -60, 90))
+  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- biome_ids
+  extent <- terra::ext(c(-180, 180, -60, 90))
   graphics::par(mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0), bty = "n")
-  raster::plot(ra, ext = extent, breaks = brks, col = biome_class_cols,
+  terra::plot(ra, ext = extent, breaks = brks, col = biome_class_cols,
                main = "", legend = FALSE, axes = FALSE)
   graphics::title(main = title, line = -2, cex.main = title_size)
   if (leg_yes) {

@@ -8,7 +8,6 @@ plot_biomes(
   biome_data,
   file_name = NULL,
   display_area = FALSE,
-  to_robinson = TRUE,
   cellarea = NULL,
   order_legend = c(1, 2, 9, 10, 11, 3, 4, 5, 12, 13, 14, 6, 7, 8, 15, 16, 17, 18, 19),
   bg_col = "white"
@@ -18,7 +17,6 @@ plot_biomes(
   biome_data,
   file_name = NULL,
   display_area = FALSE,
-  to_robinson = TRUE,
   cellarea = NULL,
   order_legend = c(1, 2, 9, 10, 11, 3, 4, 5, 12, 13, 14, 6, 7, 8, 15, 16, 17, 18, 19),
   bg_col = "white"
@@ -30,9 +28,6 @@ plot_biomes(
 \item{file_name}{directory for saving the plot (character string)}
 
 \item{display_area}{boolean, adding occupied area per biome (default FALSE)}
-
-\item{to_robinson}{logical to define if robinson projection should be used
-for plotting}
 
 \item{order_legend}{in which order the biomes should be displayed
 default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)}
@@ -55,6 +50,9 @@ default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)}
 \item{leg_scale}{size of legend in cex units (default 0.5)}
 
 \item{eps}{write as eps, replacing png in filename (default: True)}
+
+\item{to_robinson}{logical to define if robinson projection should be used
+for plotting}
 }
 \value{
 None
