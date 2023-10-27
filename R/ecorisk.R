@@ -2492,7 +2492,7 @@ plot_biome_internal_distribution <- function( # nolint
 #' @return None
 #'
 #' @export
-plot_eco_riskmap_to_screen <- function(
+plot_ecorisk_map_to_screen <- function(
   data,
   focus_biome = NULL,
   biome_classes = NULL,
@@ -2543,7 +2543,7 @@ plot_eco_riskmap_to_screen <- function(
 
   if (leg_yes) {
     fields::image.plot(
-      legend.only = TRUE, zlim = range, col = palette, breaks = brks,
+      legend.only = TRUE, col = palette, breaks = brks, zlim = range,
       lab.breaks = brks, legend.shrink = 0.7,
       legend.args = list(legendtitle, side = 3, font = 2, line = 1)
     ) # removed zlim
@@ -2598,7 +2598,7 @@ plot_ecorisk_map <- function(
         pointsize = 6, type = "cairo")
   }
 
-  plot_eco_riskmap_to_screen(
+  plot_ecorisk_map_to_screen(
     data = data,
     focus_biome = focus_biome,
     biome_classes = biome_classes,
