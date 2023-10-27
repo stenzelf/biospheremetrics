@@ -196,10 +196,10 @@ plot_global_to_screen <- function(data,
     legendticks[length(legendticks)]
   )
 
-  ra <- raster::raster(ncols = 720, nrows = 360)
+  ra <- terra::rast(ncols = 720, nrows = 360)
   range <- range(data)
-  ra[raster::cellFromXY(ra, cbind(lon, lat))] <- data
-  extent <- raster::extent(c(-180, 180, -60, 90))
+  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
+  extent <- terra::ext(c(-180, 180, -60, 90))
 
   if (leg_yes) {
     graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 3),
@@ -207,7 +207,7 @@ plot_global_to_screen <- function(data,
   } else {
     graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0))
   }
-  raster::plot(ra, ext = extent, breaks = legendticks, col = palette, main = "",
+  terra::plot(ra, ext = extent, breaks = legendticks, col = palette, main = "",
                legend = FALSE, axes = FALSE)
   title(title, line = -1)
   if (leg_yes) {

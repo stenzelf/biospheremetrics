@@ -15,7 +15,7 @@ plot_ecorisk_radial_to_screen(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
+\item{data}{EcoRisk data array c([nEcoRiskcomponents],
 3[min,mean,max])}
 
 \item{title}{character string title for plot, default empty}

@@ -10,8 +10,10 @@ plot_biocol_ts(
   first_year,
   plot_years,
   highlight_years = 2000,
+  details = FALSE,
   min_val = 0,
   max_val = 100,
+  max_val_right = 0.45,
   legendpos = "topleft",
   ext = FALSE,
   eps = FALSE,
@@ -33,6 +35,8 @@ all in GtC}
 
 \item{highlight_years}{year(s) that should be highlighted in overtime plot
 (default: 2000)}
+
+\item{details}{show all harvest components or not}
 
 \item{min_val}{y-axis minimum value for plot over time (default: 0)}
 

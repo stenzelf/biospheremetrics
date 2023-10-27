@@ -917,12 +917,12 @@ plot_biocol_map <- function(
     grDevices::png(file, width = 7.25, height = 3.5, units = "in", res = 300,
                    pointsize = 6, type = "cairo")
   }
-  ra <- raster::raster(ncols = 720, nrows = 360)
+  ra <- terra::rast(ncols = 720, nrows = 360)
   range <- range(data)
-  ra[raster::cellFromXY(ra, cbind(lon, lat))] <-  data
-  extent <- raster::extent(c(-180, 180, -60, 90))
+  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
+  extent <- terra::ext(-180, 180, -60, 90)
   graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), xpd = TRUE)
-  raster::plot(ra, ext = extent, breaks = brks, col = palette, main = "",
+  terra::plot(ra, ext = extent, breaks = brks, col = palette, main = "",
                legend = FALSE, axes = FALSE)
   graphics::title(title, line = -2)
   maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))

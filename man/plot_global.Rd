@@ -18,7 +18,8 @@ plot_global(
   legendtitle = "",
   leg_yes = TRUE,
   only_pos = FALSE,
-  eps = FALSE
+  eps = FALSE,
+  n_legend_ticks = 20
 )
 }
 \arguments{

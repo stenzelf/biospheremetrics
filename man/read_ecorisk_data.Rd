@@ -9,7 +9,6 @@ read_ecorisk_data(
   files_reference,
   files_scenario,
   save_file = NULL,
-  export = FALSE,
   time_span_reference,
   time_span_scenario,
   nitrogen,
@@ -22,9 +21,6 @@ read_ecorisk_data(
 \item{files_scenario}{folder of scenario run}
 
 \item{save_file}{file to save read in data to (default NULL)}
-
-\item{export}{flag whether to export réad in data to global environment
-(default FALSE)}
 
 \item{time_span_reference}{vector of years to use as scenario period}
 

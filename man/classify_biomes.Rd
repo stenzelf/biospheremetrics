@@ -54,8 +54,8 @@ In the boreal zone, there is no woodland, everything below the
 boreal forest threshold will be classified as boreal tundra.}
 
 \item{avg_nyear_args}{list of arguments to be passed to
-\link[biospheremetrics]{average_nyear_window} (see for more info).
-To be used for time series analysis}
+\link[biospheremetrics]{average_nyear_window} (see for more info). To be used for # nolint
+time series analysis}
 }
 \value{
 list object containing biome_id (main biome per grid cell [dim=c(ncells)]), # nolint
