@@ -282,7 +282,7 @@ read_calc_biocol <- function( # nolint
         files_scenario$fpc,
         subset = list(year = as.character(time_span_scenario))) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(band = sum)
+        lpjmlkit::as_array(subset = list(band = "natural stand fraction")
       )
 
       pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
@@ -304,7 +304,7 @@ read_calc_biocol <- function( # nolint
     nat_bands <- 1:pftbands
 
     if (!gridbased) { # needs to be scaled with standfrac
-      pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, , 1]
+      pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, , band = rep("natural stand fraction",pftbands)]
       pftnpp[, , -c(nat_bands)] <- pftnpp[, , -c(nat_bands)] * cftfrac
       harvest <- harvest * cftfrac
     }
