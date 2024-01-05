@@ -8,9 +8,9 @@ get_file_ext <- function(path) {
 
   # Get file extensions
   all_file_types <- all_files %>%
-  strsplit("/") %>%
-  sapply(utils::tail, 1) %>%
-  strsplit("^([^\\.]+)") %>%
+    strsplit("/") %>%
+    sapply(utils::tail, 1) %>%
+    strsplit("^([^\\.]+)") %>%
     sapply(function(x) {
       y <- x[2]
       return(y)
@@ -18,12 +18,12 @@ get_file_ext <- function(path) {
     substr(2, nchar(.))
 
   # Get most frequent file types
-  #TODO not yet working
+  # TODO not yet working
   most_frequent <- all_file_types %>%
     factor() %>%
     table() %>%
     names() %>%
-    .[1:5]
+    .[seq_len(5)]
 
   # 5 exemplaric files to detect type
   files_to_check <- sapply(
@@ -32,23 +32,24 @@ get_file_ext <- function(path) {
       y[which(z == x)[1]]
     },
     y = all_files,
-    z = all_file_types)
+    z = all_file_types
+  )
 
   # Detect actual LPJmL data type
   types <- sapply(
     files_to_check,
     lpjmlkit:::detect_io_type
   ) %>%
-  stats::setNames(names(.), .)
+    stats::setNames(names(.), .)
 
   # Assign file type after ranking which is available
   # first preferable: "meta", second: "clm", last: "raw"
   if ("meta" %in% names(types)) {
-   file_type <- types["meta"]
+    file_type <- types["meta"]
   } else if ("clm" %in% names(types)) {
-   file_type <- types["clm"]
+    file_type <- types["clm"]
   } else if ("raw" %in% names(types)) {
-   file_type <- types["raw"]
+    file_type <- types["raw"]
   }
   return(file_type)
 }
@@ -60,15 +61,12 @@ get_filenames <- function(path, # nolint
                           diff_output_files,
                           input_files,
                           file_ext) {
-
   file_names <- list()
   # Iterate over required outputs
   for (ofile in names(output_files)) {
-
-  # Get required max. temporal resolution and convert to nstep
+    # Get required max. temporal resolution and convert to nstep
     resolution <- output_files[[ofile]]$resolution
-    nstep <- switch(
-      resolution,
+    nstep <- switch(resolution,
       annual = 1,
       monthly = 12,
       daily = 365,
@@ -78,9 +76,7 @@ get_filenames <- function(path, # nolint
     # If input file supplied use it as first priority
     if (ofile %in% names(input_files)) {
       file_name <- input_files[[ofile]]
-
     } else if (ofile %in% names(diff_output_files)) {
-
       # If different output file should be used - as second priority
       file_name <- paste0(
         path, "/",
@@ -92,7 +88,6 @@ get_filenames <- function(path, # nolint
     }
 
     if (!is.null(file_name)) {
-
       # Check if data could be read in
       meta <- lpjmlkit::read_meta(file_name)
 
@@ -107,9 +102,8 @@ get_filenames <- function(path, # nolint
         )
       }
 
-    # If nothing specified try to read required files from provided path
+      # If nothing specified try to read required files from provided path
     } else {
-
       # Iterate over different used file name options (e.g. runoff, mrunoff, ...) # nolint
       for (cfile in seq_along(output_files[[ofile]]$file_name)) {
         file_name <- paste0(
@@ -130,7 +124,7 @@ get_filenames <- function(path, # nolint
 
         # At end of iteraton raise error that no matching file_name was found
         if (cfile == length(output_files[[ofile]]$file_name) &&
-            !output_files[[ofile]]$optional) {
+              !output_files[[ofile]]$optional) {
           stop(
             paste0(
               "No matching output for ", dQuote(ofile),
@@ -150,7 +144,6 @@ get_filenames <- function(path, # nolint
 # list required output files
 list_outputs <- function(metric = "all",
                          only_first_filename = TRUE) {
-
   metric <- process_metric(metric = metric)
 
   system.file(
@@ -160,7 +153,6 @@ list_outputs <- function(metric = "all",
   ) %>%
     yaml::read_yaml() %>%
     get_outputs(metric, only_first_filename)
-
 }
 
 
@@ -196,15 +188,15 @@ get_outputs <- function(x, metric_name, only_first_filename) { # nolint
   outputs <- list()
   # Iterate over all metrics
   for (metric in x$metric[metric_name]) {
-
     # Iterate over all unique keys
     for (item in names(metric$output)) {
-
       # Check if output is already in list or if it has higher resolution
       if (!item %in% names(outputs) ||
-          (item %in% names(outputs) &&
-           higher_res(metric$output[[item]]$resolution,
-                      outputs[[item]]$resolution))
+        (item %in% names(outputs) &&
+          higher_res(
+            metric$output[[item]]$resolution,
+            outputs[[item]]$resolution
+          ))
       ) {
         # Assign output resolution from metric file
         outputs[[item]]$resolution <- metric$output[[item]]$resolution

@@ -22,8 +22,11 @@ ecorisk_cross_table(
 \item{pick_cells}{pick one specific cell as representative for the biome
 instead of computing the average state}
 
-\item{baseline_ref}{logical, use reference state as baseline? 
-default is F - use scenario state}
+\item{baseline_ref}{logical, use reference state as baseline?
+default is FALSE - use scenario state}
+}
+\value{
+c2vr array to be used in the ecorisk call
 }
 \description{
 Function to create a modified EcoRisk data file where for each biome

@@ -18,7 +18,9 @@ ecorisk_wrapper(
   dimensions_only_local = FALSE,
   overtime = FALSE,
   window = 30,
-  debug = FALSE
+  debug = FALSE,
+  external_variability = FALSE,
+  c2vr = NULL
 )
 }
 \arguments{
@@ -60,7 +62,7 @@ local change, global change and ecosystem balance (default FALSE)}
 \value{
 list data object containing arrays of ecorisk_total,
         vegetation_structure_change, local_change, global_importance,
-        ecosystem_balance, carbon_stocks, carbon_fluxes, water_fluxes 
+        ecosystem_balance, carbon_stocks, carbon_fluxes, water_fluxes
         (+ nitrogen_stocks and nitrogen_fluxes)
 }
 \description{

@@ -69,8 +69,9 @@ the savanna_proxy option and elevation if montane_arctic_proxy requires this
 \examples{
 \dontrun{
 classify_biomes(
-  path_data = "/p/projects/open/Fabian/runs/Gamma/output/historic_gamma"
-  timespan = c(1982:2011))
+  path_data = "/p/projects/open/Fabian/runs/Gamma/output/historic_gamma",
+  timespan = c(1982:2011)
+)
 }
 
 }

@@ -28,7 +28,6 @@
 #' dim(x)[3] if `moving_average == TRUE` or `interpolate == TRUE`
 #'
 #' @md
-#' @importFrom magrittr %>%
 #' @export
 average_nyear_window <- function(x, # nolint
                                  nyear_window = NULL,
@@ -73,7 +72,7 @@ average_nyear_window <- function(x, # nolint
   if (!is.null(nyear_window)) {
     if (!is.null(nyear_reference)) {
       orig_x <- x
-      x <- lpjmlkit::asub(x, year = 1:nyear_reference)
+      x <- lpjmlkit::asub(x, year = seq_len(nyear_reference))
     }
     # only valid for nyear_window <  years of x (dim(x)[3])
     if (nyear_window > 1 & nyear_window <= dim(x)["year"]) {

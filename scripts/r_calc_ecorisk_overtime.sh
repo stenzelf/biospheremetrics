@@ -5,7 +5,7 @@
 #SBATCH --partition=standard
 #SBATCH --account=open
 #SBATCH --job-name=R_analysis_script
-#SBATCH --workdir=/p/projects/open/Fabian/Metrics/
+#SBATCH --workdir=./Metrics/
 #SBATCH --output=outfile.%j.out
 #SBATCH --error=outfile.%j.err
 #SBATCH --mail-type=ALL 

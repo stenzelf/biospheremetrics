@@ -63,36 +63,39 @@
 #'         wood_harvest_overtime, biocol_harvest, biocol_luc
 #'
 #' @export
-read_calc_biocol <- function( # nolint
-  files_scenario,
-  files_baseline,
-  files_reference = NULL,
-  time_span_scenario,
-  time_span_baseline = NULL,
-  time_span_reference = NULL,
-  gridbased = TRUE,
-  read_saved_data = FALSE,
-  save_data = FALSE,
-  data_file = NULL,
-  include_fire = FALSE,
-  external_fire = FALSE,
-  external_wood_harvest = FALSE,
-  grass_scaling = FALSE,
-  npp_threshold = 20,
-  epsilon = 0.001, # gC/m2
-  grass_harvest_file = "grazing_data.RData",
-  external_fire_file = "human_ignition_fraction.RData",
-  external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData"
-) {
-  if (is.null(files_reference))
+read_calc_biocol <- function(
+    # nolint
+    files_scenario,
+    files_baseline,
+    files_reference = NULL,
+    time_span_scenario,
+    time_span_baseline = NULL,
+    time_span_reference = NULL,
+    gridbased = TRUE,
+    read_saved_data = FALSE,
+    save_data = FALSE,
+    data_file = NULL,
+    include_fire = FALSE,
+    external_fire = FALSE,
+    external_wood_harvest = FALSE,
+    grass_scaling = FALSE,
+    npp_threshold = 20,
+    epsilon = 0.001, # gC/m2
+    grass_harvest_file = "grazing_data.RData",
+    external_fire_file = "human_ignition_fraction.RData",
+    external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData") {
+  if (is.null(files_reference)) {
     files_reference <- list(npp = baseline_npp_file)
-  if (is.null(time_span_baseline))
+  }
+  if (is.null(time_span_baseline)) {
     time_span_baseline <- time_span_scenario
-  if (is.null(time_span_reference))
-    time_span_reference <- time_span_scenario[3:12]  
+  }
+  if (is.null(time_span_reference)) {
+    time_span_reference <- time_span_scenario[3:12]
+  }
   if (grass_scaling && !file.exists(grass_harvest_file)) {
     stop(
-      paste0("Grass harvest scaling enabled, but grass_harvest_file \ 
+      paste0("Grass harvest scaling enabled, but grass_harvest_file \
               does not exist in: ", grass_harvest_file)
     )
   }
@@ -116,18 +119,21 @@ read_calc_biocol <- function( # nolint
       wood_harvest[is.na(wood_harvest)] <- 0
     } else {
       stop(
-        paste0("data_file: '",
-               data_file,
-               "' does not exist but is required since reading is set to FALSE."
-               )
+        paste0(
+          "data_file: '",
+          data_file,
+          "' does not exist but is required since reading is set to FALSE."
+        )
       )
     }
     if (save_data) {
       save_data <- FALSE
       print(
-        paste0("Both read_saved_data and save_data have been set to TRUE. ",
-            "Overwriting with the same data does not make sense, saving ",
-            "disabled. ")
+        paste0(
+          "Both read_saved_data and save_data have been set to TRUE. ",
+          "Overwriting with the same data does not make sense, saving ",
+          "disabled. "
+        )
       )
     }
   } else {
@@ -143,68 +149,71 @@ read_calc_biocol <- function( # nolint
       # calculate cell area
       cellarea <- drop(lpjmlkit::read_io(
         filename = files_baseline$terr_area
-        )$data) # in m2
+      )$data) # in m2
       lat <- grid$data[, , 2]
       lon <- grid$data[, , 1]
 
       npp <- lpjmlkit::read_io(
         files_scenario$npp,
-        subset = list(year = as.character(time_span_scenario))) %>%
+        subset = list(year = as.character(time_span_scenario))
+      ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>% drop() # gC/m2
-      npp[npp<epsilon] <- 0
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        drop() # gC/m2
+      npp[npp < epsilon] <- 0
 
       if (!is.null(files_reference)) {
         npp_ref <- lpjmlkit::read_io(
           files_reference$npp,
-          subset = list(year = as.character(time_span_reference))) %>%
+          subset = list(year = as.character(time_span_reference))
+        ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
-          lpjmlkit::as_array(aggregate = list(month = sum)
-        ) %>% drop() # remaining bands
-        npp_ref[npp_ref<epsilon] <- 0
-
+          lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+          drop() # remaining bands
+        npp_ref[npp_ref < epsilon] <- 0
       }
 
       pftnpp <- lpjmlkit::read_io(
         files_scenario$pft_npp,
-        subset = list(year = as.character(time_span_scenario))) %>%
+        subset = list(year = as.character(time_span_scenario))
+      ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)
-      )
-      pftnpp[pftnpp<epsilon] <- 0
+        lpjmlkit::as_array(aggregate = list(month = sum))
+      pftnpp[pftnpp < epsilon] <- 0
 
 
       harvest <- lpjmlkit::read_io(
         files_scenario$pft_harvestc,
-        subset = list(year = as.character(time_span_scenario))) %>%
+        subset = list(year = as.character(time_span_scenario))
+      ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)
-      )
+        lpjmlkit::as_array(aggregate = list(month = sum))
 
       rharvest <- lpjmlkit::read_io(
         files_scenario$pft_rharvestc,
-        subset = list(year = as.character(time_span_scenario))) %>%
+        subset = list(year = as.character(time_span_scenario))
+      ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum))
 
       timber <- lpjmlkit::read_io(
         files_scenario$timber_harvestc,
-        subset = list(year = as.character(time_span_scenario))) %>%
+        subset = list(year = as.character(time_span_scenario))
+      ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)
-      ) %>% drop() # remaining bands
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        drop() # remaining bands
 
       if (include_fire) {
-
         # read fire in monthly res. if possible, then multiply with monthly
         # human/total ignition frac and aggregate to yearly. Otherwise aggregate
         # human/total ignition frac to yearly and multiply with yearly firec
         fire_raw <- lpjmlkit::read_io(
           files_scenario$firec,
-          subset = list(year = as.character(time_span_scenario))) %>%
+          subset = list(year = as.character(time_span_scenario))
+        ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
-          lpjmlkit::as_array(aggregate = list(band = sum)
-        ) # gC/m2
+          lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
 
         if (external_fire) {
           load(external_fire_file) # frac = c(cell,month,year)
@@ -219,7 +228,6 @@ read_calc_biocol <- function( # nolint
               na.rm = TRUE
             ) # gC/m2
             rm(frac)
-
           } else {
             fire <- apply(
               fire_raw,
@@ -229,7 +237,6 @@ read_calc_biocol <- function( # nolint
             ) # gC/m2
           }
           rm(fire_raw)
-
         } else {
           if (external_fire) {
             frac_yearly <- apply(
@@ -258,53 +265,53 @@ read_calc_biocol <- function( # nolint
         wood_harvest[is.na(wood_harvest)] <- 0
         rm(wh_lpj, wh_years)
         gc()
-
       } else {
         wood_harvest <- fire * 0
       }
 
       cftfrac <- lpjmlkit::read_io(
         files_scenario$cftfrac,
-        subset = list(year = as.character(time_span_scenario))) %>%
+        subset = list(year = as.character(time_span_scenario))
+      ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)
-      )
+        lpjmlkit::as_array(aggregate = list(month = sum))
 
       npp_potential <- lpjmlkit::read_io(
         files_baseline$npp,
-        subset = list(year = as.character(time_span_baseline))) %>%
+        subset = list(year = as.character(time_span_baseline))
+      ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)
-      ) %>% drop() # gC/m2
-      npp_potential[npp_potential<epsilon] <- 0
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        drop() # gC/m2
+      npp_potential[npp_potential < epsilon] <- 0
 
       fpc <- lpjmlkit::read_io(
         files_scenario$fpc,
-        subset = list(year = as.character(time_span_scenario))) %>%
+        subset = list(year = as.character(time_span_scenario))
+      ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(subset = list(band = "natural stand fraction")
-      )
+        lpjmlkit::as_array(subset = list(band = "natural stand fraction"))
 
       pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
-
     } else if (file_type == "nc") { # to be added
       stop(
         "nc reading has not been updated to latest functionality.",
         " Please contact Fabian Stenzel"
       )
-
     } else {
-      stop("Unrecognized file type (",
-           file_type,
-           ")")
+      stop(
+        "Unrecognized file type (",
+        file_type,
+        ")"
+      )
     }
 
     bp_bands <- c(15, 16, 31, 32)
     grass_bands <- c(14, 30)
-    nat_bands <- 1:pftbands
+    nat_bands <- seq_len(pftbands)
 
     if (!gridbased) { # needs to be scaled with standfrac
-      pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, , band = rep("natural stand fraction",pftbands)]
+      pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, , band = rep("natural stand fraction", pftbands)]
       pftnpp[, , -c(nat_bands)] <- pftnpp[, , -c(nat_bands)] * cftfrac
       harvest <- harvest * cftfrac
       rharvest <- rharvest * cftfrac
@@ -314,23 +321,24 @@ read_calc_biocol <- function( # nolint
       pftnpp[, , pftbands + grass_bands],
       c(1, 2),
       sum
-    ) #gC/m2 only from grassland bands
+    ) # gC/m2 only from grassland bands
 
     pftnpp_cft <- apply(
       pftnpp[, , -c(nat_bands, pftbands + grass_bands, pftbands + bp_bands)],
       c(1, 2), sum
-    ) #gC/m2 not from grassland and bioenergy bands
+    ) # gC/m2 not from grassland and bioenergy bands
 
     pftnpp_bioenergy <- apply(
       pftnpp[, , pftbands + bp_bands],
       c(1, 2),
       sum
-    ) #gC/m2 only from bioenergy bands
+    ) # gC/m2 only from bioenergy bands
 
     pftnpp_nat <- apply(
-      pftnpp[, , nat_bands], c(1, 2), sum) # gC/m2
+      pftnpp[, , nat_bands], c(1, 2), sum
+    ) # gC/m2
 
-    if (is.null(files_reference)){
+    if (is.null(files_reference)) {
       pi_window <- 3:32
       npp_ref <- npp_potential[, pi_window]
     } # npp_ref
@@ -369,31 +377,33 @@ read_calc_biocol <- function( # nolint
             data_file,
             ") already exists, old file renamed to: ",
             data_file,
-            "_sav")
+            "_sav"
           )
+        )
         file.rename(data_file, paste0(data_file, "_sav"))
       }
 
       save(npp_potential,
-           npp,
-           npp_ref,
-           pftnpp_cft,
-           pftnpp_nat,
-           pftnpp_grasslands,
-           pftnpp_bioenergy,
-           harvest_cft,
-           rharvest_cft,
-           fire,
-           timber,
-           fpc,
-           cftfrac,
-           harvest_grasslands,
-           harvest_bioenergy,
-           wood_harvest,
-           lat,
-           lon,
-           cellarea,
-           file = data_file)
+        npp,
+        npp_ref,
+        pftnpp_cft,
+        pftnpp_nat,
+        pftnpp_grasslands,
+        pftnpp_bioenergy,
+        harvest_cft,
+        rharvest_cft,
+        fire,
+        timber,
+        fpc,
+        cftfrac,
+        harvest_grasslands,
+        harvest_bioenergy,
+        wood_harvest,
+        lat,
+        lon,
+        cellarea,
+        file = data_file
+      )
     }
   }
 
@@ -407,12 +417,12 @@ read_calc_biocol <- function( # nolint
     lpj_grass_harvest_region <- array(0, dim = nregs)
 
     lpj_grass_harvest_2000 <- rowMeans(
-      harvest_grasslands[, (1995 - start_year + 1) : (2005 - start_year + 1)]
+      harvest_grasslands[, (1995 - start_year + 1):(2005 - start_year + 1)]
     ) * cellarea / 1000 * 2 # from gC/m2 to kgDM
 
     grassland_scaling_factor_cellwise <- array(1, dim = grid$ncells)
 
-    for (r in 1:nregs) {
+    for (r in seq_len(nregs)) {
       lpj_grass_harvest_region[r] <- sum(
         lpj_grass_harvest_2000[which(mapping_lpj67420_to_grazing_regions == r)]
       )
@@ -422,7 +432,7 @@ read_calc_biocol <- function( # nolint
       grazing_data$Herrero_2000_kgDM_by_region / lpj_grass_harvest_region
     )
 
-    for (r in 1:nregs) {
+    for (r in seq_len(nregs)) {
       grassland_scaling_factor_cellwise[
         which(mapping_lpj67420_to_grazing_regions == r)
       ] <- scaling_factor[r]
@@ -469,32 +479,31 @@ read_calc_biocol <- function( # nolint
     npp_harv_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
       harvest_grasslands_overtime + harvest_bioenergy_overtime +
       timber_harvest_overtime + wood_harvest_overtime
-      
   }
   biocol_overtime <- npp_harv_overtime + npp_luc_overtime
   biocol_overtime_frac_piref <- (
     biocol_overtime / mean(colSums(npp_ref * cellarea) / 10^15)
   )
   biocol_overtime_frac <- (
-    biocol_overtime / npp_pot_overtime 
+    biocol_overtime / npp_pot_overtime
   )
   biocol_luc <- npp_potential - npp
-  #browser()
-  #biocol_luc2 <- (npp_potential - pftnpp_cft) * apply(cftfrac[, , -c(grass_bands, bp_bands)], c("cell", "year"), sum) +
+  # browser()
+  # biocol_luc2 <- (npp_potential - pftnpp_cft) * apply(cftfrac[, , -c(grass_bands, bp_bands)], c("cell", "year"), sum) +
   #               (npp_potential - pftnpp_grasslands) * apply(cftfrac[, , grass_bands], c("cell", "year"), sum) +
   #               (npp_potential - pftnpp_bioenergy) * apply(cftfrac[, , bp_bands], c("cell", "year"), sum)
-  
+
   # pick a PI window that excludes onset effects, but is reasonable early
 
   if (include_fire) {
     biocol_harvest <- (
       harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy +
-      timber + fire + wood_harvest
+        timber + fire + wood_harvest
     )
   } else {
     biocol_harvest <- (
       harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy +
-      timber + wood_harvest
+        timber + wood_harvest
     )
   }
 
@@ -510,38 +519,39 @@ read_calc_biocol <- function( # nolint
   # take the abs of biocol and sum that up for overtime
   biocol_overtime_abs <- colSums(abs(biocol * cellarea)) / 10^15
   biocol_overtime_abs_frac_piref <- biocol_overtime_abs * 10^15 /
-                                      mean(colSums(npp_ref * cellarea))
+    mean(colSums(npp_ref * cellarea))
   biocol_overtime_abs_frac <- biocol_overtime_abs / npp_pot_overtime
 
-  return(list(biocol_overtime = biocol_overtime,
-              biocol_overtime_abs = biocol_overtime_abs,
-              biocol_overtime_abs_frac_piref = biocol_overtime_abs_frac_piref,
-              biocol_overtime_frac_piref = biocol_overtime_frac_piref,
-              biocol_overtime_frac = biocol_overtime_frac,
-              biocol_overtime_abs_frac = biocol_overtime_abs_frac,
-              npp_harv_overtime = npp_harv_overtime,
-              npp_luc_overtime = npp_luc_overtime,
-              npp_act_overtime = npp_act_overtime,
-              npp_pot_overtime = npp_pot_overtime,
-              npp_eco_overtime = npp_eco_overtime,
-              harvest_grasslands_overtime = harvest_grasslands_overtime,
-              harvest_bioenergy_overtime = harvest_bioenergy_overtime,
-              harvest_cft_overtime = harvest_cft_overtime,
-              rharvest_cft_overtime = rharvest_cft_overtime,
-              fire_overtime = fire_overtime,
-              timber_harvest_overtime = timber_harvest_overtime,
-              wood_harvest_overtime = wood_harvest_overtime,
-              biocol = biocol,
-              biocol_frac = biocol_frac,
-              npp = npp,
-              biocol_frac_piref = biocol_frac_piref,
-              npp_potential = npp_potential,
-              npp_ref = npp_ref,
-              harvest_cft = harvest_cft,
-              rharvest_cft = rharvest_cft,
-              biocol_harvest = biocol_harvest,
-              biocol_luc = biocol_luc)) #, biocol_luc_piref = biocol_luc_piref))
-
+  return(list(
+    biocol_overtime = biocol_overtime,
+    biocol_overtime_abs = biocol_overtime_abs,
+    biocol_overtime_abs_frac_piref = biocol_overtime_abs_frac_piref,
+    biocol_overtime_frac_piref = biocol_overtime_frac_piref,
+    biocol_overtime_frac = biocol_overtime_frac,
+    biocol_overtime_abs_frac = biocol_overtime_abs_frac,
+    npp_harv_overtime = npp_harv_overtime,
+    npp_luc_overtime = npp_luc_overtime,
+    npp_act_overtime = npp_act_overtime,
+    npp_pot_overtime = npp_pot_overtime,
+    npp_eco_overtime = npp_eco_overtime,
+    harvest_grasslands_overtime = harvest_grasslands_overtime,
+    harvest_bioenergy_overtime = harvest_bioenergy_overtime,
+    harvest_cft_overtime = harvest_cft_overtime,
+    rharvest_cft_overtime = rharvest_cft_overtime,
+    fire_overtime = fire_overtime,
+    timber_harvest_overtime = timber_harvest_overtime,
+    wood_harvest_overtime = wood_harvest_overtime,
+    biocol = biocol,
+    biocol_frac = biocol_frac,
+    npp = npp,
+    biocol_frac_piref = biocol_frac_piref,
+    npp_potential = npp_potential,
+    npp_ref = npp_ref,
+    harvest_cft = harvest_cft,
+    rharvest_cft = rharvest_cft,
+    biocol_harvest = biocol_harvest,
+    biocol_luc = biocol_luc
+  )) # , biocol_luc_piref = biocol_luc_piref))
 }
 
 #' Calculate BioCol
@@ -595,30 +605,31 @@ read_calc_biocol <- function( # nolint
 #'
 #' @export
 calc_biocol <- function(
-  path_lu,
-  path_pnv,
-  start_year,
-  stop_year,
-  reference_npp_time_span = NULL,
-  reference_npp_file = NULL,
-  varnames = NULL,
-  gridbased = TRUE,
-  read_saved_data = FALSE,
-  save_data = FALSE,
-  data_file = NULL,
-  include_fire = FALSE,
-  external_fire = FALSE,
-  external_wood_harvest = FALSE,
-  grass_scaling = FALSE,
-  npp_threshold = 20,
-  grass_harvest_file = "grazing_data.RData",
-  external_fire_file = "human_ignition_fraction.RData",
-  external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData"
-) {
+    path_lu,
+    path_pnv,
+    start_year,
+    stop_year,
+    reference_npp_time_span = NULL,
+    reference_npp_file = NULL,
+    varnames = NULL,
+    gridbased = TRUE,
+    read_saved_data = FALSE,
+    save_data = FALSE,
+    data_file = NULL,
+    include_fire = FALSE,
+    external_fire = FALSE,
+    external_wood_harvest = FALSE,
+    grass_scaling = FALSE,
+    npp_threshold = 20,
+    grass_harvest_file = "grazing_data.RData",
+    external_fire_file = "human_ignition_fraction.RData",
+    external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData") {
   if (is.null(varnames)) {
     print(
-      paste0("Varnames not given, using standard values, which might not fit ",
-             "this specific configuration. Please check!")
+      paste0(
+        "Varnames not given, using standard values, which might not fit ",
+        "this specific configuration. Please check!"
+      )
     )
     varnames <- data.frame(
       row.names = c(
@@ -654,7 +665,7 @@ calc_biocol <- function(
     npp = paste0(path_lu, varnames["npp", "outname"]),
     pft_npp = paste0(path_lu, varnames["pft_npp", "outname"]),
     pft_harvestc = paste0(path_lu, varnames["pft_harvest", "outname"]),
-    pft_rharvestc = paste0(path_lu,varnames["pft_rharvest", "outname"]),
+    pft_rharvestc = paste0(path_lu, varnames["pft_rharvest", "outname"]),
     firec = paste0(path_lu, varnames["firec", "outname"]),
     timber_harvestc = paste0(path_lu, varnames["timber_harvest", "outname"]),
     cftfrac = paste0(path_lu, varnames["cftfrac", "outname"]),
@@ -673,7 +684,7 @@ calc_biocol <- function(
     fpc = paste0(path_pnv, varnames["fpc", "outname"])
   )
   files_reference <- list(
-        npp = reference_npp_file
+    npp = reference_npp_file
   )
   return(
     read_calc_biocol(
@@ -725,26 +736,25 @@ calc_biocol <- function(
 #' @return none
 #' @export
 plot_biocol <- function(
-  biocol_data,
-  path_write,
-  plotyears,
-  min_val,
-  max_val,
-  legendpos,
-  details = FALSE,
-  start_year,
-  mapyear,
-  mapyear_buffer = 5,
-  highlightyear,
-  eps = FALSE
-) {
+    biocol_data,
+    path_write,
+    plotyears,
+    min_val,
+    max_val,
+    legendpos,
+    details = FALSE,
+    start_year,
+    mapyear,
+    mapyear_buffer = 5,
+    highlightyear,
+    eps = FALSE) {
   mapindex <- mapyear - start_year
   print(paste0("Plotting BioCol figures"))
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
     ),
     file = paste0(path_write, "BioCol_absolute_", mapyear, ".png"),
     type = "exp",
@@ -760,7 +770,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_luc[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_luc[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
     ),
     file = paste0(path_write, "BioCol_luc_", mapyear, ".png"),
     type = "exp",
@@ -776,12 +786,12 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_harvest[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_harvest[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
     ),
     file = paste0(path_write, "BioCol_harv_", mapyear, ".png"),
     type = "exp",
     title = "",
-    # paste0("BioCol_harv in ", mapyear), 
+    # paste0("BioCol_harv in ", mapyear),
     pow2min = 0,
     pow2max = 12,
     legendtitle = "GtC",
@@ -808,13 +818,13 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_frac[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_frac[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
     ),
     file = paste0(path_write, "BioCol_frac_LPJmL_", mapyear, ".png"),
     legendtitle = "frac of NPPpot",
     type = "lin",
-    min=-1,
-    max=1,
+    min = -1,
+    max = 1,
     col_pos = "Reds",
     col_neg = "Blues",
     leg_yes = TRUE,
@@ -824,14 +834,14 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_frac_piref[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_frac_piref[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
     ),
     file = paste0(path_write, "BioCol_frac_piref_LPJmL_", mapyear, ".png"),
     title = "",
     legendtitle = "frac of NPPref",
     type = "lin",
-    min=-1,
-    max=1,
+    min = -1,
+    max = 1,
     col_pos = "Reds",
     col_neg = "Blues",
     leg_yes = TRUE,
@@ -841,7 +851,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$npp[, (mapindex - mapyear_buffer) : (mapindex + mapyear_buffer)] # nolint
+      biocol_data$npp[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
     ),
     file = paste0(path_write, "NPP_LPJmL_", mapyear, ".png"),
     type = "lin",
@@ -873,40 +883,51 @@ plot_biocol <- function(
 #'
 #' @export
 plot_biocol_map <- function(
-  data, file,
-  title = "",
-  legendtitle = "",
-  zero_threshold = 0.001,
-  eps = FALSE,
-  haberllegend = FALSE
-) {
+    data,
+    file,
+    title = "",
+    legendtitle = "",
+    zero_threshold = 0.001,
+    eps = FALSE,
+    haberllegend = FALSE) {
   path_write <- dirname(file)
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
-  if (haberllegend){
-    brks <- c(-400, -200, -100, -50, -zeroThreshold,
-              zeroThreshold, 10, 20, 30, 40, 50, 60, 70, 80, 100)
-    classes <- c("<-200", "-200 - -100", "-100 - -50",
-                 paste0("-50 - -",zeroThreshold),
-                 paste0("-",zeroThreshold," - ",zeroThreshold),
-                 paste0(zeroThreshold," - 10"), "10 - 20", "20 - 30", "30 - 40", 
-                 "40 - 50", "50 - 60", "60 - 70", "70 - 80", "80 - 100")
-    palette <- c("navy", "royalblue3", "royalblue1", "skyblue1",
-                 "grey80", "yellowgreen", "greenyellow", "yellow",
-                 "gold", "orange", "orangered", "orangered4",
-                 "brown4", "black")
-  } else{
-    brks <- c(-400,seq(-100,-10,10),-zeroThreshold,
-              zeroThreshold,seq(10,100,10),400)/100
-    classes <- c("<-1", "-1 - -0.9", "-0.9 - -0.8", "-0.8 - -0.7", 
-                 "-0.7 - -0.6", "-0.6 - -0.5", "-0.5 - -0.4", "-0.4 - -0.3", 
-                 "-0.3 - -0.2", "-0.2 - -0.1",paste("-0.1 - -",zeroThreshold),
-                 paste("-",zeroThreshold," - ",zeroThreshold),
-                 paste(zeroThreshold," - 0.1"),"0.1 - 0.2", "0.2 - 0.3", 
-                 "0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
-                 "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1", ">1")    
+  if (haberllegend) {
+    brks <- c(
+      -400, -200, -100, -50, -zero_threshold,
+      zero_threshold, 10, 20, 30, 40, 50, 60, 70, 80, 100
+    )
+    classes <- c(
+      "<-200", "-200 - -100", "-100 - -50",
+      paste0("-50 - -", zero_threshold),
+      paste0("-", zero_threshold, " - ", zero_threshold),
+      paste0(zero_threshold, " - 10"), "10 - 20", "20 - 30", "30 - 40",
+      "40 - 50", "50 - 60", "60 - 70", "70 - 80", "80 - 100"
+    )
+    palette <- c(
+      "navy", "royalblue3", "royalblue1", "skyblue1",
+      "grey80", "yellowgreen", "greenyellow", "yellow",
+      "gold", "orange", "orangered", "orangered4",
+      "brown4", "black"
+    )
+  } else {
+    brks <- c(
+      -400, seq(-100, -10, 10), -zero_threshold,
+      zero_threshold, seq(10, 100, 10), 400
+    ) / 100
+    classes <- c(
+      "<-1", "-1 - -0.9", "-0.9 - -0.8", "-0.8 - -0.7",
+      "-0.7 - -0.6", "-0.6 - -0.5", "-0.5 - -0.4", "-0.4 - -0.3",
+      "-0.3 - -0.2", "-0.2 - -0.1", paste("-0.1 - -", zero_threshold),
+      paste("-", zero_threshold, " - ", zero_threshold),
+      paste(zero_threshold, " - 0.1"), "0.1 - 0.2", "0.2 - 0.3",
+      "0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7",
+      "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1", ">1"
+    )
     palette <- grDevices::colorRampPalette(rev(
-               RColorBrewer::brewer.pal(11,"RdBu")))(length(brks)-1)
+      RColorBrewer::brewer.pal(11, "RdBu")
+    ))(length(brks) - 1)
   }
 
   data[data < brks[1]] <- brks[1]
@@ -914,26 +935,33 @@ plot_biocol_map <- function(
 
   if (eps) {
     file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[1 : (length(file) - 1)], "eps"), collapse = ".")
+    file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
     grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file, horizontal = FALSE, onefile = FALSE, width = 22,
-                          height = 8.5, paper = "special")
-
+    grDevices::postscript(file,
+      horizontal = FALSE, onefile = FALSE, width = 22,
+      height = 8.5, paper = "special"
+    )
   } else {
-    grDevices::png(file, width = 7.25, height = 3.5, units = "in", res = 300,
-                   pointsize = 6, type = "cairo")
+    grDevices::png(file,
+      width = 7.25, height = 3.5, units = "in", res = 300,
+      pointsize = 6, type = "cairo"
+    )
   }
   ra <- terra::rast(ncols = 720, nrows = 360)
   range <- range(data)
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
   extent <- terra::ext(-180, 180, -60, 90)
   graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), xpd = TRUE)
-  terra::plot(ra, ext = extent, breaks = brks, col = palette, main = "",
-               legend = FALSE, axes = FALSE)
+  terra::plot(ra,
+    ext = extent, breaks = brks, col = palette, main = "",
+    legend = FALSE, axes = FALSE
+  )
   graphics::title(title, line = -2)
   maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
-  graphics::legend(x = -180, y = 50, fill = palette, border = palette,
-                   legend = classes, title = legendtitle)
+  graphics::legend(
+    x = -180, y = 50, fill = palette, border = palette,
+    legend = classes, title = legendtitle
+  )
   grDevices::dev.off()
 }
 
@@ -966,43 +994,49 @@ plot_biocol_map <- function(
 #'
 #' @export
 plot_biocol_ts <- function(
-  biocol_data,
-  file,
-  first_year,
-  plot_years,
-  highlight_years = 2000,
-  details = FALSE,
-  min_val = 0,
-  max_val = 100,
-  max_val_right = 0.45,
-  legendpos = "topleft",
-  ext = FALSE,
-  eps = FALSE,
-  ref = "pi"
-) {
+    biocol_data,
+    file,
+    first_year,
+    plot_years,
+    highlight_years = 2000,
+    details = FALSE,
+    min_val = 0,
+    max_val = 100,
+    max_val_right = 0.45,
+    legendpos = "topleft",
+    ext = FALSE,
+    eps = FALSE,
+    ref = "pi") {
   path_write <- dirname(file)
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   last_year <- first_year + length(biocol_data$npp_act_overtime) - 1
-  colz <- c("slateblue", "gold", "green3",  "grey60", "red3",
-            "black", "grey40", "darkorange", "#ff8c009d", "blue",
-            "yellow", "turquoise", "darkgreen")
+  colz <- c(
+    "slateblue", "gold", "green3", "grey60", "red3",
+    "black", "grey40", "darkorange", "#ff8c009d", "blue",
+    "yellow", "turquoise", "darkgreen"
+  )
 
   if (eps) {
     file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[1 : (length(file) - 1)], "eps"), collapse = ".")
+    file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
     grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file, horizontal = FALSE, onefile = FALSE, width = 22,
-                          height = 8.5, paper = "special")
-
+    grDevices::postscript(file,
+      horizontal = FALSE, onefile = FALSE, width = 22,
+      height = 8.5, paper = "special"
+    )
   } else {
-    grDevices::png(file, width = 3.5, height = 3, units = "in", res = 300,
-                   pointsize = 6, type = "cairo")
+    grDevices::png(file,
+      width = 3.5, height = 3, units = "in", res = 300,
+      pointsize = 6, type = "cairo"
+    )
   }
 
   graphics::par(bty = "o", oma = c(0, 0, 0, 0), mar = c(4, 5, 1, 3))
-  graphics::plot(NA, ylab = "GtC/yr", xlab = "Year", xlim = plot_years,
-       ylim = c(min_val, max_val), xaxs = "i", yaxs = "i")
+  graphics::plot(NA,
+    ylab = "GtC/yr", xlab = "Year", xlim = plot_years,
+    ylim = c(min_val, max_val), xaxs = "i", yaxs = "i"
+  )
   graphics::grid()
   graphics::lines(
     x = seq(first_year, last_year, 1),
@@ -1014,7 +1048,8 @@ plot_biocol_ts <- function(
     x = seq(first_year, last_year, 1),
     y = biocol_data$npp_act_overtime,
     type = "l",
-    col = colz[2])
+    col = colz[2]
+  )
   graphics::lines(
     x = seq(first_year, last_year, 1),
     y = biocol_data$npp_eco_overtime,
@@ -1123,33 +1158,40 @@ plot_biocol_ts <- function(
       yaxs = "i",
       axes = FALSE
     )
-  }else {
+  } else {
     stop(paste0("Unknown value for parameter ref: ", ref, " - Aborting."))
   }
 
   graphics::axis(side = 4, col = colz[8], col.axis = colz[8])
-  graphics::mtext(text = "fraction of NPPref", col = colz[8], side = 4, line = 2)
+  graphics::mtext(
+    text = "fraction of NPPref",
+    col = colz[8],
+    side = 4,
+    line = 2
+  )
 
   if (!is.null(highlight_years)) {
     for (y in highlight_years) {
-      lines(x = c(y, y), y = c(min_val, max_val), col = "grey40")
+      graphics::lines(x = c(y, y), y = c(min_val, max_val), col = "grey40")
     }
   }
   if (details) {
-  graphics::legend(
-    legendpos,
-    legend = c(
-      "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
-      "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]", "BioCol sum [frac NPPref]",
-      "rharvest", "firec", "timber_harvest", "wood_harvest"
-    ), col = colz, lty = 1, cex = 1)
+    graphics::legend(
+      legendpos,
+      legend = c(
+        "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
+        "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]", "BioCol sum [frac NPPref]", # nolint:line_length_linter
+        "rharvest", "firec", "timber_harvest", "wood_harvest"
+      ), col = colz, lty = 1, cex = 1
+    )
   } else {
-      graphics::legend(
-    legendpos,
-    legend = c(
-      "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
-      "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]", "BioCol sum [frac NPPref]"
-    ), col = colz[1:9], lty = 1, cex = 1)
+    graphics::legend(
+      legendpos,
+      legend = c(
+        "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
+        "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]", "BioCol sum [frac NPPref]" # nolint:line_length_linter
+      ), col = colz[seq_len(9)], lty = 1, cex = 1
+    )
   }
   grDevices::dev.off()
 }

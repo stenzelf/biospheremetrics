@@ -1,20 +1,19 @@
 library(devtools)
 library(lpjmlkit)
 library(magrittr)
+library(biospheremetrics)
 
-devtools::load_all("/p/projects/open/Fabian/LPJbox/biospheremetrics_paper/")
-
-run_folder <- "/p/projects/open/Fabian/runs/metrics_202306/output/lu_1500_2014/"
-pnv_folder <- "/p/projects/open/Fabian/runs/metrics_202306/output/pnv_1500_2014/"
-out_folder <- "/p/projects/open/Fabian/Metrics/"
-lpj_input <- "/p/projects/lpjml/input/historical/"
+run_folder <- "./output/lu_1500_2014/"
+pnv_folder <- "./output/pnv_1500_2014/"
+out_folder <- "./Metrics/"
+lpj_input <- "./historical/"
 
 # read grid
-grid <- lpjmlkit::read_io(paste0(run_folder, "grid.bin.json"))
+grid <- read_io(paste0(run_folder, "grid.bin.json"))
 # calculate cell area
 lat <- grid[, , 2]
 lon <- grid[, , 1]
-cellarea <- lpjmlkit::calc_cellarea(grid)
+cellarea <- calc_cellarea(grid)
 
 vars_ecorisk <- data.frame(
   row.names = c("grid", "fpc", "fpc_bft", "cftfrac", "firec", "npp", "runoff",
@@ -43,8 +42,8 @@ ecorisk <- ecorisk_wrapper(
   nitrogen = TRUE,
   varnames = vars_ecorisk,
   weighting = "equal",
-  save_data = "/p/projects/open/Fabian/Metrics/data/ecorisk_202306_overtime_data.RData",
-  save_ecorisk = "/p/projects/open/Fabian/Metrics/data/ecorisk_202306_overtime_gamma.RData",
+  save_data = "./data/ecorisk_202306_overtime_data.RData",
+  save_ecorisk = "./data/ecorisk_202306_overtime_gamma.RData",
   time_span_reference = c(1550:1579),
   time_span_scenario = c(1500:2014),
   dimensions_only_local = FALSE,

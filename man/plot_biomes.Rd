@@ -65,8 +65,10 @@ on the "classify_biomes" function
 }
 \examples{
 \dontrun{
- plot_biomes(biome_data = biomes,
-             file_name ="/p/projects/open/Johanna/R/biomes.pfd")
+plot_biomes(
+  biome_data = biomes,
+  file_name = "/p/projects/open/Johanna/R/biomes.pfd"
+)
 }
 
 }

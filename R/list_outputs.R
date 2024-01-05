@@ -121,7 +121,9 @@ get_function_args <- function(x, metric_name) {
   # Get arguments of functions
   funs %>%
     lapply(function(x) {
-      unlist(lapply(mget(x, inherits = TRUE), formalArgs), use.names = FALSE)
+      unlist(
+        lapply(mget(x, inherits = TRUE), methods::formalArgs), use.names = FALSE
+      )
     })
 }
 
@@ -142,7 +144,11 @@ higher_res <- function(x, y) {
 # split calculation string for variable addition/subtraction into signs & vars 
 split_sign <- function(string) {
   # add spaces around +- signs
-  string <- gsub("-", " - ", gsub("+", " + ", string, fixed = T), fixed = T)
+  string <- gsub(
+    " - ",
+    gsub("+", " + ", string, fixed = TRUE),
+    fixed = TRUE
+  )
   # reduce multiple spaces to one
   string <- trimws(gsub("\\s+", " ", string))
   a <- strsplit(string, " ")[[1]]

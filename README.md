@@ -286,13 +286,13 @@ plot_biomes(biome_data = biome_classes,
             display_area = TRUE,
             cellarea = cellarea,
             file_name = paste0(out_folder,"EcoRisk/biomes_2005-2014.png"),
-            order_legend = 1:19,
+            order_legend = seq_len(19),
             to_robinson = FALSE)
 plot_biomes(biome_data=biome_classes_pi,
             display_area = TRUE,
             cellarea = cellarea,
             file_name = paste0(out_folder,"EcoRisk/biomes_1901-1910.png"),
-            order_legend = 1:19,
+            order_legend = seq_len(19),
             to_robinson = FALSE)
 
 # compute median ecorisk values for biomes/large worldregions

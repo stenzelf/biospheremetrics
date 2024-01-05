@@ -18,7 +18,9 @@ calc_ecorisk(
   lon,
   cell_area,
   dimensions_only_local = FALSE,
-  nitrogen = TRUE
+  nitrogen = TRUE,
+  external_variability = FALSE,
+  c2vr = NULL
 )
 }
 \arguments{
@@ -52,6 +54,12 @@ for water/carbon/nitrogen fluxes and pools, or use an average of
 local change, global change and ecosystem balance (default FALSE)}
 
 \item{nitrogen}{include nitrogen outputs (default: TRUE)}
+
+\item{external_variability}{include external change_to_variability_ratio?
+(default: FALSE)}
+
+\item{c2vr}{list with external change_to_variability_ratios for each
+component (default: NULL)}
 }
 \value{
 list data object containing arrays of ecorisk_total,

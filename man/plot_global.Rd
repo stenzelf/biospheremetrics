@@ -6,20 +6,23 @@
 \usage{
 plot_global(
   data,
-  file,
+  file = NULL,
   title = "",
-  pow2max = NULL,
   pow2min = NULL,
+  pow2max = NULL,
   min = NULL,
   max = NULL,
+  brks = NULL,
+  palette = NULL,
   col_pos = "GnBu",
   type = "exp",
   col_neg = "YlOrRd",
   legendtitle = "",
   leg_yes = TRUE,
   only_pos = FALSE,
-  eps = FALSE,
-  n_legend_ticks = 20
+  n_legend_ticks = 20,
+  min_0 = 0.01,
+  eps = FALSE
 )
 }
 \arguments{
@@ -29,11 +32,11 @@ plot_global(
 
 \item{title}{character string title for plot}
 
-\item{pow2max}{for exponential legend: upper (positive) end of data range to
-plot (2^pow2max)}
-
 \item{pow2min}{for exponential legend: smallest positive number to be
 distinguished from 0 (2^-pow2min)}
+
+\item{pow2max}{for exponential legend: upper (positive) end of data range to
+plot (2^pow2max)}
 
 \item{min}{for linear legend: lower end of data range to plot (0 is placed
 symmetrically between min and max, if onlypos = FALSE)}
@@ -43,8 +46,11 @@ symmetrically between min and max, if onlypos = FALSE)}
 
 \item{col_pos}{color palette for the positives}
 
-\item{type}{string indicating whether to plot exponential (exp) or
-linear (lin) legend (default: exp)}
+\item{type}{string indicating whether to plot manual (man),
+exponential (exp) or linear (lin) legend (default: exp).
+man requires: parameters brks and palette defined,
+exp requires: parameters pow2min and pow2max given defined,
+lin requires: parameters min and max defined}
 
 \item{col_neg}{color palette for the negatives}
 
@@ -54,14 +60,23 @@ linear (lin) legend (default: exp)}
 
 \item{only_pos}{boolean to show only positive half of legend (default: FALSE)}
 
+\item{n_legend_ticks}{(default: 20)}
+
+\item{min_0}{(default: 0.01)}
+
 \item{eps}{boolean whether to write eps file instead of PNG (default: FALSE)}
 }
 \value{
 None
 }
 \description{
-Creates a PNG/eps with a plot of a global LPJmL array
-   Data is plotted in range: c(-2^pow2max,-2^-pow2min,0,2^-pow2min,2^pow2max)
+Plot global LPJmL array to file (if file argument is given) or screen (else).
+   type argument controls plot type: (exponential, linear, or manual legend).
+   Depending on this more parameters are required.
+   Data plot ranges:
+     exp: c(-2^pow2max,-2^-pow2min,0,2^-pow2min,2^pow2max)
+     lin: c(min,max)
+     man: brks
    colors for pos and neg values can be given, default is Blues for the
    positive and Reds for the negative numbers 0-range (from 2^-pow2min to
    2^pow2min) is white.
@@ -70,16 +85,7 @@ Creates a PNG/eps with a plot of a global LPJmL array
 }
 \examples{
 \dontrun{
-plot_global(
-  data = irrigation2006,
-  file = paste("~/", "mwateramount_2005_06.png", sep = ""),
-  title = paste("irrigation amount 2006 in mm/yr", sep = ""),
-  pow2max = 15,
-  pow2min = 0,
-  legendtitle = "legendtitle",
-  leg_yes = TRUE,
-  eps = FALSE
-)
+
 }
 
 }

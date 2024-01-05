@@ -2,20 +2,19 @@ library(devtools)
 library(lpjmlkit)
 library(sf)
 library(terra)
+library(biospheremetrics)
 
-devtools::load_all("/p/projects/open/Jannes/repos/biospheremetrics")
-
-run_folder <- "/p/projects/open/Fabian/runs/metrics_202306/output/lu_1500_2014/"
-pnv_folder <- "/p/projects/open/Fabian/runs/metrics_202306/output/pnv_1500_2014/"
-out_folder <- "/p/projects/open/Jannes/tests/metrics/"
-lpj_input <- "/p/projects/lpjml/input/historical/"
+run_folder <- "./output/lu_1500_2014/"
+pnv_folder <- "./output/pnv_1500_2014/"
+out_folder <- "./metrics/"
+lpj_input <- "./historical/"
 
 # read grid
-grid <- lpjmlkit::read_io(paste0(run_folder, "grid.bin.json"))
+grid <- read_io(paste0(run_folder, "grid.bin.json"))
 # calculate cell area
 lat <- grid$data[, , 2]
 lon <- grid$data[, , 1]
-cellarea <- lpjmlkit::calc_cellarea(grid)
+cellarea <- calc_cellarea(grid)
 
 ################# calculate BioCol ################
 # 16GB of RAM are enough to calculate BioCol for a smaller analysis window (~40 years)
