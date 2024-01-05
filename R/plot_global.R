@@ -1,7 +1,12 @@
 #' Plot global LPJmL array
 #'
-#' Creates a PNG/eps with a plot of a global LPJmL array
-#'    Data is plotted in range: c(-2^pow2max,-2^-pow2min,0,2^-pow2min,2^pow2max)
+#' Plot global LPJmL array to file (if file argument is given) or screen (else).
+#'    type argument controls plot type: (exponential, linear, or manual legend).
+#'    Depending on this more parameters are required.
+#'    Data plot ranges:
+#'      exp: c(-2^pow2max,-2^-pow2min,0,2^-pow2min,2^pow2max)
+#'      lin: c(min,max)
+#'      man: brks
 #'    colors for pos and neg values can be given, default is Blues for the
 #'    positive and Reds for the negative numbers 0-range (from 2^-pow2min to
 #'    2^pow2min) is white.
@@ -21,93 +26,15 @@
 #'            symmetrically between min and max, if onlypos = FALSE)
 #' @param col_pos color palette for the positives
 #' @param col_neg color palette for the negatives
-#' @param type string indicating whether to plot exponential (exp) or
-#'             linear (lin) legend (default: exp)
+#' @param type string indicating whether to plot manual (man),
+#'             exponential (exp) or linear (lin) legend (default: exp).
+#'             man requires: parameters brks and palette defined, 
+#'             exp requires: parameters pow2min and pow2max given defined,
+#'             lin requires: parameters min and max defined
 #' @param legendtitle character string legend title
 #' @param leg_yes boolean whether to show legend (default: TRUE)
-#' @param only_pos boolean to show only positive half of legend (default: FALSE)
-#' @param eps boolean whether to write eps file instead of PNG (default: FALSE)
-#'
-#' @return None
-#'
-#' @examples
-#' \dontrun{
-#' plot_global(
-#'   data = irrigation2006,
-#'   file = paste("~/", "mwateramount_2005_06.png", sep = ""),
-#'   title = paste("irrigation amount 2006 in mm/yr", sep = ""),
-#'   pow2max = 15,
-#'   pow2min = 0,
-#'   legendtitle = "legendtitle",
-#'   leg_yes = TRUE,
-#'   eps = FALSE
-#' )
-#' }
-#'
-#' @export
-plot_global <- function(data,
-                        file,
-                        title = "",
-                        pow2max = NULL,
-                        pow2min = NULL,
-                        min = NULL,
-                        max = NULL,
-                        col_pos = "GnBu",
-                        type = "exp",
-                        col_neg = "YlOrRd",
-                        legendtitle = "",
-                        leg_yes = TRUE,
-                        only_pos = FALSE,
-                        eps = FALSE,
-                        n_legend_ticks = 20) {
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
-
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file, horizontal = FALSE, onefile = FALSE, width = 22,
-                          height = 8.5, paper = "special")
-
-  } else {
-    grDevices::png(file, width = 7.25, height = 3.5, units = "in", res = 300,
-                   pointsize = 6, type = "cairo")
-  }
-
-  plot_global_to_screen(
-    data = data, title = title, pow2max = pow2max, type = type,
-    pow2min = pow2min, min = min, max = max, col_pos = col_pos,
-    col_neg = col_neg, legendtitle = legendtitle, leg_yes = leg_yes,
-    only_pos = only_pos, n_legend_ticks = n_legend_ticks
-  )
-  grDevices::dev.off()
-}
-
-
-#' Plot global LPJmL array
-#'
-#' Plot of a global LPJmL array inside RStudio
-#'    Data is plotted in range: c(-2^pow2max,-2^-pow2min,0,2^-pow2min,2^pow2max)
-#'    where the positive values are colored green to blue,
-#'    0-range is white,
-#'    and the negative ones red to yellow
-#'
-#' @param data array with data to plot in LPJmL specific array c(67420)
-#' @param file character string for location/file to save plot to
-#' @param title character string title for plot
-#' @param pow2max for exponential legend: upper (positive) end of data range to
-#'                plot (2^pow2max)
-#' @param pow2min for exponential legend: smallest positive number to be
-#'                distinguished from 0 (2^-pow2min)
-#' @param max for linear legend: upper end of data range to plot (0 is placed
-#'            symmetrically between min and max, if onlypos = FALSE)
-#' @param min for linear legend: lower end of data range to plot (0 is placed
-#'            symmetrically between min and max, if onlypos = FALSE)
-#' @param col_pos color palette for the positives
-#' @param col_neg color palette for the negatives
-#' @param type string indicating whether to plot exponential (exp) or
-#'             linear (lin) legend (default: exp)
-#' @param legendtitle character string legend title
-#' @param leg_yes boolean whether to show legend (default: TRUE)
+#' @param n_legend_ticks (default: 20)
+#' @param min_0 (default: 0.01)
 #' @param only_pos boolean to show only positive half of legend (default: FALSE)
 #' @param eps boolean whether to write eps file instead of PNG (default: FALSE)
 #'
@@ -115,31 +42,43 @@ plot_global <- function(data,
 #
 #' @examples
 #' \dontrun{
-#' plot_global_to_screen(
-#'   data = irrigation2006,
-#'   title = paste("irrigation amount 2006 in mm/yr", sep = ""),
-#'   pow2max = 15,
-#'   pow2min = 0,
-#'   "legendtitle",
-#'   leg_yes = TRUE
-#' )
 #' }
 #'
 #' @export
-plot_global_to_screen <- function(data,
-                                  title = "",
-                                  pow2max = NULL,
-                                  pow2min = NULL,
-                                  min = NULL,
-                                  max = NULL,
-                                  col_pos = "GnBu",
-                                  type = "exp",
-                                  col_neg = "YlOrRd",
-                                  legendtitle = "",
-                                  leg_yes = TRUE,
-                                  only_pos = FALSE,
-                                  n_legend_ticks = 20,
-                                  min_0 = 0.01) {
+plot_global <- function(data,
+                        file = NULL,
+                        title = "",
+                        pow2min = NULL,
+                        pow2max = NULL,
+                        min = NULL,
+                        max = NULL,
+                        brks = NULL,
+                        palette = NULL,
+                        col_pos = "GnBu",
+                        type = "exp",
+                        col_neg = "YlOrRd",
+                        legendtitle = "",
+                        leg_yes = TRUE,
+                        only_pos = FALSE,
+                        n_legend_ticks = 20,
+                        min_0 = 0.01,
+                        eps = FALSE) {
+
+  if (!is.null(file)) {
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
+
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file, horizontal = FALSE, onefile = FALSE, width = 22,
+                            height = 8.5, paper = "special")
+
+    } else {
+      grDevices::png(file, width = 7.25, height = 3.5, units = "in", res = 300,
+                    pointsize = 6, type = "cairo")
+    }
+  }
+
   if (only_pos) {
     if (type == "exp") {
       if (is.null(pow2max) | is.null(pow2min)) {
@@ -163,33 +102,40 @@ plot_global_to_screen <- function(data,
     )
 
   } else {
-    if (type == "exp") {
-      if (is.null(pow2max) | is.null(pow2min)) {
-        stop("For exponental legend, pow2min and pow2max need to be specified.")
+    if (type == "exp" || type == "lin") {
+      if (type == "exp") {
+        if (is.null(pow2max) | is.null(pow2min)) {
+          stop("For exponental legend, pow2min and pow2max need to be specified.")
+        }
+        legendticks <- c(
+          -(2^seq(pow2max, pow2min, -1)), 2^seq(pow2min, pow2max, 1)
+        )
+        brks <- seq(-pow2max, pow2max, length.out = length(legendticks))
+      } else if (type == "lin") {
+        if (is.null(max) | is.null(min)) {
+          stop("For linear legend, min and max need to be specified.")
+        }
+        if (n_legend_ticks%%2 == 0) {
+          n_legend_ticks <- n_legend_ticks + 1
+        }
+        legendticks <- c( seq(min, 0, length.out = n_legend_ticks),
+                          seq(0, max, length.out = n_legend_ticks) )
+        legendticks[c(n_legend_ticks,(n_legend_ticks+1))] <- c(-min_0,min_0)
+        brks <- legendticks
       }
-      legendticks <- c(
-        -(2^seq(pow2max, pow2min, -1)), 2^seq(pow2min, pow2max, 1)
+      palette <- c(
+        rev(
+          grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_neg))(length(legendticks) / 2 - 1) # nolint
+        ),
+        "white",
+        grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) / 2 - 1) # nolint
       )
-      brks <- seq(-pow2max, pow2max, length.out = length(legendticks))
-    } else if (type == "lin") {
-      if (is.null(max) | is.null(min)) {
-        stop("For linear legend, min and max need to be specified.")
-      }
-      if (n_legend_ticks%%2 == 0) {
-        n_legend_ticks <- n_legend_ticks + 1
-      }
-      legendticks <- c( seq(min, 0, length.out = n_legend_ticks),
-                        seq(0, max, length.out = n_legend_ticks) )
-      legendticks[c(n_legend_ticks,(n_legend_ticks+1))] <- c(-min_0,min_0)
-      brks <- legendticks
+    } else { # type == man
+      if (only_pos) stop("Manual breaks and palette, but conflicting parameter
+              only_pos == TRUE defined. Aborting.")
+      legendticks <- brks
     }
-    palette <- c(
-      rev(
-        grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_neg))(length(legendticks) / 2 - 1) # nolint
-      ),
-      "white",
-      grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) / 2 - 1) # nolint
-    )
+
   }
   data[data < legendticks[1]] <- legendticks[1]
   data[data > legendticks[length(legendticks)]] <- (
@@ -202,30 +148,37 @@ plot_global_to_screen <- function(data,
   extent <- terra::ext(c(-180, 180, -60, 90))
 
   if (leg_yes) {
-    graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 3),
+    graphics::par(bty = "n", oma = c(0, 0, 0, 3), mar = c(0, 0, 0, 0),
                   xpd = TRUE)
   } else {
-    graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0))
+    graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0),
+                  xpd = TRUE)
   }
-  terra::plot(ra, ext = extent, breaks = legendticks, col = palette, main = "",
+
+  terra::plot(ra, ext = extent, breaks = legendticks, col = palette, main = title,
                legend = FALSE, axes = FALSE)
+  maps::map("world", add = TRUE, res = 0, lwd = 0.1, ylim = c(-60, 90))
   title(title, line = -1)
   if (leg_yes) {
     if (type == "exp") {
       fields::image.plot(
         legend.only = TRUE, zlim = c(-pow2max, pow2max), col = palette,
         useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
-        legend.shrink = 0.8,
-        legend.args = list(legendtitle, side = 3, font = 2, line = 1)
+        legend.shrink = 0.7,
+        legend.args = list(legendtitle, side = 3, font = 2, line = 1),
+        smallplot = c(0.975, 0.99, 0.1, 0.9)
       )
-    } else { # linear plotting
+    }else { # manual plotting
       fields::image.plot(
-        legend.only = TRUE, zlim = c(min, max), col = palette,
+        legend.only = TRUE, zlim = range(brks), col = palette,
         useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
-        legend.shrink = 0.8,
+        legend.shrink = 0.7,
         legend.args = list(legendtitle, side = 3, font = 2, line = 1)
       )
     }
   }
-  maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
+
+  if (!is.null(file)) {
+    grDevices::dev.off()
+  }
 }
