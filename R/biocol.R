@@ -307,6 +307,7 @@ read_calc_biocol <- function( # nolint
       pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, , band = rep("natural stand fraction",pftbands)]
       pftnpp[, , -c(nat_bands)] <- pftnpp[, , -c(nat_bands)] * cftfrac
       harvest <- harvest * cftfrac
+      rharvest <- rharvest * cftfrac
     }
 
     pftnpp_grasslands <- apply(
@@ -478,6 +479,11 @@ read_calc_biocol <- function( # nolint
     biocol_overtime / npp_pot_overtime 
   )
   biocol_luc <- npp_potential - npp
+  #browser()
+  #biocol_luc2 <- (npp_potential - pftnpp_cft) * apply(cftfrac[, , -c(grass_bands, bp_bands)], c("cell", "year"), sum) +
+  #               (npp_potential - pftnpp_grasslands) * apply(cftfrac[, , grass_bands], c("cell", "year"), sum) +
+  #               (npp_potential - pftnpp_bioenergy) * apply(cftfrac[, , bp_bands], c("cell", "year"), sum)
+  
   # pick a PI window that excludes onset effects, but is reasonable early
 
   if (include_fire) {
