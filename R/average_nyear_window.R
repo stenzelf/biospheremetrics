@@ -64,7 +64,7 @@ average_nyear_window <- function(x, # nolint
   interpolate_spline <- function(x, y, nyear_window) {
     rep(NA, dim(y)["year"]) %>%
       `[<-`(seq(round(nyear_window / 2), dim(y)["year"], nyear_window),
-                value = x) %>%
+              value = x) %>%
       zoo::na.spline()
   }
 

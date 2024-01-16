@@ -1,5 +1,5 @@
 # function to get file extension
-get_file_ext <- function(path) {
+get_major_file_ext <- function(path) {
   # Get all files in path
   all_files <- list.files(
     path,
@@ -10,12 +10,17 @@ get_file_ext <- function(path) {
   all_file_types <- all_files %>%
     strsplit("/") %>%
     sapply(utils::tail, 1) %>%
-    strsplit("^([^\\.]+)") %>%
+    strsplit("\\.") %>%
     sapply(function(x) {
-      y <- x[2]
-      return(y)
+      y <- x[-1]
+      if ("json" %in% y) {
+        return(paste(tail(strsplit(y, "\\."), 2), collapse = "."))
+      } else {
+        return(tail(strsplit(y, "\\."), 1))
+      }
     }) %>%
-    substr(2, nchar(.))
+    unlist()
+
 
   # Get most frequent file types
   # TODO not yet working

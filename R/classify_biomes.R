@@ -62,7 +62,7 @@ classify_biomes <- function(path_reference = NULL,
     stop("files_reference or path_reference must be provided")
   } else if (!is.null(path_reference) && is.null(files_reference)) {
     # Get main file type (meta, clm)
-    file_ext <- get_file_ext(path_reference)
+    file_ext <- get_major_file_ext(path_reference)
 
     # List required output files for each boundary
     output_files <- list_outputs("biome",
