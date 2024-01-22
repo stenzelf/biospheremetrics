@@ -1,13 +1,42 @@
+rm(list = ls())
 library(devtools)
 library(lpjmlkit)
-library(sf)
-library(terra)
-library(biospheremetrics)
+library(magrittr)
 
-run_folder <- "./output/lu_1500_2014/"
-pnv_folder <- "./output/pnv_1500_2014/"
-out_folder <- "./metrics/"
-lpj_input <- "./historical/"
+devtools::load_all("/p/projects/open/Fabian/LPJbox/biospheremetrics_review_paper/")
+
+run_folder <- paste0(system.file("extdata","run","lu_1500_2016",package = "biospheremetrics"),"/")
+pnv_folder <- paste0(system.file("extdata","run","pnv_1500_2016",package = "biospheremetrics"),"/")
+out_folder <- tempdir()
+
+vars_metrics <- data.frame(
+  row.names = c("grid","fpc", "fpc_bft", "cftfrac", "firec", "npp", "runoff",
+                "transp", "vegc", "firef", "rh", "harvestc", "rharvestc",
+                "pft_harvestc", "pft_rharvestc", "evap", "interc", "discharge",
+                "soilc", "litc", "swc", "swc_vol", "vegn", "soilnh4", "soilno3",
+                "leaching", "n2o_denit", "n2o_nit", "n2_emis", "bnf",
+                "n_volatilization", "gpp", "res_storage", "lakevol", "ndepos",
+                "rd", "prec", "terr_area", "irrig", "nfert_agr", "nmanure_agr", 
+                "firen", "harvestn", "rivervol", "irrig_stor","pft_npp",
+                "timber_harvest", "rootmoist"),
+  outname = c("grid.bin.json", "fpc.bin.json", "fpc_bft.bin.json",
+              "cftfrac.bin.json", "firec.bin.json", "npp.bin.json",
+              "runoff.bin.json", "transp.bin.json", "vegc.bin.json",
+              "firef.bin.json", "rh.bin.json", "harvestc.bin.json",
+              "rharvestc.bin.json", "pft_harvest.pft.bin.json",
+              "pft_rharvest.pft.bin.json", "evap.bin.json",
+              "interc.bin.json", "discharge.bin.json", "soilc.bin.json",
+              "litc.bin.json", "swc.bin.json", "swc_vol.bin.json", "vegn.bin.json",
+              "soilnh4.bin.json", "soilno3.bin.json", "leaching.bin.json",
+              "n2o_denit.bin.json", "n2o_nit.bin.json", "n2_emis.bin.json",
+              "bnf.bin.json", "n_volatilization.bin.json", "gpp.bin.json",
+              "res_storage.bin.json", "lakevol.bin.json", "ndepos.bin.json",
+              "rd.bin.json", "prec.bin.json", "terr_area.bin.json",
+              "irrig.bin.json", "nfert_agr.bin.json", "nmanure_agr.bin.json",
+              "firen.bin.json", "harvestn.bin.json", "rivervol.bin.json",
+              "irrig_stor.bin.json", "pft_npp.bin.json",
+              "timber_harvestc.bin.json","rootmoist.bin.json")
+)
 
 # read grid
 grid <- read_io(paste0(run_folder, "grid.bin.json"))
@@ -20,40 +49,47 @@ cellarea <- calc_cellarea(grid)
 # 16GB of RAM are enough to calculate BioCol for a smaller analysis window (~40 years)
 # for longer spans (500 years) - use separate script ("read_in_BioCol_data.R") 
 # and submit as cluster job using "sbatch R_read_in_BioCol_data.sh" - analysis for "biocol overtime" below
-vars_biocol <- data.frame(
-  row.names = c("grid", "npp", "pft_npp", "pft_harvest", "pft_rharvest",
-                "firec", "timber_harvest", "cftfrac", "fpc"),
-  outname = c("grid.bin.json", "mnpp.bin.json", "pft_npp.bin.json",
-              "pft_harvest.pft.bin.json", "pft_rharvest.pft.bin.json",
-              "firec.bin.json", "timber_harvestc.bin.json", "cftfrac.bin.json",
-              "fpc.bin.json")
-)
+# read grid
+grid <- lpjmlkit::read_io(paste0(run_folder, "grid.bin.json"))$data
+# calculate cell area
+lat <- grid[, , 2]
+lon <- grid[, , 1]
+cellarea <- drop(lpjmlkit::read_io(filename = paste0(run_folder,"terr_area.bin.json"))$data) # in m2
+
+
+paletteNew = c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+
+
+################# calculate BioCol ################
+# 16GB of RAM are enough to calculate BioCol for a smaller analysis window (~40 years)
+# for longer spans (500 years) - use separate script ("read_in_BioCol_data.R") 
+# and submit as cluster job using "sbatch R_read_in_BioCol_data.sh"
 
 biocol <- calc_biocol(
   path_lu = run_folder,
   path_pnv = pnv_folder,
   gridbased = TRUE,
   start_year = 1980,
-  stop_year = 2014,
+  stop_year = 2016,
   reference_npp_time_span = 1510:1539,
-  reference_npp_file = "/p/projects/open/Fabian/runs/metrics_202306/output/pnv_1500_2014/mnpp.bin.json",
+  reference_npp_file = "/p/projects/open/Fabian/runs/metrics_202308/output/pnv_1500_2016/npp.bin.json",
   read_saved_data = FALSE,
-  save_data = TRUE,
-  npp_threshold = 20,
-  data_file = "/p/projects/open/Jannes/tests/metrics/BioCol_202306.RData",
+  save_data = FALSE,
+  npp_threshold = 1,
+  data_file = "/p/projects/open/Fabian/Metrics/data/BioCol_202308_1980-2016.RData",
   external_fire = FALSE,
   external_wood_harvest = TRUE,
   external_fire_file = "/p/projects/open/Fabian/LPJbox/human_ignition_fraction.RData",
-  external_wood_harvest_file = "/p/projects/open/LanduseData/LUH2_v2h/wood_harvest_biomass_sum_1500-2014_67420.RData",
-  varnames = vars_biocol,
+  external_wood_harvest_file = "/p/projects/open/LanduseData/LUH2_v2h/wood_harvest_biomass_sum_1500-2016_extended_67420.RData",
+  varnames = vars_metrics,
   grass_scaling = FALSE,
   include_fire = FALSE
 )
 
 plot_biocol(
   biocol_data = biocol,
-  path_write = paste0(out_folder, "BioCol/"),
-  plotyears = c(1980, 2014),
+  path_write = paste0(out_folder,"BioCol_test/"),
+  plotyears = c(1980,2014),
   min_val = 0,
   max_val = 90,
   legendpos = "left",
@@ -63,25 +99,7 @@ plot_biocol(
   eps = FALSE
 )
 
-vars_ecorisk <- data.frame(
-  row.names = c("grid","fpc", "fpc_bft", "cftfrac", "firec", "npp", "runoff",
-                "transp", "vegc", "firef", "rh", "harvestc", "rharvestc",
-                "pft_harvestc", "pft_rharvestc", "evap", "interc", "discharge",
-                "soilc", "litc", "swc", "vegn", "soilnh4", "soilno3",
-                "leaching", "n2o_denit", "n2o_nit", "n2_emis", "bnf",
-                "n_volatilization"),
-  outname = c("grid.bin.json", "fpc.bin.json", "fpc_bft.bin.json",
-              "cftfrac.bin.json", "firec.bin.json", "mnpp.bin.json",
-              "mrunoff.bin.json", "mtransp.bin.json", "vegc.bin.json",
-              "firef.bin.json", "mrh.bin.json", "flux_harvest.bin.json",
-              "flux_rharvest.bin.json", "pft_harvest.pft.bin.json",
-              "pft_rharvest.pft.bin.json", "mevap.bin.json",
-              "minterc.bin.json", "mdischarge.bin.json", "soilc.bin.json",
-              "litc.bin.json", "mswc.bin.json", "vegn.bin.json",
-              "soilnh4.bin.json", "soilno3.bin.json", "mleaching.bin.json",
-              "mn2o_denit.bin.json", "mn2o_nit.bin.json", "mn2_emis.bin.json",
-              "mbnf.bin.json", "mn_volatilization.bin.json")
-)
+
 
 ecorisk <- ecorisk_wrapper(
   path_ref = pnv_folder,
