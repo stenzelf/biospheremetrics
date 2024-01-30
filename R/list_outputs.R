@@ -143,8 +143,9 @@ higher_res <- function(x, y) {
 
 # split calculation string for variable addition/subtraction into signs & vars 
 split_sign <- function(string) {
+  print(string)
   # add spaces around +- signs
-  string <- gsub(
+  string <- gsub("-",
     " - ",
     gsub("+", " + ", string, fixed = TRUE),
     fixed = TRUE
