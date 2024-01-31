@@ -1,8 +1,8 @@
 {
-  "sim_name" : "lu_1500_2016",
+  "sim_name" : "pnv_1500_2016",
   "source" : "LPJmL C Version 5.8.1",
-  "history" : "/p/projects/open/Fabian/LPJmL_versions/LPJmL58//bin/lpjml /p/projects/open/Fabian/runs/metrics_double_cell//configurations/config_lu_1500_2016.json",
-  "variable" : "rootmoist",
+  "history" : "/p/projects/open/Fabian/LPJmL_versions/LPJmL58//bin/lpjml /p/projects/open/Fabian/runs/metrics_double_cell//configurations/config_pnv_1500_2016.json",
+  "variable" : "interc_b",
   "firstcell" : 47459,
   "ncell" : 2,
   "cellsize_lon" : 0.500000,
@@ -10,8 +10,8 @@
   "nstep" : 12,
   "timestep" : 1,
   "nbands" : 1,
-  "descr" : "root moisture",
-  "unit" : "",
+  "descr" : "blue interception",
+  "unit" : "mm/month",
   "firstyear" : 1500,
   "lastyear" : 2016,
   "nyear" : 517,
@@ -22,5 +22,5 @@
   "format" : "raw",
   "grid" : {"filename" : "grid.bin.json", "format" : "meta"},
   "ref_area" : {"filename" : "terr_area.bin.json", "format" : "meta"},
-  "filename" : "rootmoist.bin"
+  "filename" : "interc_b.bin"
 }

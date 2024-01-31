@@ -1,7 +1,7 @@
 {
   "sim_name" : "lu_1500_2016",
-  "source" : "LPJmL C Version 5.7.5",
-  "history" : "/p/projects/open/Fabian/LPJmL_versions/LPJmL57_add_isimip_outputs//bin/lpjml /p/projects/open/Fabian/runs/metrics_double_cell//configurations/config_lu_1500_2016.json",
+  "source" : "LPJmL C Version 5.8.1",
+  "history" : "/p/projects/open/Fabian/LPJmL_versions/LPJmL58//bin/lpjml /p/projects/open/Fabian/runs/metrics_double_cell//configurations/config_lu_1500_2016.json",
   "variable" : "pft_npp",
   "firstcell" : 47459,
   "ncell" : 2,
@@ -34,5 +34,7 @@
   "order" : "cellseq",
   "bigendian" : false,
   "format" : "raw",
+  "grid" : {"filename" : "grid.bin.json", "format" : "meta"},
+  "ref_area" : {"filename" : "terr_area.bin.json", "format" : "meta"},
   "filename" : "pft_npp.bin"
 }

@@ -18,7 +18,7 @@
 ****                                                                      ****
 ******************************************************************************
 
-Running for user stenzel on cs-f14c01b07 at Fri Jan 19 16:10:40 2024
+Running for user stenzel on cs-e14c05b08 at Tue Jan 30 09:28:16 2024
 Reading configuration from '/p/projects/open/Fabian/runs/metrics_double_cell//configurations/config_pnv_1500_2016.json'.
 ==============================================================================
 Simulation "pnv_1500_2016" running on 2 tasks
@@ -47,7 +47,7 @@ lakes        meta /p/projects/lpjml/input/historical/input_VERSION2/glwd_lakes_a
 ------------ ---- -------------------------------------------------------------
 Writing restart file '/p/projects/open/Fabian/runs/metrics_double_cell//restart/pnv_1500_2016/restart.lpj' after year 2016.
 Reading random seeds from restart file.
-Number of output files:       124
+Number of output files:       129
 Output written in year:       1500
 Byte order in output files:   little endian
 
@@ -58,10 +58,13 @@ agb_tree            raw  gC/m2             float Y     1 /p/projects/open/Fabian
 albedo              raw  -                 float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/albedo.bin + .json
 bnf                 raw  gN/m2/month       float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/bnf.bin + .json
 bnf_agr             raw  gN/m2/yr          float Y     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/bnf_agr.bin + .json
+cft_consump_water_b raw  mm/yr             float Y    32 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/cft_consump_water_b.bin + .json
+cft_consump_water_g raw  mm/yr             float Y    32 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/cft_consump_water_g.bin + .json
 cft_evap            raw  mm/yr             float Y    32 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/cft_evap.bin + .json
 cft_interc          raw  mm/yr             float Y    32 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/cft_interc.bin + .json
 cft_runoff          raw  mm/growing season float Y    24 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/cft_runoff.bin + .json
 cft_transp          raw  mm/yr             float Y    32 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/cft_transp.bin + .json
+cft_transp_b        raw  mm/yr             float Y    32 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/cft_transp_b.bin + .json
 cftfrac             raw  -                 float Y    32 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/cftfrac.bin + .json
 conv_loss_drain     raw  mm/yr             float Y     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/aconv_loss_drain.bin + .json
 conv_loss_evap      raw  mm/yr             float Y     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/aconv_loss_evap.bin + .json
@@ -84,7 +87,7 @@ harvestc_agr        raw  gC/m2/yr          float Y     1 /p/projects/open/Fabian
 harvestn            raw  gN/m2/yr          float Y     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/harvestn.bin + .json
 harvestn_agr        raw  gN/m2/yr          float Y     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/harvestn_agr.bin + .json
 interc              raw  mm/month          float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/interc.bin + .json
-interc_b            raw  mm/month          float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/intec_b.bin + .json
+interc_b            raw  mm/month          float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/interc_b.bin + .json
 irrig               raw  mm/month          float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/irrig.bin + .json
 irrig_stor          raw  dm3               float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/irrig_stor.bin + .json
 lake_area           raw  m2                float Y     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/lake_area.bin + .json
@@ -142,12 +145,14 @@ phen_light          raw  -                 float M     1 /p/projects/open/Fabian
 phen_tmax           raw  -                 float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/phen_tmax.bin + .json
 phen_tmin           raw  -                 float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/phen_tmin.bin + .json
 phen_water          raw  -                 float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/phen_water.bin + .json
+prec                raw  mm/month          float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/prec.bin + .json
 prod_turnover       raw  gC/m2/yr          float Y     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/prod_turnover.bin + .json
 rd                  raw  gC/m2/month       float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/rd.bin + .json
 res_storage         raw  dm3               float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/res_storage.bin + .json
 return_flow_b       raw  mm/month          float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/return_flow_b.bin + .json
 rh                  raw  gC/m2/month       float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/rh.bin + .json
 rivervol            raw  dm3               float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/rivervol.bin + .json
+rootmoist           raw  -                 float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/rootmoist.bin + .json
 runoff              raw  mm/month          float M     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/runoff.bin + .json
 sdate               raw  -                 short Y    24 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/sdate.bin + .json
 seasonality         raw  -                 short Y     1 /p/projects/open/Fabian/runs/metrics_double_cell//output/pnv_1500_2016/seasonality.bin + .json
@@ -186,7 +191,7 @@ Last year:                     2016
 Index of first cell:          47459
 Number of grid cells:             2
 ==============================================================================
-Memory allocated for output: 9,160 bytes/cell
+Memory allocated for output: 9,944 bytes/cell
 Simulation begins...
 Spinup using climate starting from year 1901
 
@@ -818,5 +823,5 @@ Year   NEP     estab   fire    NBP     transp     evap    interc  nuptake ndeman
   2016 -157.455   0.069 199.660 -357.045  2402671.7 269539.1 183983.9 72132.9  13665.5 12196.8 14852.3
 Simulation ended.
 lpjml successfully terminated, 2 grid cells processed.
-Wall clock time:	13 sec, 0.013 sec/cell/year.
-Total wall clock time:	14 sec (00:00:14).
+Wall clock time:	14 sec, 0.014 sec/cell/year.
+Total wall clock time:	15 sec (00:00:15).

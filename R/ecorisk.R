@@ -56,7 +56,7 @@ ecorisk_wrapper <- function(path_ref,
 
   # TODO: compare length time_span_reference and time_span_scenario
   if (is.null(varnames)) {
-    print("variable name list not provided, using standard list, which might
+    message("variable name list not provided, using standard list, which might
           not be applicable for this case ...")
     varnames <- data.frame(
       row.names = c(
@@ -94,8 +94,7 @@ ecorisk_wrapper <- function(path_ref,
   nyears <- length(time_span_reference)
   nyears_scen <- length(time_span_scenario)
   if (nyears < 30 || nyears_scen < 30) {
-    stop("Warning: timespan in reference or scenario is smaller than 30 years. \
-          Aborting!")
+    stop("Timespan in reference or scenario is smaller than 30 years.")
   }
   # translate varnames and folders to files_scenarios/reference lists
   files_scenario <- list(
@@ -202,7 +201,7 @@ ecorisk_wrapper <- function(path_ref,
 
   if (read_saved_data) {
     if (!is.null(save_data)) {
-      print(paste("Loading saved data from:", save_data))
+      message("Loading saved data from:", save_data)
       load(file = save_data)
     } else {
       stop(
@@ -255,7 +254,7 @@ ecorisk_wrapper <- function(path_ref,
     nitrogen_total = array(0, dim = c(ncells, slices))
   )
   for (y in seq_len(slices)) {
-    print(paste0("Calculating time slice ", y, " of ", slices))
+    message("Calculating time slice ", y, " of ", slices)
     returned <- calc_ecorisk(
       fpc_ref = fpc_ref,
       fpc_scen = fpc_scen[, , y:(y + window - 1)],
@@ -296,7 +295,7 @@ ecorisk_wrapper <- function(path_ref,
 
   ############## export and save data if requested #############
   if (!(is.null(save_ecorisk))) {
-    print(paste0("Saving EcoRisk data to: ", save_ecorisk))
+    message("Saving EcoRisk data to: ", save_ecorisk)
     save(ecorisk, file = save_ecorisk)
   }
   #
@@ -800,28 +799,31 @@ read_ecorisk_data <- function(
 
     ### read in lpjml output
     # for vegetation_structure_change (fpc,fpc_bft,cftfrac)
-    print("Reading in fpc, fpc_bft, cftfrac")
+    message("Reading in fpc, fpc_bft, cftfrac")
 
     cft_scen <- aperm(lpjmlkit::read_io(
       files_scenario$cftfrac,
       subset = list(year = as.character(time_span_scenario))
     ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2))
+      lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2)) %>%
+      suppressWarnings()
 
     bft_scen <- aperm(lpjmlkit::read_io(
       files_scenario$fpc_bft,
       subset = list(year = as.character(time_span_scenario))
     ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2))
+      lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2)) %>%
+      suppressWarnings()
 
     fpc_scen <- aperm(lpjmlkit::read_io(
       files_scenario$fpc,
       subset = list(year = as.character(time_span_scenario))
     ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2))
+      lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2)) %>%
+      suppressWarnings()
 
     if (file.exists(files_reference$cftfrac)) {
       cft_ref <- aperm(lpjmlkit::read_io(
@@ -829,7 +831,8 @@ read_ecorisk_data <- function(
         subset = list(year = as.character(time_span_reference))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2))
+        lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2)) %>%
+        suppressWarnings()
     } else {
       cft_ref <- cft_scen * 0
     }
@@ -840,7 +843,8 @@ read_ecorisk_data <- function(
         subset = list(year = as.character(time_span_reference))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2))
+        lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2)) %>%
+        suppressWarnings()
     } else {
       bft_ref <- bft_scen * 0
     }
@@ -850,7 +854,8 @@ read_ecorisk_data <- function(
       subset = list(year = as.character(time_span_reference))
     ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2))
+      lpjmlkit::as_array(aggregate = list(month = sum)), c(1, 3, 2)) %>%
+      suppressWarnings()
 
     #### new input reading ###
     metric_files <- system.file(
@@ -882,34 +887,36 @@ read_ecorisk_data <- function(
           path_scen_file <- files_scenario[[vars[v, "variable"]]]
           if (file.exists(path_scen_file)) {
             header_scen <- lpjmlkit::read_meta(filename = path_scen_file)
-            print(paste(
+            message(
               "Reading in", path_scen_file, "with unit", header_scen$unit,
               "-> as part of", class_names[index]
-            ))
+            )
             var_scen <- lpjmlkit::read_io(
               path_scen_file,
               subset = list(year = as.character(time_span_scenario))
             ) %>%
               lpjmlkit::transform(to = c("year_month_day")) %>%
               lpjmlkit::as_array(aggregate = list(month = sum, band = sum), ) %>%
-              drop()
+              drop() %>%
+              suppressWarnings()
           } else {
             stop(paste("Couldn't read in:", path_scen_file, " - stopping!"))
           }
           path_ref_file <- files_reference[[vars[v, "variable"]]]
           if (file.exists(path_ref_file)) {
             header_ref <- lpjmlkit::read_meta(path_ref_file)
-            print(paste(
+            message(
               "Reading in", path_ref_file, "with unit", header_ref$unit,
               "-> as part of", class_names[index]
-            ))
+            )
             var_ref <- lpjmlkit::read_io(
               path_ref_file,
               subset = list(year = as.character(time_span_reference))
             ) %>%
               lpjmlkit::transform(to = c("year_month_day")) %>%
               lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-              drop()
+              drop() %>%
+              suppressWarnings()
           } else {
             stop(paste("Couldn't read in:", path_ref_file, " - stopping!"))
           }
@@ -947,7 +954,7 @@ read_ecorisk_data <- function(
   }
 
   if (!(is.null(save_file))) {
-    print(paste0("Saving data to: ", save_file))
+    message("Saving data to: ", save_file)
     save(state_ref, state_scen, fpc_ref, fpc_scen,
       bft_ref, bft_scen, cft_ref, cft_scen, lat, lon, cell_area,
       file = save_file
@@ -2307,11 +2314,9 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
   # start
   for (b in sort(unique(biome_classes$biome_id))) {
     filebase <- strsplit(data_file_base, "_data.RData")[[1]]
-    print(
-      paste0(
-        "Calculating differences with biome ", b, " (",
-        biome_classes$biome_names[b], ")"
-      )
+    message(
+      "Calculating differences with biome ", b, " (",
+      biome_classes$biome_names[b], ")"
     )
 
     data_file <- paste0(
@@ -3004,8 +3009,8 @@ plot_ecorisk_radial <- function(data,
   path_write <- dirname(file)
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
   if (length(which(data < 0 | data > 1)) > 0) {
-    print(
-      "Warning: there are values in data outside the expected EcoRisk range [0..1]." # nolint
+    warning(
+      "There are values in data outside the expected EcoRisk range [0..1]." # nolint
     )
   }
 
@@ -3155,7 +3160,7 @@ plot_ecorisk_over_time_panel <- function(data, # nolint
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (length(which(data < 0 | data > 1)) > 0) {
-    print("Warning: values in data outside the expected EcoRisk range [0..1].")
+    warning("Values in data outside the expected EcoRisk range [0..1].")
   }
 
   if (eps) {
@@ -3265,7 +3270,7 @@ plot_ecorisk_radial_panel <- function(data,
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   if (length(which(data < 0 | data > 1)) > 0) {
-    print("Warning: values in data outside the expected EcoRisk range [0..1].")
+    warning("Values in data outside the expected EcoRisk range [0..1].")
   }
 
   if (eps) {
