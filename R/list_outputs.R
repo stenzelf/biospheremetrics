@@ -145,6 +145,7 @@ higher_res <- function(x, y) {
 split_sign <- function(string) {
   # add spaces around +- signs
   string <- gsub(
+    "-",
     " - ",
     gsub("+", " + ", string, fixed = TRUE),
     fixed = TRUE

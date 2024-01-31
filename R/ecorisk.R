@@ -53,6 +53,8 @@ ecorisk_wrapper <- function(path_ref,
                             debug = FALSE,
                             external_variability = FALSE,
                             c2vr = NULL) {
+
+  # TODO: compare length time_span_reference and time_span_scenario
   if (is.null(varnames)) {
     print("variable name list not provided, using standard list, which might
           not be applicable for this case ...")
@@ -209,7 +211,7 @@ ecorisk_wrapper <- function(path_ref,
       )
     }
   } else {
-    # first read in all lpjml output files required for computing EcoRisk
+    # first read in all lpjml output files required for computing EcoRisks
     returned_vars <- read_ecorisk_data(
       files_reference = files_reference,
       files_scenario = files_scenario,
@@ -779,6 +781,7 @@ read_ecorisk_data <- function(
     time_span_scenario,
     nitrogen,
     debug = FALSE) {
+
   file_type <- tools::file_ext(files_reference$grid)
 
   if (file_type %in% c("json", "clm")) {
