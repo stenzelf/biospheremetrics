@@ -167,7 +167,7 @@ read_calc_biocol <- function(
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-          drop() # remaining bands
+          drop()
         npp_ref[npp_ref < epsilon] <- 0
       }
 
@@ -215,7 +215,10 @@ read_calc_biocol <- function(
           subset = list(year = as.character(time_span_scenario))
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
-          lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
+          lpjmlkit::as_array(aggregate = list(band = sum)) %>%
+          drop() %>%
+          suppressWarnings()
+
 
         if (external_fire) {
           load(external_fire_file) # frac = c(cell,month,year)
@@ -625,62 +628,41 @@ calc_biocol <- function(
     grass_harvest_file = "grazing_data.RData",
     external_fire_file = "human_ignition_fraction.RData",
     external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData") {
-  if (is.null(varnames)) {
-    message(
-      "Varnames not given, using standard values, which might not fit ",
-      "this specific configuration. Please check!"
-    )
-    varnames <- data.frame(
-      row.names = c(
-        "grid",
-        "npp",
-        "pft_npp",
-        "pft_harvest",
-        "pft_rharvest",
-        "firec",
-        "timber_harvest",
-        "cftfrac",
-        "fpc"
-      ),
-      outname = c(
-        "grid.bin.json",
-        "mnpp.bin.json",
-        "pft_npp.bin.json",
-        "pft_harvest.bin.json",
-        "pft_rharvest.bin.json",
-        "firec.bin.json",
-        "timber_harvestc.bin.json",
-        "cftfrac.bin.json",
-        "fpc.bin.json"
-      ),
-      timestep = c("Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y")
-    )
-  }
 
-  # translate varnames and folders to files_scenarios/reference lists
+  metric_files <- system.file(
+    "extdata",
+    "metric_files.yml",
+    package = "biospheremetrics"
+  ) %>%
+    yaml::read_yaml()
+  
+  file_extension <- get_major_file_ext(paste0(path_lu))
+  outputs <- metric_files$metric$biocol$output
+  
+  # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
   files_scenario <- list(
-    grid = paste0(path_lu, varnames["grid", "outname"]),
-    terr_area = paste0(path_lu, varnames["terr_area", "outname"]),
-    npp = paste0(path_lu, varnames["npp", "outname"]),
-    pft_npp = paste0(path_lu, varnames["pft_npp", "outname"]),
-    pft_harvestc = paste0(path_lu, varnames["pft_harvest", "outname"]),
-    pft_rharvestc = paste0(path_lu, varnames["pft_rharvest", "outname"]),
-    firec = paste0(path_lu, varnames["firec", "outname"]),
-    timber_harvestc = paste0(path_lu, varnames["timber_harvest", "outname"]),
-    cftfrac = paste0(path_lu, varnames["cftfrac", "outname"]),
-    fpc = paste0(path_lu, varnames["fpc", "outname"])
+    grid = paste0(path_lu, outputs$grid$name, ".", file_extension),
+    terr_area = paste0(path_lu, outputs$terr_area$name, ".", file_extension),
+    npp = paste0(path_lu, outputs$npp$name, ".", file_extension),
+    pft_npp = paste0(path_lu, outputs$pft_npp$name, ".", file_extension),
+    pft_harvestc = paste0(path_lu, outputs$pft_harvestc$name, ".", file_extension),
+    pft_rharvestc = paste0(path_lu, outputs$pft_rharvestc$name, ".", file_extension),
+    firec = paste0(path_lu, outputs$firec$name, ".", file_extension),
+    timber_harvestc = paste0(path_lu, outputs$timber_harvestc$name, ".", file_extension),
+    cftfrac = paste0(path_lu, outputs$cftfrac$name, ".", file_extension),
+    fpc = paste0(path_lu, outputs$fpc$name, ".", file_extension)
   )
   files_baseline <- list(
-    grid = paste0(path_pnv, varnames["grid", "outname"]),
-    terr_area = paste0(path_pnv, varnames["terr_area", "outname"]),
-    npp = paste0(path_pnv, varnames["npp", "outname"]),
-    pft_npp = paste0(path_pnv, varnames["pft_npp", "outname"]),
-    pft_harvestc = paste0(path_pnv, varnames["pft_harvest", "outname"]),
-    pft_rharvestc = paste0(path_pnv, varnames["pft_rharvest", "outname"]),
-    firec = paste0(path_pnv, varnames["firec", "outname"]),
-    timber_harvestc = paste0(path_pnv, varnames["timber_harvest", "outname"]),
-    cftfrac = paste0(path_pnv, varnames["cftfrac", "outname"]),
-    fpc = paste0(path_pnv, varnames["fpc", "outname"])
+    grid = paste0(path_pnv, outputs$grid$name, ".", file_extension),
+    terr_area = paste0(path_pnv, outputs$terr_area$name, ".", file_extension),
+    npp = paste0(path_pnv, outputs$npp$name, ".", file_extension),
+    pft_npp = paste0(path_pnv, outputs$pft_npp$name, ".", file_extension),
+    pft_harvestc = paste0(path_pnv, outputs$pft_harvestc$name, ".", file_extension),
+    pft_rharvestc = paste0(path_pnv, outputs$pft_rharvestc$name, ".", file_extension),
+    firec = paste0(path_pnv, outputs$firec$name, ".", file_extension),
+    timber_harvestc = paste0(path_pnv, outputs$timber_harvestc$name, ".", file_extension),
+    cftfrac = paste0(path_pnv, outputs$cftfrac$name, ".", file_extension),
+    fpc = paste0(path_pnv, outputs$fpc$name, ".", file_extension)
   )
   files_reference <- list(
     npp = reference_npp_file

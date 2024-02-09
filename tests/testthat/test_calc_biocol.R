@@ -1,39 +1,6 @@
 # outputs in CLM format
 test_that("test calc_biocal", {
 
-  vars_biocol <- data.frame(
-    row.names = c(
-      "grid", "fpc", "fpc_bft", "cftfrac", "firec", "npp", "runoff",
-      "transp", "vegc", "firef", "rh", "harvestc", "rharvestc",
-      "pft_harvestc", "pft_rharvestc", "evap", "interc", "discharge",
-      "soilc", "litc", "swc", "vegn", "soilnh4", "soilno3",
-      "leaching", "n2o_denit", "n2o_nit", "n2_emis", "bnf",
-      "n_volatilization", "gpp", "res_storage", "lakevol", "ndepos",
-      "rd", "prec", "terr_area", "irrig", "nfert_agr", "nmanure_agr",
-      "firen", "harvestn", "rivervol", "irrig_stor", "swc_vol", "rootmoist",
-      "pft_npp", "timber_harvest"
-    ),
-    outname = c(
-      "grid.bin.json", "fpc.bin.json", "fpc_bft.bin.json",
-      "cftfrac.bin.json", "firec.bin.json", "npp.bin.json",
-      "runoff.bin.json", "transp.bin.json", "vegc.bin.json",
-      "firef.bin.json", "rh.bin.json", "harvestc.bin.json",
-      "rharvestc.bin.json", "pft_harvest.pft.bin.json",
-      "pft_rharvest.pft.bin.json", "evap.bin.json",
-      "interc.bin.json", "discharge.bin.json", "soilc.bin.json",
-      "litc.bin.json", "swc.bin.json", "vegn.bin.json",
-      "soilnh4.bin.json", "soilno3.bin.json", "leaching.bin.json",
-      "n2o_denit.bin.json", "n2o_nit.bin.json", "n2_emis.bin.json",
-      "bnf.bin.json", "n_volatilization.bin.json", "gpp.bin.json",
-      "res_storage.bin.json", "lakevol.bin.json", "ndepos.bin.json",
-      "rd.bin.json", "prec.bin.json", "terr_area.bin.json",
-      "irrig.bin.json", "nfert_agr.bin.json", "nmanure_agr.bin.json",
-      "firen.bin.json", "harvestn.bin.json", "rivervol.bin.json",
-      "irrig_stor.bin.json", "swc_vol.bin.json", "rootmoist.bin.json",
-      "pft_npp.bin.json", "timber_harvestc.bin.json"
-    )
-  )
-
   save_data_file <- file.path(
     tempdir(),
     "biocol_202306_data.RData"
@@ -69,7 +36,6 @@ test_that("test calc_biocal", {
     external_wood_harvest = FALSE,
     external_fire_file = "",
     external_wood_harvest_file = "",
-    varnames = vars_biocol,
     grass_scaling = FALSE,
     include_fire = FALSE
   )

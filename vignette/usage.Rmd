@@ -1,0 +1,49 @@
+---
+title: "Introduction to biospheremetrics"
+output: rmarkdown::html_vignette
+description: >
+  Start here if this is your first time using biospheremetrics. 
+vignette: >
+  %\VignetteIndexEntry{Introduction to biospheremetrics}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+
+```{r, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(collapse = T, comment = "#>")
+options(tibble.print_min = 4L, tibble.print_max = 4L)
+library(dplyr)
+set.seed(1014)
+```
+
+When working with data you must:
+
+* Figure out what you want to do.
+
+* Describe those tasks in the form of a computer program.
+
+* Execute the program.
+
+The dplyr package makes these steps fast and easy:
+
+* By constraining your options, it helps you think about your data manipulation 
+  challenges.
+
+* It provides simple "verbs", functions that correspond to the most common data 
+  manipulation tasks, to help you translate your thoughts into code.
+
+* It uses efficient backends, so you spend less time waiting for the computer.
+
+This document introduces you to dplyr's basic set of tools, and shows you how to apply them to data frames. dplyr also supports databases via the dbplyr package, once you've installed, read `vignette("dbplyr")` to learn more.
+
+## Data: starwars
+
+To explore the basic data manipulation verbs of dplyr, we'll use the dataset `starwars`. This dataset contains `r nrow(starwars)` characters and comes from the [Star Wars API](https://swapi.dev), and is documented in `?starwars`
+
+```{r}
+dim(starwars)
+starwars
+```
+
+Note that `starwars` is a tibble, a modern reimagining of the data frame. It's particularly useful for large datasets because it only prints the first few rows. You can learn more about tibbles at <https://tibble.tidyverse.org>; in particular you can convert data frames to tibbles with `as_tibble()`.

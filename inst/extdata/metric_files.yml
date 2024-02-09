@@ -30,81 +30,107 @@ metric:
         # LPJmL output IDs with required resolution
         output: &ecorisk_output
             grid:
+                name: "grid"
+                resolution: "annual"
+                optional: false
+            terr_area:
+                name: "terr_area"
                 resolution: "annual"
                 optional: false
             fpc:
+                name: "fpc"
                 resolution: "annual"
                 optional: false
             fpc_bft:
+                name: "fpc_bft"
                 resolution: "annual"
                 optional: false
             cftfrac:
+                name: "cftfrac"
                 resolution: "annual"
                 optional: false
             firec:
+                name: "firec"
                 resolution: "annual"
                 optional: false
             npp:
+                name: "npp"
                 resolution: "annual"
                 optional: false
             gpp:
-                resolution: "annual"
-                optional: false
-            ra:
+                name: "gpp"
                 resolution: "annual"
                 optional: false
             runoff:
+                name: "runoff"
                 resolution: "annual"
                 optional: false
-            irrig:                
+            irrig:     
+                name: "irrig"           
                 resolution: "annual"
                 optional: false
             transp:
+                name: "transp"
                 resolution: "annual"
                 optional: false
             vegc:
+                name: "vegc"
                 resolution: "annual"
                 optional: false
             firef:
-                resolution: "annual"
-                optional: false
-            rh:
+                name: "firef"
                 resolution: "annual"
                 optional: false
             harvestc:
-                resolution: "annual"
-                optional: false
-            rharvestc:
+                name: "harvestc"
                 resolution: "annual"
                 optional: false
             evap:
+                name: "evap"
                 resolution: "annual"
                 optional: false
             interc:
+                name: "interc"
                 resolution: "annual"
                 optional: false
             soilc:
+                name: "soilc"
                 resolution: "annual"
                 optional: false
             litc:
+                name: "litc"
                 resolution: "annual"
                 optional: false
             swc:
+                name: "swc"
                 resolution: "annual"
                 optional: false
             swc_vol:
+                name: "swc_vol"
+                resolution: "annual"
+                optional: false
+            swe:
+                name: "swe"
                 resolution: "annual"
                 optional: false
             res_storage:
+                name: "res_storage"
+                resolution: "annual"
+                optional: false
+            irrig_stor:
+                name: "irrig_stor"
+                resolution: "annual"
+                optional: false
+            rivervol:
+                name: "rivervol"
                 resolution: "annual"
                 optional: false
             lakevol:
+                name: "lakevol"
                 resolution: "annual"
                 optional: false
             prec:
-                resolution: "annual"
-                optional: false
-            rootmoist:
+                name: "prec"
                 resolution: "annual"
                 optional: false
         metric_class: &ecorisk_classes
@@ -116,11 +142,11 @@ metric:
             carbon_fluxes:
                 carbon_influx:
                     gpp
-                carbon_outflux: # gpp - npp is better than rh + rd (miss rg, re)
+                carbon_outflux:
                     gpp - npp + firec + harvestc # harvestc contains residues
             water_pools:
                 soil_water_pool:
-                    rootmoist # should be swc + snow water equiv. (swe) and litter water pool (litter.agtop_moist)
+                    swc + swe # add litter water pool (litter.agtop_moist)
             water_fluxes:
                 water_influx:
                     prec + irrig
@@ -139,51 +165,59 @@ metric:
         output:
             <<: *ecorisk_output
             vegn:
+                name: "vegn"
                 resolution: "annual"
                 optional: false
             harvestn:
+                name: "harvestn"
                 resolution: "annual"
                 optional: false
-            pft_harvestn:
-                resolution: "annual"
-                optional: false
-            rharvestn:
-                resolution: "annual"
-                optional: false
-            pft_rharvestn:
+            firen:
+                name: "firen"
                 resolution: "annual"
                 optional: false
             soilnh4:
+                name: "soilnh4"
                 resolution: "annual"
                 optional: false
             soilno3:
+                name: "soilno3"
                 resolution: "annual"
                 optional: false
             leaching:
+                name: "leaching"
                 resolution: "annual"
                 optional: false
             n2o_denit:
+                name: "n2o_denit"
                 resolution: "annual"
                 optional: false
             n2o_nit:
+                name: "n2o_nit"
                 resolution: "annual"
                 optional: false
             n2_emis:
+                name: "n2_emis"
                 resolution: "annual"
                 optional: false
             bnf:
+                name: "bnf"
+                resolution: "annual"
+                optional: false
+            ndepos:
+                name: "ndepos"
                 resolution: "annual"
                 optional: false
             n_volatilization:
+                name: "n_volatilization"
                 resolution: "annual"
                 optional: false
             nfert_agr:
+                name: "nfert_agr"
                 resolution: "annual"
                 optional: false
             nmanure_agr:
-                resolution: "annual"
-                optional: false
-            ndepo_agr:
+                name: "nmanure_agr"
                 resolution: "annual"
                 optional: false
         metric_class: 
@@ -207,30 +241,43 @@ metric:
         # LPJmL output IDs with required resolution
         output:
             grid:
+                name: "grid"
+                resolution: "annual"
+                optional: false
+            terr_area:
+                name: "terr_area"
                 resolution: "annual"
                 optional: false
             npp:
+                name: "npp"
                 resolution: "annual"
                 optional: false
             pft_npp:
+                name: "pft_npp"
                 resolution: "annual"
                 optional: false
             pft_harvestc:
+                name: "pft_harvest.pft"
                 resolution: "annual"
                 optional: false
             pft_rharvestc:
+                name: "pft_rharvest.pft"
                 resolution: "annual"
                 optional: false
             firec:
+                name: "firec"
                 resolution: "annual"
                 optional: false
             timber_harvestc:
+                name: "timber_harvestc"
                 resolution: "annual"
                 optional: false
             cftfrac:
+                name: "cftfrac"
                 resolution: "annual"
                 optional: false
             fpc:
+                name: "fpc"
                 resolution: "annual"
                 optional: false
         # Called boundaries functions
