@@ -9,34 +9,8 @@ run_folder <- paste0(system.file("extdata","run","lu_1500_2016",package = "biosp
 pnv_folder <- paste0(system.file("extdata","run","pnv_1500_2016",package = "biospheremetrics"),"/")
 out_folder <- paste0(tempdir(),"/")
 
-vars_metrics <- data.frame(
-  row.names = c("grid","fpc", "fpc_bft", "cftfrac", "firec", "npp", "runoff",
-                "transp", "vegc", "firef", "rh", "harvestc", "rharvestc",
-                "pft_harvestc", "pft_rharvestc", "evap", "interc", "discharge",
-                "soilc", "litc", "swc", "swc_vol", "vegn", "soilnh4", "soilno3",
-                "leaching", "n2o_denit", "n2o_nit", "n2_emis", "bnf",
-                "n_volatilization", "gpp", "res_storage", "lakevol", "ndepos",
-                "rd", "prec", "terr_area", "irrig", "nfert_agr", "nmanure_agr", 
-                "firen", "harvestn", "rivervol", "irrig_stor","pft_npp",
-                "timber_harvest", "rootmoist"),
-  outname = c("grid.bin.json", "fpc.bin.json", "fpc_bft.bin.json",
-              "cftfrac.bin.json", "firec.bin.json", "npp.bin.json",
-              "runoff.bin.json", "transp.bin.json", "vegc.bin.json",
-              "firef.bin.json", "rh.bin.json", "harvestc.bin.json",
-              "rharvestc.bin.json", "pft_harvest.pft.bin.json",
-              "pft_rharvest.pft.bin.json", "evap.bin.json",
-              "interc.bin.json", "discharge.bin.json", "soilc.bin.json",
-              "litc.bin.json", "swc.bin.json", "swc_vol.bin.json", "vegn.bin.json",
-              "soilnh4.bin.json", "soilno3.bin.json", "leaching.bin.json",
-              "n2o_denit.bin.json", "n2o_nit.bin.json", "n2_emis.bin.json",
-              "bnf.bin.json", "n_volatilization.bin.json", "gpp.bin.json",
-              "res_storage.bin.json", "lakevol.bin.json", "ndepos.bin.json",
-              "rd.bin.json", "prec.bin.json", "terr_area.bin.json",
-              "irrig.bin.json", "nfert_agr.bin.json", "nmanure_agr.bin.json",
-              "firen.bin.json", "harvestn.bin.json", "rivervol.bin.json",
-              "irrig_stor.bin.json", "pft_npp.bin.json",
-              "timber_harvestc.bin.json","rootmoist.bin.json")
-)
+# the output variable names and their composition for the computation of biocol 
+# and ecorisk are defined in inst/extdata/metric_files.yml
 
 ################# calculate BioCol ################
 # 16GB of RAM are enough to calculate BioCol for a smaller analysis window (~40 years)
@@ -57,7 +31,7 @@ paletteNew = c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
 # for longer spans (500 years) - use separate script ("read_in_BioCol_data.R") 
 # and submit as cluster job using "sbatch R_read_in_BioCol_data.sh"
 
-biocol <- calc_biocol(
+biocol <- biospheremetrics::calc_biocol(
   path_lu = run_folder,
   path_pnv = pnv_folder,
   gridbased = TRUE,

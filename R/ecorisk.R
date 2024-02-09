@@ -19,9 +19,6 @@
 #'        calculation (default FALSE)
 #' @param weighting apply "old" (Ostberg-like), "new", or "equal" weighting of
 #'        vegetation_structure_change weights (default "equal")
-#' @param varnames data.frame with names of output files (outname) and time res.
-#'        (timestep) -- can be specified to account for variable file names
-#'        (default NULL -- standard names as below)
 #' @param time_span_reference vector of years to use as scenario period
 #' @param time_span_scenario vector of years to use as scenario period
 #' @param dimensions_only_local flag whether to use only local change component
@@ -44,7 +41,6 @@ ecorisk_wrapper <- function(path_ref,
                             save_ecorisk = NULL,
                             nitrogen = TRUE,
                             weighting = "equal",
-                            varnames = NULL,
                             time_span_reference,
                             time_span_scenario,
                             dimensions_only_local = FALSE,
@@ -54,146 +50,108 @@ ecorisk_wrapper <- function(path_ref,
                             external_variability = FALSE,
                             c2vr = NULL) {
 
-  # TODO: compare length time_span_reference and time_span_scenario
-  if (is.null(varnames)) {
-    message("variable name list not provided, using standard list, which might
-          not be applicable for this case ...")
-    varnames <- data.frame(
-      row.names = c(
-        "grid", "fpc", "fpc_bft", "cftfrac", "firec", "npp", "runoff",
-        "transp", "vegc", "firef", "rh", "harvestc", "rharvestc",
-        "pft_harvestc", "pft_rharvestc", "evap", "interc", "discharge",
-        "soilc", "litc", "swc", "vegn", "soilnh4", "soilno3",
-        "leaching", "n2o_denit", "n2o_nit", "n2_emis", "bnf",
-        "n_volatilization", "gpp", "res_storage", "lakevol", "ndepos",
-        "rd", "prec", "terr_area", "irrig", "nfert_agr", "nmanure_agr",
-        "firen", "harvestn", "rivervol", "irrig_stor"
-      ),
-      outname = c(
-        "grid.bin.json", "fpc.bin.json", "fpc_bft.bin.json",
-        "cftfrac.bin.json", "firec.bin.json", "npp.bin.json",
-        "runoff.bin.json", "transp.bin.json", "vegc.bin.json",
-        "firef.bin.json", "rh.bin.json", "harvestc.bin.json",
-        "rharvestc.bin.json", "pft_harvest.pft.bin.json",
-        "pft_rharvest.pft.bin.json", "mevap.bin.json",
-        "interc.bin.json", "discharge.bin.json", "soilc.bin.json",
-        "litc.bin.json", "swc.bin.json", "vegn.bin.json",
-        "soilnh4.bin.json", "soilno3.bin.json", "mleaching.bin.json",
-        "n2o_denit.bin.json", "n2o_nit.bin.json", "n2_emis.bin.json",
-        "bnf.bin.json", "n_volatilization.bin.json", "gpp.bin.json",
-        "res_storage.bin.json", "lakevol.bin.json", "ndepos.bin.json",
-        "rd.bin.json", "mprec.bin.json", "terr_area.bin.json",
-        "irrig.bin.json", "nfert_agr.bin.json", "nmanure_agr.bin.json",
-        "firen.bin.json", "harvestn.bin.json", "rivervol.bin.json",
-        "irrig_stor.bin.json"
-      ),
-      timestep = rep("Y", 44)
-    )
-  }
-
+  # check timespan consistency
   nyears <- length(time_span_reference)
   nyears_scen <- length(time_span_scenario)
-  if (nyears < 30 || nyears_scen < 30) {
-    stop("Timespan in reference or scenario is smaller than 30 years.")
+  if ( (! nyears == window) || nyears_scen < window) {
+    stop(paste0("Timespan in reference is not equal to window size (", window,
+                "), or scenario timespan is smaller than window size."))
   }
-  # translate varnames and folders to files_scenarios/reference lists
+  
+  # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
+  metric_files <- system.file(
+    "extdata",
+    "metric_files.yml",
+    package = "biospheremetrics"
+  ) %>%
+    yaml::read_yaml()
+  
+  file_extension <- get_major_file_ext(paste0(path_scen))
+  outputs <- metric_files$metric$ecorisk_nitrogen$output
+
   files_scenario <- list(
-    grid = paste0(path_scen, varnames["grid", "outname"]),
-    fpc = paste0(path_scen, varnames["fpc", "outname"]),
-    fpc_bft = paste0(path_scen, varnames["fpc_bft", "outname"]),
-    cftfrac = paste0(path_scen, varnames["cftfrac", "outname"]),
-    firec = paste0(path_scen, varnames["firec", "outname"]),
-    npp = paste0(path_scen, varnames["npp", "outname"]),
-    runoff = paste0(path_scen, varnames["runoff", "outname"]),
-    transp = paste0(path_scen, varnames["transp", "outname"]),
-    vegc = paste0(path_scen, varnames["vegc", "outname"]),
-    firef = paste0(path_scen, varnames["firef", "outname"]),
-    rh = paste0(path_scen, varnames["rh", "outname"]),
-    harvestc = paste0(path_scen, varnames["harvestc", "outname"]),
-    rharvestc = paste0(path_scen, varnames["rharvestc", "outname"]),
-    pft_harvestc = paste0(path_scen, varnames["pft_harvest", "outname"]),
-    pft_rharvestc = paste0(path_scen, varnames["pft_rharvest", "outname"]),
-    evap = paste0(path_scen, varnames["evap", "outname"]),
-    interc = paste0(path_scen, varnames["interc", "outname"]),
-    discharge = paste0(path_scen, varnames["discharge", "outname"]),
-    soilc = paste0(path_scen, varnames["soilc", "outname"]),
-    litc = paste0(path_scen, varnames["litc", "outname"]),
-    swc = paste0(path_scen, varnames["swc", "outname"]),
-    swc_vol = paste0(path_scen, varnames["swc_vol", "outname"]),
-    vegn = paste0(path_scen, varnames["vegn", "outname"]),
-    soilnh4 = paste0(path_scen, varnames["soilnh4", "outname"]),
-    soilno3 = paste0(path_scen, varnames["soilno3", "outname"]),
-    leaching = paste0(path_scen, varnames["leaching", "outname"]),
-    n2o_denit = paste0(path_scen, varnames["n2o_denit", "outname"]),
-    n2o_nit = paste0(path_scen, varnames["n2o_nit", "outname"]),
-    n2_emis = paste0(path_scen, varnames["n2_emis", "outname"]),
-    bnf = paste0(path_scen, varnames["bnf", "outname"]),
-    n_volatilization = paste0(path_scen, varnames["n_volatilization", "outname"]),
-    gpp = paste0(path_scen, varnames["gpp", "outname"]),
-    res_storage = paste0(path_scen, varnames["res_storage", "outname"]),
-    lakevol = paste0(path_scen, varnames["lakevol", "outname"]),
-    ndepos = paste0(path_scen, varnames["ndepos", "outname"]),
-    rd = paste0(path_scen, varnames["rd", "outname"]),
-    prec = paste0(path_scen, varnames["prec", "outname"]),
-    terr_area = paste0(path_scen, varnames["terr_area", "outname"]),
-    irrig = paste0(path_scen, varnames["irrig", "outname"]),
-    nfert_agr = paste0(path_scen, varnames["nfert_agr", "outname"]),
-    nmanure_agr = paste0(path_scen, varnames["nmanure_agr", "outname"]),
-    ndepos = paste0(path_scen, varnames["ndepos", "outname"]),
-    firen = paste0(path_scen, varnames["firen", "outname"]),
-    harvestn = paste0(path_scen, varnames["harvestn", "outname"]),
-    irrig_stor = paste0(path_scen, varnames["irrig_stor", "outname"]),
-    rivervol = paste0(path_scen, varnames["rivervol", "outname"]),
-    rootmoist = paste0(path_scen, varnames["rootmoist", "outname"])
+    grid = paste0(path_scen, outputs$grid$name, ".", file_extension),
+    terr_area = paste0(path_scen, outputs$terr_area$name, ".", file_extension),
+    fpc = paste0(path_scen, outputs$fpc$name, ".", file_extension),
+    fpc_bft = paste0(path_scen, outputs$fpc_bft$name, ".", file_extension),
+    cftfrac = paste0(path_scen, outputs$cftfrac$name, ".", file_extension),
+    firec = paste0(path_scen, outputs$firec$name, ".", file_extension),
+    npp = paste0(path_scen, outputs$npp$name, ".", file_extension),
+    runoff = paste0(path_scen, outputs$runoff$name, ".", file_extension),
+    transp = paste0(path_scen, outputs$transp$name, ".", file_extension),
+    vegc = paste0(path_scen, outputs$vegc$name, ".", file_extension),
+    firef = paste0(path_scen, outputs$firef$name, ".", file_extension),
+    harvestc = paste0(path_scen, outputs$harvestc$name, ".", file_extension),
+    evap = paste0(path_scen, outputs$evap$name, ".", file_extension),
+    interc = paste0(path_scen, outputs$interc$name, ".", file_extension),
+    soilc = paste0(path_scen, outputs$soilc$name, ".", file_extension),
+    litc = paste0(path_scen, outputs$litc$name, ".", file_extension),
+    swc = paste0(path_scen, outputs$swc$name, ".", file_extension),
+    swc_vol = paste0(path_scen, outputs$swc_vol$name, ".", file_extension),
+    swe = paste0(path_scen, outputs$swe$name, ".", file_extension),
+    vegn = paste0(path_scen, outputs$vegn$name, ".", file_extension),
+    soilnh4 = paste0(path_scen, outputs$soilnh4$name, ".", file_extension),
+    soilno3 = paste0(path_scen, outputs$soilno3$name, ".", file_extension),
+    leaching = paste0(path_scen, outputs$leaching$name, ".", file_extension),
+    n2o_denit = paste0(path_scen, outputs$n2o_denit$name, ".", file_extension),
+    n2o_nit = paste0(path_scen, outputs$n2o_nit$name, ".", file_extension),
+    n2_emis = paste0(path_scen, outputs$n2_emis$name, ".", file_extension),
+    bnf = paste0(path_scen, outputs$bnf$name, ".", file_extension),
+    n_volatilization = paste0(path_scen, outputs$n_volatilization$name, ".", file_extension),
+    gpp = paste0(path_scen, outputs$gpp$name, ".", file_extension),
+    res_storage = paste0(path_scen, outputs$res_storage$name, ".", file_extension),
+    lakevol = paste0(path_scen, outputs$lakevol$name, ".", file_extension),
+    prec = paste0(path_scen, outputs$prec$name, ".", file_extension),
+    irrig = paste0(path_scen, outputs$irrig$name, ".", file_extension),
+    nfert_agr = paste0(path_scen, outputs$nfert_agr$name, ".", file_extension),
+    nmanure_agr = paste0(path_scen, outputs$nmanure_agr$name, ".", file_extension),
+    ndepos = paste0(path_scen, outputs$ndepos$name, ".", file_extension),
+    firen = paste0(path_scen, outputs$firen$name, ".", file_extension),
+    harvestn = paste0(path_scen, outputs$harvestn$name, ".", file_extension),
+    irrig_stor = paste0(path_scen, outputs$irrig_stor$name, ".", file_extension),
+    rivervol = paste0(path_scen, outputs$rivervol$name, ".", file_extension)
   )
   files_reference <- list(
-    grid = paste0(path_ref, varnames["grid", "outname"]),
-    fpc = paste0(path_ref, varnames["fpc", "outname"]),
-    fpc_bft = paste0(path_ref, varnames["fpc_bft", "outname"]),
-    cftfrac = paste0(path_ref, varnames["cftfrac", "outname"]),
-    firec = paste0(path_ref, varnames["firec", "outname"]),
-    npp = paste0(path_ref, varnames["npp", "outname"]),
-    runoff = paste0(path_ref, varnames["runoff", "outname"]),
-    transp = paste0(path_ref, varnames["transp", "outname"]),
-    vegc = paste0(path_ref, varnames["vegc", "outname"]),
-    firef = paste0(path_ref, varnames["firef", "outname"]),
-    rh = paste0(path_ref, varnames["rh", "outname"]),
-    harvestc = paste0(path_ref, varnames["harvestc", "outname"]),
-    rharvestc = paste0(path_ref, varnames["rharvestc", "outname"]),
-    pft_harvestc = paste0(path_ref, varnames["pft_harvest", "outname"]),
-    pft_rharvestc = paste0(path_ref, varnames["pft_rharvest", "outname"]),
-    evap = paste0(path_ref, varnames["evap", "outname"]),
-    interc = paste0(path_ref, varnames["interc", "outname"]),
-    discharge = paste0(path_ref, varnames["discharge", "outname"]),
-    soilc = paste0(path_ref, varnames["soilc", "outname"]),
-    litc = paste0(path_ref, varnames["litc", "outname"]),
-    swc = paste0(path_ref, varnames["swc", "outname"]),
-    swc_vol = paste0(path_ref, varnames["swc_vol", "outname"]),
-    vegn = paste0(path_ref, varnames["vegn", "outname"]),
-    soilnh4 = paste0(path_ref, varnames["soilnh4", "outname"]),
-    soilno3 = paste0(path_ref, varnames["soilno3", "outname"]),
-    leaching = paste0(path_ref, varnames["leaching", "outname"]),
-    n2o_denit = paste0(path_ref, varnames["n2o_denit", "outname"]),
-    n2o_nit = paste0(path_ref, varnames["n2o_nit", "outname"]),
-    n2_emis = paste0(path_ref, varnames["n2_emis", "outname"]),
-    bnf = paste0(path_ref, varnames["bnf", "outname"]),
-    n_volatilization = paste0(path_ref, varnames["n_volatilization", "outname"]),
-    gpp = paste0(path_ref, varnames["gpp", "outname"]),
-    res_storage = paste0(path_ref, varnames["res_storage", "outname"]),
-    lakevol = paste0(path_ref, varnames["lakevol", "outname"]),
-    ndepos = paste0(path_ref, varnames["ndepos", "outname"]),
-    rd = paste0(path_ref, varnames["rd", "outname"]),
-    prec = paste0(path_ref, varnames["prec", "outname"]),
-    terr_area = paste0(path_ref, varnames["terr_area", "outname"]),
-    irrig = paste0(path_ref, varnames["irrig", "outname"]),
-    nfert_agr = paste0(path_ref, varnames["nfert_agr", "outname"]),
-    nmanure_agr = paste0(path_ref, varnames["nmanure_agr", "outname"]),
-    ndepos = paste0(path_ref, varnames["ndepos", "outname"]),
-    firen = paste0(path_ref, varnames["firen", "outname"]),
-    harvestn = paste0(path_ref, varnames["harvestn", "outname"]),
-    irrig_stor = paste0(path_ref, varnames["irrig_stor", "outname"]),
-    rivervol = paste0(path_ref, varnames["rivervol", "outname"]),
-    rootmoist = paste0(path_ref, varnames["rootmoist", "outname"])
+    grid = paste0(path_ref, outputs$grid$name, ".", file_extension),
+    terr_area = paste0(path_ref, outputs$terr_area$name, ".", file_extension),
+    fpc = paste0(path_ref, outputs$fpc$name, ".", file_extension),
+    fpc_bft = paste0(path_ref, outputs$fpc_bft$name, ".", file_extension),
+    cftfrac = paste0(path_ref, outputs$cftfrac$name, ".", file_extension),
+    firec = paste0(path_ref, outputs$firec$name, ".", file_extension),
+    npp = paste0(path_ref, outputs$npp$name, ".", file_extension),
+    runoff = paste0(path_ref, outputs$runoff$name, ".", file_extension),
+    transp = paste0(path_ref, outputs$transp$name, ".", file_extension),
+    vegc = paste0(path_ref, outputs$vegc$name, ".", file_extension),
+    firef = paste0(path_ref, outputs$firef$name, ".", file_extension),
+    harvestc = paste0(path_ref, outputs$harvestc$name, ".", file_extension),
+    evap = paste0(path_ref, outputs$evap$name, ".", file_extension),
+    interc = paste0(path_ref, outputs$interc$name, ".", file_extension),
+    soilc = paste0(path_ref, outputs$soilc$name, ".", file_extension),
+    litc = paste0(path_ref, outputs$litc$name, ".", file_extension),
+    swc = paste0(path_ref, outputs$swc$name, ".", file_extension),
+    swc_vol = paste0(path_ref, outputs$swc_vol$name, ".", file_extension),
+    swe = paste0(path_ref, outputs$swe$name, ".", file_extension),
+    vegn = paste0(path_ref, outputs$vegn$name, ".", file_extension),
+    soilnh4 = paste0(path_ref, outputs$soilnh4$name, ".", file_extension),
+    soilno3 = paste0(path_ref, outputs$soilno3$name, ".", file_extension),
+    leaching = paste0(path_ref, outputs$leaching$name, ".", file_extension),
+    n2o_denit = paste0(path_ref, outputs$n2o_denit$name, ".", file_extension),
+    n2o_nit = paste0(path_ref, outputs$n2o_nit$name, ".", file_extension),
+    n2_emis = paste0(path_ref, outputs$n2_emis$name, ".", file_extension),
+    bnf = paste0(path_ref, outputs$bnf$name, ".", file_extension),
+    n_volatilization = paste0(path_ref, outputs$n_volatilization$name, ".", file_extension),
+    gpp = paste0(path_ref, outputs$gpp$name, ".", file_extension),
+    res_storage = paste0(path_ref, outputs$res_storage$name, ".", file_extension),
+    lakevol = paste0(path_ref, outputs$lakevol$name, ".", file_extension),
+    prec = paste0(path_ref, outputs$prec$name, ".", file_extension),
+    irrig = paste0(path_ref, outputs$irrig$name, ".", file_extension),
+    nfert_agr = paste0(path_ref, outputs$nfert_agr$name, ".", file_extension),
+    nmanure_agr = paste0(path_ref, outputs$nmanure_agr$name, ".", file_extension),
+    ndepos = paste0(path_ref, outputs$ndepos$name, ".", file_extension),
+    firen = paste0(path_ref, outputs$firen$name, ".", file_extension),
+    harvestn = paste0(path_ref, outputs$harvestn$name, ".", file_extension),
+    irrig_stor = paste0(path_ref, outputs$irrig_stor$name, ".", file_extension),
+    rivervol = paste0(path_ref, outputs$rivervol$name, ".", file_extension)
   )
 
   if (overtime && (window != nyears)) stop("Overtime is enabled, but window \
@@ -251,7 +209,9 @@ ecorisk_wrapper <- function(path_ref,
     water_fluxes = array(0, dim = c(ncells, slices)),
     nitrogen_stocks = array(0, dim = c(ncells, slices)),
     nitrogen_fluxes = array(0, dim = c(ncells, slices)),
-    nitrogen_total = array(0, dim = c(ncells, slices))
+    nitrogen_total = array(0, dim = c(ncells, slices)),
+    lat = lat,
+    lon = lon
   )
   for (y in seq_len(slices)) {
     message("Calculating time slice ", y, " of ", slices)
@@ -888,8 +848,8 @@ read_ecorisk_data <- function(
           if (file.exists(path_scen_file)) {
             header_scen <- lpjmlkit::read_meta(filename = path_scen_file)
             message(
-              "Reading in", path_scen_file, "with unit", header_scen$unit,
-              "-> as part of", class_names[index]
+              "Reading in ", path_scen_file, " with unit ", header_scen$unit,
+              " -> as part of ", class_names[index]
             )
             var_scen <- lpjmlkit::read_io(
               path_scen_file,
@@ -906,8 +866,8 @@ read_ecorisk_data <- function(
           if (file.exists(path_ref_file)) {
             header_ref <- lpjmlkit::read_meta(path_ref_file)
             message(
-              "Reading in", path_ref_file, "with unit", header_ref$unit,
-              "-> as part of", class_names[index]
+              "Reading in ", path_ref_file, " with unit ", header_ref$unit,
+              " -> as part of ", class_names[index]
             )
             var_ref <- lpjmlkit::read_io(
               path_ref_file,
@@ -1955,7 +1915,6 @@ ecorisk_cross_table <- function(data_file_in,
     path_scen = NULL,
     read_saved_data = TRUE,
     nitrogen = TRUE,
-    varnames = vars_metrics,
     weighting = "equal",
     save_data = data_file_in,
     save_ecorisk = NULL,
@@ -2343,7 +2302,6 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
         weighting = "equal",
         save_data = data_file,
         save_ecorisk = ecorisk_file,
-        varnames = vars_ecorisk,
         time_span_reference = time_span_reference,
         time_span_scenario = time_span_reference,
         dimensions_only_local = FALSE
@@ -2479,10 +2437,7 @@ plot_biome_internal_distribution_to_screen <- function(
   biomes <- di["biome"]
 
   if (is.null(palette)) {
-    palette <- c(
-      "white", "steelblue1", "royalblue",
-      RColorBrewer::brewer.pal(7, "YlOrRd")
-    )
+    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
   col_index <- floor(seq(res / 2, 1 - res / 2, res) * 10) + 1
 
@@ -2561,94 +2516,13 @@ plot_biome_internal_distribution <- function(
   grDevices::dev.off()
 }
 
-
-#' Plot EcoRisk map to screen
-#'
-#' Function to plot a global map of EcoRisk values [0-1] per grid cell to screen
-#'
-#' @param data folder of reference run
-#' @param focus_biome highlight the biome with this id and desaturate all other
-#'                    (default NULL -- no highlight)
-#' @param biome_classes to mask the focus_biome from
-#' @param title character string title for plot, default empty
-#' @param legendtitle character string legend title
-#' @param leg_yes logical. whether to plot legend or not. defaults to TRUE
-#' @param leg_scale scaling factor for legend. defaults to 1
-#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg
-#'        color scheme white-blue-yellow-red
-#'
-#' @return None
-#'
-#' @export
-plot_ecorisk_map_to_screen <- function(
-    data,
-    focus_biome = NULL,
-    biome_classes = NULL,
-    title = "",
-    legendtitle = "",
-    title_size = 1,
-    leg_yes = TRUE,
-    palette = NULL) {
-  brks <- seq(0, 1, 0.1)
-  data[data < brks[1]] <- brks[1]
-  data[data > brks[length(brks)]] <- brks[length(brks)]
-
-  if (is.null(palette)) {
-    palette <- c(
-      "white", "steelblue1", "royalblue",
-      RColorBrewer::brewer.pal(7, "YlOrRd")
-    )
-  }
-
-  if (!is.null(focus_biome)) {
-    focus <- data
-    focus[!(biome_classes == focus_biome)] <- NA
-    palette_low_sat <- grDevices::adjustcolor(palette, alpha.f = 0.25)
-    ra_f <- terra::rast(ncols = 720, nrows = 360)
-    ra_f[terra::cellFromXY(ra_f, cbind(lon, lat))] <- focus
-  }
-
-  ra <- terra::rast(ncols = 720, nrows = 360)
-  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
-  range <- range(data)
-  extent <- terra::ext(c(-180, 180, -60, 90))
-  graphics::par(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n")
-
-  if (is.null(focus_biome)) {
-    terra::plot(ra,
-      ext = extent, breaks = brks, col = palette, main = "",
-      legend = FALSE, axes = FALSE
-    )
-  } else {
-    terra::plot(ra,
-      ext = extent, breaks = brks, col = palette_low_sat,
-      main = "", legend = FALSE, axes = FALSE
-    )
-    terra::plot(ra_f,
-      ext = extent, breaks = brks, col = palette, main = "",
-      legend = FALSE, axes = FALSE, add = TRUE
-    )
-  }
-
-  title(main = title, line = -2, cex.main = title_size)
-  maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
-
-  if (leg_yes) {
-    fields::image.plot(
-      legend.only = TRUE, col = palette, breaks = brks, zlim = range,
-      lab.breaks = brks, legend.shrink = 0.7,
-      legend.args = list(legendtitle, side = 3, font = 2, line = 1)
-    ) # removed zlim
-  }
-}
-
-
 #' Plot EcoRisk map to file
 #'
 #' Function to plot a global map of EcoRisk values [0-1] per grid cell to file
 #'
-#' @param data folder of reference run
-#' @param file to write into
+#' @param ecorisk_object ecorisk object from which to plot
+#' @param plot_dimension which dimension from ecorisk object to plot
+#' @param file to write into, if not supplied (default is NULL) write to screen
 #' @param focus_biome highlight the biome with this id and desaturate all other
 #'                    (default NULL -- no highlight)
 #' @param biome_classes to mask the focus_biome from
@@ -2664,8 +2538,9 @@ plot_ecorisk_map_to_screen <- function(
 #'
 #' @export
 plot_ecorisk_map <- function(
-    data,
-    file,
+    ecorisk_object,
+    plot_dimension,
+    file = NULL,
     focus_biome = NULL,
     biome_classes = NULL,
     title = "",
@@ -2673,37 +2548,78 @@ plot_ecorisk_map <- function(
     eps = FALSE,
     title_size = 1,
     leg_yes = TRUE,
-    palette = NULL) {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 22,
-      height = 8.5, paper = "special"
+    palette = NULL
+) {
+  data <- ecorisk_object[[plot_dimension]]
+  lat <- ecorisk_object$lat
+  lon <- ecorisk_object$lon
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+        horizontal = FALSE, onefile = FALSE, width = 22,
+        height = 8.5, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+        width = 7.25, height = 3.5, units = "in", res = 300,
+        pointsize = 6, type = "cairo"
+      )
+    }
+  }
+  brks <- seq(0, 1, 0.1)
+  data[data < brks[1]] <- brks[1]
+  data[data > brks[length(brks)]] <- brks[length(brks)]
+  
+  if (is.null(palette)) {
+    palette = c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+  }
+  
+  if (!is.null(focus_biome)) {
+    focus <- data
+    focus[!(biome_classes == focus_biome)] <- NA
+    palette_low_sat <- grDevices::adjustcolor(palette, alpha.f = 0.25)
+    ra_f <- terra::rast(ncols = 720, nrows = 360)
+    ra_f[terra::cellFromXY(ra_f, cbind(lon, lat))] <- focus
+  }
+  
+  ra <- terra::rast(ncols = 720, nrows = 360)
+  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
+  range <- range(data)
+  extent <- terra::ext(c(-180, 180, -60, 90))
+  graphics::par(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n")
+  
+  if (is.null(focus_biome)) {
+    terra::plot(ra,
+                ext = extent, breaks = brks, col = palette, main = "",
+                legend = FALSE, axes = FALSE
     )
   } else {
-    grDevices::png(file,
-      width = 7.25, height = 3.5, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
+    terra::plot(ra,
+                ext = extent, breaks = brks, col = palette_low_sat,
+                main = "", legend = FALSE, axes = FALSE
+    )
+    terra::plot(ra_f,
+                ext = extent, breaks = brks, col = palette, main = "",
+                legend = FALSE, axes = FALSE, add = TRUE
     )
   }
-
-  plot_ecorisk_map_to_screen(
-    data = data,
-    focus_biome = focus_biome,
-    biome_classes = biome_classes,
-    title = title,
-    legendtitle = legendtitle,
-    title_size = title_size,
-    leg_yes = leg_yes,
-    palette = palette
-  )
-
-  grDevices::dev.off()
+  
+  title(main = title, line = -2, cex.main = title_size)
+  maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
+  
+  if (leg_yes) {
+    fields::image.plot(
+      legend.only = TRUE, col = palette, breaks = brks, zlim = range,
+      lab.breaks = brks, legend.shrink = 0.7,
+      legend.args = list(legendtitle, side = 3, font = 2, line = 1)
+    ) # removed zlim
+  }
+  if (!is.null(file)) grDevices::dev.off()
 }
 
 
@@ -3514,9 +3430,7 @@ plot_biome_averages_to_screen <- function(
   data[data > brks[length(brks)]] <- brks[length(brks)]
 
   if (is.null(palette)) {
-    palette <- c(
-      "white", "steelblue1", "royalblue", RColorBrewer::brewer.pal(7, "YlOrRd")
-    )
+    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
   col_index <- floor(data[, 2] * 10) + 1
 
@@ -3614,9 +3528,7 @@ plot_ecorisk_cross_table_to_screen <- function(
   centers <- expand.grid(y, x)
   # coloring
   if (is.null(palette)) {
-    palette <- c(
-      "white", "steelblue1", "royalblue", RColorBrewer::brewer.pal(7, "YlOrRd")
-    )
+    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
   brks <- seq(0, 1, 0.1)
 

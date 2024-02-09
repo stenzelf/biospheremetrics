@@ -12,7 +12,6 @@ ecorisk_wrapper(
   save_ecorisk = NULL,
   nitrogen = TRUE,
   weighting = "equal",
-  varnames = NULL,
   time_span_reference,
   time_span_scenario,
   dimensions_only_local = FALSE,
@@ -40,10 +39,6 @@ calculation (default FALSE)}
 
 \item{weighting}{apply "old" (Ostberg-like), "new", or "equal" weighting of
 vegetation_structure_change weights (default "equal")}
-
-\item{varnames}{data.frame with names of output files (outname) and time res.
-(timestep) -- can be specified to account for variable file names
-(default NULL -- standard names as below)}
 
 \item{time_span_reference}{vector of years to use as scenario period}
 

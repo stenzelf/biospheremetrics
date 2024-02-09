@@ -159,7 +159,8 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop() # gC/m2
+        drop() %>%
+        suppressWarnings() # gC/m2
       npp[npp < epsilon] <- 0
 
       if (!is.null(files_reference)) {
@@ -169,7 +170,8 @@ read_calc_biocol <- function(
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-          drop() # remaining bands
+          drop()  %>%
+          suppressWarnings()# remaining bands
         npp_ref[npp_ref < epsilon] <- 0
       }
 
@@ -178,7 +180,8 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        suppressWarnings()
       pftnpp[pftnpp < epsilon] <- 0
 
 
@@ -187,14 +190,16 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        suppressWarnings()
 
       rharvest <- lpjmlkit::read_io(
         files_scenario$pft_rharvestc,
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        suppressWarnings()
 
       timber <- lpjmlkit::read_io(
         files_scenario$timber_harvestc,
@@ -202,7 +207,8 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop() # remaining bands
+        drop() %>%
+        suppressWarnings() # remaining bands
 
       if (include_fire) {
         # read fire in monthly res. if possible, then multiply with monthly
@@ -274,7 +280,8 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        suppressWarnings()
 
       npp_potential <- lpjmlkit::read_io(
         files_baseline$npp,
@@ -282,7 +289,8 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop() # gC/m2
+        drop()  %>%
+        suppressWarnings()# gC/m2
       npp_potential[npp_potential < epsilon] <- 0
 
       fpc <- lpjmlkit::read_io(
@@ -290,7 +298,8 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(subset = list(band = "natural stand fraction"))
+        lpjmlkit::as_array(subset = list(band = "natural stand fraction")) %>%
+        suppressWarnings()
 
       pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
     } else if (file_type == "nc") { # to be added
@@ -550,7 +559,10 @@ read_calc_biocol <- function(
     harvest_cft = harvest_cft,
     rharvest_cft = rharvest_cft,
     biocol_harvest = biocol_harvest,
-    biocol_luc = biocol_luc
+    biocol_luc = biocol_luc,
+    lat = lat,
+    lon = lon,
+    cellarea = cellarea
   )) # , biocol_luc_piref = biocol_luc_piref))
 }
 
@@ -611,7 +623,6 @@ calc_biocol <- function(
     stop_year,
     reference_npp_time_span = NULL,
     reference_npp_file = NULL,
-    varnames = NULL,
     gridbased = TRUE,
     read_saved_data = FALSE,
     save_data = FALSE,
@@ -624,64 +635,41 @@ calc_biocol <- function(
     grass_harvest_file = "grazing_data.RData",
     external_fire_file = "human_ignition_fraction.RData",
     external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData") {
-  if (is.null(varnames)) {
-    print(
-      paste0(
-        "Varnames not given, using standard values, which might not fit ",
-        "this specific configuration. Please check!"
-      )
-    )
-    varnames <- data.frame(
-      row.names = c(
-        "grid",
-        "npp",
-        "pft_npp",
-        "pft_harvest",
-        "pft_rharvest",
-        "firec",
-        "timber_harvest",
-        "cftfrac",
-        "fpc"
-      ),
-      outname = c(
-        "grid.bin.json",
-        "mnpp.bin.json",
-        "pft_npp.bin.json",
-        "pft_harvest.bin.json",
-        "pft_rharvest.bin.json",
-        "firec.bin.json",
-        "timber_harvestc.bin.json",
-        "cftfrac.bin.json",
-        "fpc.bin.json"
-      ),
-      timestep = c("Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y")
-    )
-  }
 
-  # translate varnames and folders to files_scenarios/reference lists
+  metric_files <- system.file(
+    "extdata",
+    "metric_files.yml",
+    package = "biospheremetrics"
+  ) %>%
+    yaml::read_yaml()
+  
+  file_extension <- get_major_file_ext(paste0(path_lu))
+  outputs <- metric_files$metric$biocol$output
+  
+  # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
   files_scenario <- list(
-    grid = paste0(path_lu, varnames["grid", "outname"]),
-    terr_area = paste0(path_lu, varnames["terr_area", "outname"]),
-    npp = paste0(path_lu, varnames["npp", "outname"]),
-    pft_npp = paste0(path_lu, varnames["pft_npp", "outname"]),
-    pft_harvestc = paste0(path_lu, varnames["pft_harvest", "outname"]),
-    pft_rharvestc = paste0(path_lu, varnames["pft_rharvest", "outname"]),
-    firec = paste0(path_lu, varnames["firec", "outname"]),
-    timber_harvestc = paste0(path_lu, varnames["timber_harvest", "outname"]),
-    cftfrac = paste0(path_lu, varnames["cftfrac", "outname"]),
-    fpc = paste0(path_lu, varnames["fpc", "outname"])
+    grid = paste0(path_lu, outputs$grid$name, ".", file_extension),
+    terr_area = paste0(path_lu, outputs$terr_area$name, ".", file_extension),
+    npp = paste0(path_lu, outputs$npp$name, ".", file_extension),
+    pft_npp = paste0(path_lu, outputs$pft_npp$name, ".", file_extension),
+    pft_harvestc = paste0(path_lu, outputs$pft_harvestc$name, ".", file_extension),
+    pft_rharvestc = paste0(path_lu, outputs$pft_rharvestc$name, ".", file_extension),
+    firec = paste0(path_lu, outputs$firec$name, ".", file_extension),
+    timber_harvestc = paste0(path_lu, outputs$timber_harvestc$name, ".", file_extension),
+    cftfrac = paste0(path_lu, outputs$cftfrac$name, ".", file_extension),
+    fpc = paste0(path_lu, outputs$fpc$name, ".", file_extension)
   )
   files_baseline <- list(
-    grid = paste0(path_pnv, varnames["grid", "outname"]),
-    terr_area = paste0(path_pnv, varnames["terr_area", "outname"]),
-    npp = paste0(path_pnv, varnames["npp", "outname"]),
-    pft_npp = paste0(path_pnv, varnames["pft_npp", "outname"]),
-    pft_harvestc = paste0(path_pnv, varnames["pft_harvest", "outname"]),
-    pft_rharvestc = paste0(path_pnv, varnames["pft_rharvest", "outname"]),
-    firec = paste0(path_pnv, varnames["firec", "outname"]),
-    timber_harvestc = paste0(path_pnv, varnames["timber_harvest", "outname"]),
-    cftfrac = paste0(path_pnv, varnames["cftfrac", "outname"]),
-    fpc = paste0(path_pnv, varnames["fpc", "outname"])
+    grid = paste0(path_pnv, outputs$grid$name, ".", file_extension),
+    terr_area = paste0(path_pnv, outputs$terr_area$name, ".", file_extension),
+    npp = paste0(path_pnv, outputs$npp$name, ".", file_extension),
+    pft_npp = paste0(path_pnv, outputs$pft_npp$name, ".", file_extension),
+    pft_harvestc = paste0(path_pnv, outputs$pft_harvestc$name, ".", file_extension),
+    pft_rharvestc = paste0(path_pnv, outputs$pft_rharvestc$name, ".", file_extension),
+    firec = paste0(path_pnv, outputs$firec$name, ".", file_extension),
+    timber_harvestc = paste0(path_pnv, outputs$timber_harvestc$name, ".", file_extension),
+    cftfrac = paste0(path_pnv, outputs$cftfrac$name, ".", file_extension),
+    fpc = paste0(path_pnv, outputs$fpc$name, ".", file_extension)
   )
   files_reference <- list(
     npp = reference_npp_file
@@ -751,7 +739,8 @@ plot_biocol <- function(
   mapindex <- mapyear - start_year
   print(paste0("Plotting BioCol figures"))
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
+  lon <- biocol_data$lon
+  lat <- biocol_data$lat
   plot_global(
     data = rowMeans(
       biocol_data$biocol[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
@@ -775,7 +764,6 @@ plot_biocol <- function(
     file = paste0(path_write, "BioCol_luc_", mapyear, ".png"),
     type = "exp",
     title = "",
-    # paste0("BioCol_luc in ", mapyear),
     pow2min = 0,
     pow2max = 12,
     legendtitle = "GtC",

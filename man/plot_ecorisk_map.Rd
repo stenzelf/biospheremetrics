@@ -5,8 +5,9 @@
 \title{Plot EcoRisk map to file}
 \usage{
 plot_ecorisk_map(
-  data,
-  file,
+  ecorisk_object,
+  plot_dimension,
+  file = NULL,
   focus_biome = NULL,
   biome_classes = NULL,
   title = "",
@@ -18,9 +19,11 @@ plot_ecorisk_map(
 )
 }
 \arguments{
-\item{data}{folder of reference run}
+\item{ecorisk_object}{ecorisk object from which to plot}
 
-\item{file}{to write into}
+\item{plot_dimension}{which dimension from ecorisk object to plot}
+
+\item{file}{to write into, if not supplied (default is NULL) write to screen}
 
 \item{focus_biome}{highlight the biome with this id and desaturate all other
 (default NULL -- no highlight)}
