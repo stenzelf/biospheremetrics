@@ -114,7 +114,7 @@ read_calc_biocol <- function(
   # reading required data
   if (read_saved_data) {
     if (file.exists(data_file)) {
-      print(paste0("Reading in data from previously saved data file"))
+      message("Reading in data from previously saved data file")
       load(data_file)
       wood_harvest[is.na(wood_harvest)] <- 0
     } else {
@@ -128,16 +128,14 @@ read_calc_biocol <- function(
     }
     if (save_data) {
       save_data <- FALSE
-      print(
-        paste0(
-          "Both read_saved_data and save_data have been set to TRUE. ",
-          "Overwriting with the same data does not make sense, saving ",
-          "disabled. "
-        )
+      message(
+        "Both read_saved_data and save_data have been set to TRUE. ",
+        "Overwriting with the same data does not make sense, saving ",
+        "disabled. "
       )
     }
   } else {
-    print("Reading in data from outputs")
+    message("Reading in data from outputs")
 
     file_type <- tools::file_ext(files_baseline$grid)
 
@@ -178,7 +176,8 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        suppressWarnings()
       pftnpp[pftnpp < epsilon] <- 0
 
 
@@ -187,14 +186,16 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        suppressWarnings()
 
       rharvest <- lpjmlkit::read_io(
         files_scenario$pft_rharvestc,
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        suppressWarnings()
 
       timber <- lpjmlkit::read_io(
         files_scenario$timber_harvestc,
@@ -202,7 +203,8 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop() # remaining bands
+        drop() %>%
+        suppressWarnings()
 
       if (include_fire) {
         # read fire in monthly res. if possible, then multiply with monthly
@@ -274,7 +276,8 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum))
+        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+        suppressWarnings()
 
       npp_potential <- lpjmlkit::read_io(
         files_baseline$npp,
@@ -369,16 +372,14 @@ read_calc_biocol <- function(
 
     if (save_data) {
       if (!file.exists(data_file)) {
-        print(paste0("Writing data file: ", data_file))
+        message("Writing data file: ", data_file)
       } else {
-        print(
-          paste0(
-            "Data file (",
-            data_file,
-            ") already exists, old file renamed to: ",
-            data_file,
-            "_sav"
-          )
+        message(
+          "Data file (",
+          data_file,
+          ") already exists, old file renamed to: ",
+          data_file,
+          "_sav"
         )
         file.rename(data_file, paste0(data_file, "_sav"))
       }
@@ -407,7 +408,7 @@ read_calc_biocol <- function(
     }
   }
 
-  print(paste0("Calculating data"))
+  message("Calculating data")
 
   if (grass_scaling) {
     load(grass_harvest_file)
@@ -625,11 +626,9 @@ calc_biocol <- function(
     external_fire_file = "human_ignition_fraction.RData",
     external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData") {
   if (is.null(varnames)) {
-    print(
-      paste0(
-        "Varnames not given, using standard values, which might not fit ",
-        "this specific configuration. Please check!"
-      )
+    message(
+      "Varnames not given, using standard values, which might not fit ",
+      "this specific configuration. Please check!"
     )
     varnames <- data.frame(
       row.names = c(
@@ -749,7 +748,7 @@ plot_biocol <- function(
     highlightyear,
     eps = FALSE) {
   mapindex <- mapyear - start_year
-  print(paste0("Plotting BioCol figures"))
+  message("Plotting BioCol figures")
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
   plot_global(

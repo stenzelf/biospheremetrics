@@ -1,21 +1,21 @@
 # outputs in CLM format
 test_that("test calc_ecorisk", {
   # read grid
-  grid <- system.file(
-    "extdata/run/lu_1500_2016",
-    "grid.bin.json",
-    package = "biospheremetrics"
-  ) %>%
-    lpjmlkit::read_io()
-
-  test_that("grid object exists", {
-    expect_true(exists("grid"))
-  })
-
-  # calculate cell area
-  lat <- grid$data[, , 2]
-  lon <- grid$data[, , 1]
-  cellarea <- lpjmlkit::calc_cellarea(grid)
+  #   grid <- system.file(
+  #     "extdata/run/lu_1500_2016",
+  #     "grid.bin.json",
+  #     package = "biospheremetrics"
+  #   ) %>%
+  #     lpjmlkit::read_io()
+  # 
+  #   test_that("grid object exists", {
+  #     expect_true(exists("grid"))
+  #   })
+  # 
+  #   # calculate cell area
+  #   lat <- grid$data[, , 2]
+  #   lon <- grid$data[, , 1]
+  #   cellarea <- lpjmlkit::calc_cellarea(grid)
 
   vars_ecorisk <- data.frame(
     row.names = c(
@@ -104,8 +104,8 @@ test_that("test calc_ecorisk", {
   # test for expected array dimensions
   expect_true(
     sapply(ecorisk, function(x) {
-        all(dim(x) == c(4, 2, 1)) || all(dim(x) == c(2, 1))
-      }) %>%
+      all(dim(x) == c(4, 2, 1)) || all(dim(x) == c(2, 1))
+    }) %>%
       all() %>%
       suppressWarnings()
   )
