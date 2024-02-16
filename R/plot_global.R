@@ -14,7 +14,8 @@
 #'    only pos values.
 #'
 #' @param data array with data to plot in LPJmL specific array c(67420)
-#' @param file character string for location/file to save plot to
+#' @param file character string for location/file to save plot to, if not 
+#'             supplied, the plot is displayed to screen (default: NULL)
 #' @param title character string title for plot
 #' @param pow2max for exponential legend: upper (positive) end of data range to
 #'                plot (2^pow2max)
@@ -38,13 +39,24 @@
 #' @param only_pos boolean to show only positive half of legend (default: FALSE)
 #' @param eps boolean whether to write eps file instead of PNG (default: FALSE)
 #'
-#' @return None
-#
 #' @examples
 #' \dontrun{
-#'
+#' plot_global(
+#'   data = rowMeans(
+#'     biocol_data$biocol[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
+#'   ),
+#'   file = paste0(path_write, "BioCol_absolute_", mapyear, ".png"),
+#'   type = "exp",
+#'   pow2min = 0,
+#'   pow2max = 12,
+#'   legendtitle = "GtC",
+#'   leg_yes = TRUE,
+#'   only_pos = FALSE,
+#'   eps = eps
+#' )
 #' }
 #'
+#' @md
 #' @export
 plot_global <- function(data,
                         file = NULL,

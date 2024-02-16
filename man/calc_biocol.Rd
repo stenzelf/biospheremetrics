@@ -11,6 +11,7 @@ calc_biocol(
   stop_year,
   reference_npp_time_span = NULL,
   reference_npp_file = NULL,
+  varnames = NULL,
   gridbased = TRUE,
   read_saved_data = FALSE,
   save_data = FALSE,
