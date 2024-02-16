@@ -146,7 +146,7 @@ metric:
                     gpp - npp + firec + harvestc # harvestc contains residues
             water_pools:
                 soil_water_pool:
-                    swc + swe # add litter water pool (litter.agtop_moist)
+                    swc # replace by swc_in_mm + swe (mm) and litter.agtop_moist
             water_fluxes:
                 water_influx:
                     prec + irrig
