@@ -114,7 +114,7 @@ read_calc_biocol <- function(
   # reading required data
   if (read_saved_data) {
     if (file.exists(data_file)) {
-      print(paste0("Reading in data from previously saved data file"))
+      message("Reading in data from previously saved data file")
       load(data_file)
       wood_harvest[is.na(wood_harvest)] <- 0
     } else {
@@ -128,16 +128,14 @@ read_calc_biocol <- function(
     }
     if (save_data) {
       save_data <- FALSE
-      print(
-        paste0(
-          "Both read_saved_data and save_data have been set to TRUE. ",
-          "Overwriting with the same data does not make sense, saving ",
-          "disabled. "
-        )
+      message(
+        "Both read_saved_data and save_data have been set to TRUE. ",
+        "Overwriting with the same data does not make sense, saving ",
+        "disabled. "
       )
     }
   } else {
-    print("Reading in data from outputs")
+    message("Reading in data from outputs")
 
     file_type <- tools::file_ext(files_baseline$grid)
 
@@ -159,8 +157,7 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop() %>%
-        suppressWarnings() # gC/m2
+        drop() # gC/m2
       npp[npp < epsilon] <- 0
 
       if (!is.null(files_reference)) {
@@ -170,8 +167,7 @@ read_calc_biocol <- function(
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-          drop()  %>%
-          suppressWarnings()# remaining bands
+          drop()
         npp_ref[npp_ref < epsilon] <- 0
       }
 
@@ -208,7 +204,7 @@ read_calc_biocol <- function(
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
         drop() %>%
-        suppressWarnings() # remaining bands
+        suppressWarnings()
 
       if (include_fire) {
         # read fire in monthly res. if possible, then multiply with monthly
@@ -219,7 +215,10 @@ read_calc_biocol <- function(
           subset = list(year = as.character(time_span_scenario))
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
-          lpjmlkit::as_array(aggregate = list(band = sum)) # gC/m2
+          lpjmlkit::as_array(aggregate = list(band = sum)) %>%
+          drop() %>%
+          suppressWarnings()
+
 
         if (external_fire) {
           load(external_fire_file) # frac = c(cell,month,year)
@@ -289,8 +288,7 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop()  %>%
-        suppressWarnings()# gC/m2
+        drop() # gC/m2
       npp_potential[npp_potential < epsilon] <- 0
 
       fpc <- lpjmlkit::read_io(
@@ -298,8 +296,7 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(subset = list(band = "natural stand fraction")) %>%
-        suppressWarnings()
+        lpjmlkit::as_array(subset = list(band = "natural stand fraction"))
 
       pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
     } else if (file_type == "nc") { # to be added
@@ -378,16 +375,14 @@ read_calc_biocol <- function(
 
     if (save_data) {
       if (!file.exists(data_file)) {
-        print(paste0("Writing data file: ", data_file))
+        message("Writing data file: ", data_file)
       } else {
-        print(
-          paste0(
-            "Data file (",
-            data_file,
-            ") already exists, old file renamed to: ",
-            data_file,
-            "_sav"
-          )
+        message(
+          "Data file (",
+          data_file,
+          ") already exists, old file renamed to: ",
+          data_file,
+          "_sav"
         )
         file.rename(data_file, paste0(data_file, "_sav"))
       }
@@ -416,7 +411,7 @@ read_calc_biocol <- function(
     }
   }
 
-  print(paste0("Calculating data"))
+  message("Calculating data")
 
   if (grass_scaling) {
     load(grass_harvest_file)
@@ -559,10 +554,7 @@ read_calc_biocol <- function(
     harvest_cft = harvest_cft,
     rharvest_cft = rharvest_cft,
     biocol_harvest = biocol_harvest,
-    biocol_luc = biocol_luc,
-    lat = lat,
-    lon = lon,
-    cellarea = cellarea
+    biocol_luc = biocol_luc
   )) # , biocol_luc_piref = biocol_luc_piref))
 }
 
@@ -623,6 +615,7 @@ calc_biocol <- function(
     stop_year,
     reference_npp_time_span = NULL,
     reference_npp_file = NULL,
+    varnames = NULL,
     gridbased = TRUE,
     read_saved_data = FALSE,
     save_data = FALSE,
@@ -737,10 +730,9 @@ plot_biocol <- function(
     highlightyear,
     eps = FALSE) {
   mapindex <- mapyear - start_year
-  print(paste0("Plotting BioCol figures"))
+  message("Plotting BioCol figures")
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-  lon <- biocol_data$lon
-  lat <- biocol_data$lat
+
   plot_global(
     data = rowMeans(
       biocol_data$biocol[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
@@ -764,6 +756,7 @@ plot_biocol <- function(
     file = paste0(path_write, "BioCol_luc_", mapyear, ".png"),
     type = "exp",
     title = "",
+    # paste0("BioCol_luc in ", mapyear),
     pow2min = 0,
     pow2max = 12,
     legendtitle = "GtC",
