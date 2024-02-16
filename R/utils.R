@@ -38,7 +38,8 @@ get_major_file_ext <- function(path) {
     },
     y = all_files,
     z = all_file_types
-  )
+  ) %>%
+    na.omit()
 
   # Detect actual LPJmL data type
   types <- sapply(

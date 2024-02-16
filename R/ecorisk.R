@@ -57,7 +57,7 @@ ecorisk_wrapper <- function(path_ref,
     stop(paste0("Timespan in reference is not equal to window size (", window,
                 "), or scenario timespan is smaller than window size."))
   }
-  
+
   # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
   metric_files <- system.file(
     "extdata",
@@ -65,7 +65,7 @@ ecorisk_wrapper <- function(path_ref,
     package = "biospheremetrics"
   ) %>%
     yaml::read_yaml()
-  
+
   file_extension <- get_major_file_ext(paste0(path_scen))
   outputs <- metric_files$metric$ecorisk_nitrogen$output
 

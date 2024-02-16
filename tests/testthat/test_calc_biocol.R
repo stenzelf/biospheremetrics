@@ -24,7 +24,7 @@ test_that("test calc_biocal", {
     ),
     path_pnv = pnv_folder,
     gridbased = TRUE,
-    start_year = 1500,
+    start_year = 1501,
     stop_year = 2016,
     reference_npp_time_span = 1510:1539,
     reference_npp_file = paste0(pnv_folder, "npp.bin.json"),
