@@ -130,7 +130,7 @@ get_filenames <- function(path, # nolint
 
         # At end of iteraton raise error that no matching file_name was found
         if (cfile == length(output_files[[ofile]]$file_name) &&
-              !output_files[[ofile]]$optional) {
+          !output_files[[ofile]]$optional) {
           stop(
             paste0(
               "No matching output for ", dQuote(ofile),

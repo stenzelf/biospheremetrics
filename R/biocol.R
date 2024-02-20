@@ -628,17 +628,16 @@ calc_biocol <- function(
     grass_harvest_file = "grazing_data.RData",
     external_fire_file = "human_ignition_fraction.RData",
     external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData") {
-
   metric_files <- system.file(
     "extdata",
     "metric_files.yml",
     package = "biospheremetrics"
   ) %>%
     yaml::read_yaml()
-  
+
   file_extension <- get_major_file_ext(paste0(path_lu))
   outputs <- metric_files$metric$biocol$output
-  
+
   # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
   files_scenario <- list(
     grid = paste0(path_lu, outputs$grid$name, ".", file_extension),

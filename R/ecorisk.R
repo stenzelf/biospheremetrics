@@ -49,13 +49,15 @@ ecorisk_wrapper <- function(path_ref,
                             debug = FALSE,
                             external_variability = FALSE,
                             c2vr = NULL) {
-
   # check timespan consistency
   nyears <- length(time_span_reference)
   nyears_scen <- length(time_span_scenario)
-  if ( (! nyears == window) || nyears_scen < window) {
-    stop(paste0("Timespan in reference is not equal to window size (", window,
-                "), or scenario timespan is smaller than window size."))
+  if ((!nyears == window) || nyears_scen < window) {
+    stop(
+      "Timespan in reference is not equal to window size (",
+      window,
+      "), or scenario timespan is smaller than window size."
+    )
   }
 
   # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
@@ -740,7 +742,6 @@ read_ecorisk_data <- function(
     time_span_scenario,
     nitrogen,
     debug = FALSE) {
-
   file_type <- tools::file_ext(files_reference$grid)
 
   if (file_type %in% c("json", "clm")) {
@@ -2437,7 +2438,7 @@ plot_biome_internal_distribution_to_screen <- function(
   biomes <- di["biome"]
 
   if (is.null(palette)) {
-    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+    palette <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
   }
   col_index <- floor(seq(res / 2, 1 - res / 2, res) * 10) + 1
 
@@ -2548,8 +2549,7 @@ plot_ecorisk_map <- function(
     eps = FALSE,
     title_size = 1,
     leg_yes = TRUE,
-    palette = NULL
-) {
+    palette = NULL) {
   data <- ecorisk_object[[plot_dimension]]
   lat <- ecorisk_object$lat
   lon <- ecorisk_object$lon
@@ -2574,11 +2574,11 @@ plot_ecorisk_map <- function(
   brks <- seq(0, 1, 0.1)
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
-  
+
   if (is.null(palette)) {
-    palette = c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+    palette <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
   }
-  
+
   if (!is.null(focus_biome)) {
     focus <- data
     focus[!(biome_classes == focus_biome)] <- NA
@@ -2586,32 +2586,32 @@ plot_ecorisk_map <- function(
     ra_f <- terra::rast(ncols = 720, nrows = 360)
     ra_f[terra::cellFromXY(ra_f, cbind(lon, lat))] <- focus
   }
-  
+
   ra <- terra::rast(ncols = 720, nrows = 360)
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
   range <- range(data)
   extent <- terra::ext(c(-180, 180, -60, 90))
   graphics::par(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n")
-  
+
   if (is.null(focus_biome)) {
     terra::plot(ra,
-                ext = extent, breaks = brks, col = palette, main = "",
-                legend = FALSE, axes = FALSE
+      ext = extent, breaks = brks, col = palette, main = "",
+      legend = FALSE, axes = FALSE
     )
   } else {
     terra::plot(ra,
-                ext = extent, breaks = brks, col = palette_low_sat,
-                main = "", legend = FALSE, axes = FALSE
+      ext = extent, breaks = brks, col = palette_low_sat,
+      main = "", legend = FALSE, axes = FALSE
     )
     terra::plot(ra_f,
-                ext = extent, breaks = brks, col = palette, main = "",
-                legend = FALSE, axes = FALSE, add = TRUE
+      ext = extent, breaks = brks, col = palette, main = "",
+      legend = FALSE, axes = FALSE, add = TRUE
     )
   }
-  
+
   title(main = title, line = -2, cex.main = title_size)
   maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
-  
+
   if (leg_yes) {
     fields::image.plot(
       legend.only = TRUE, col = palette, breaks = brks, zlim = range,
@@ -3430,7 +3430,7 @@ plot_biome_averages_to_screen <- function(
   data[data > brks[length(brks)]] <- brks[length(brks)]
 
   if (is.null(palette)) {
-    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+    palette <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
   }
   col_index <- floor(data[, 2] * 10) + 1
 
@@ -3528,7 +3528,7 @@ plot_ecorisk_cross_table_to_screen <- function(
   centers <- expand.grid(y, x)
   # coloring
   if (is.null(palette)) {
-    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+    palette <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
   }
   brks <- seq(0, 1, 0.1)
 
