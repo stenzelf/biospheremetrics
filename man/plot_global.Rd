@@ -28,7 +28,8 @@ plot_global(
 \arguments{
 \item{data}{array with data to plot in LPJmL specific array c(67420)}
 
-\item{file}{character string for location/file to save plot to}
+\item{file}{character string for location/file to save plot to, if not
+supplied, the plot is displayed to screen (default: NULL)}
 
 \item{title}{character string title for plot}
 
@@ -66,26 +67,35 @@ lin requires: parameters min and max defined}
 
 \item{eps}{boolean whether to write eps file instead of PNG (default: FALSE)}
 }
-\value{
-None
-}
 \description{
 Plot global LPJmL array to file (if file argument is given) or screen (else).
-   type argument controls plot type: (exponential, linear, or manual legend).
-   Depending on this more parameters are required.
-   Data plot ranges:
-     exp: c(-2^pow2max,-2^-pow2min,0,2^-pow2min,2^pow2max)
-     lin: c(min,max)
-     man: brks
-   colors for pos and neg values can be given, default is Blues for the
-   positive and Reds for the negative numbers 0-range (from 2^-pow2min to
-   2^pow2min) is white.
-   The negatives can be omitted by setting only_pos=TRUE, in case there are
-   only pos values.
+type argument controls plot type: (exponential, linear, or manual legend).
+Depending on this more parameters are required.
+Data plot ranges:
+exp: c(-2^pow2max,-2^-pow2min,0,2^-pow2min,2^pow2max)
+lin: c(min,max)
+man: brks
+colors for pos and neg values can be given, default is Blues for the
+positive and Reds for the negative numbers 0-range (from 2^-pow2min to
+2^pow2min) is white.
+The negatives can be omitted by setting only_pos=TRUE, in case there are
+only pos values.
 }
 \examples{
 \dontrun{
-
+plot_global(
+  data = rowMeans(
+    biocol_data$biocol[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
+  ),
+  file = paste0(path_write, "BioCol_absolute_", mapyear, ".png"),
+  type = "exp",
+  pow2min = 0,
+  pow2max = 12,
+  legendtitle = "GtC",
+  leg_yes = TRUE,
+  only_pos = FALSE,
+  eps = eps
+)
 }
 
 }
