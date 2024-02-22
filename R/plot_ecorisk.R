@@ -11,7 +11,8 @@
 #'             calculateWithInBiomeDiffs for each subcategory of ecorisk.
 #'             dim: c(biomes,bins)
 #' @param file to write into, if not supplied (default is NULL) write to screen
-#' @param biomes_abbrv character vector. abbreviated names of biomes
+#' @param biomes_abbrv character vector. abbreviated names of biomes 
+#'        (defaults to NULL -> extract dimension names from data)
 #' @param scale scaling factor for distribution. defaults to 1
 #' @param title character string title for plot, default empty
 #' @param legendtitle character string legend title, default empty
@@ -23,19 +24,17 @@
 #' \dontrun{
 #' plot_biome_internal_distribution(
 #'   data = biomes,
-#'   file = "/temp/biomes.png"
+#'   file = "./biomes.png"
 #' )
 #' }
 #'
 #' @md
 #' @export
-
 plot_biome_internal_distribution <- function(
-    # nolint
     data,
     file = NULL,
-    biomes_abbrv,
-    scale,
+    biomes_abbrv = NULL,
+    scale = 1,
     title = "",
     legendtitle = "",
     eps = FALSE,
@@ -62,6 +61,7 @@ plot_biome_internal_distribution <- function(
   bins <- di["bin"]
   res <- 1 / bins
   biomes <- di["biome"]
+  if (is.null(biomes_abbrv)) biomes_abbrv <- names(data)$biome
   
   if (is.null(palette)) {
     palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
@@ -112,8 +112,15 @@ plot_biome_internal_distribution <- function(
 #' @param palette color palette to plot EcoRisk with, defaults to the Ostberg
 #'        color scheme white-blue-yellow-red
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_biome_internal_distribution(
+#'   data = biomes,
+#'   file = "./biomes.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
 plot_ecorisk_map <- function(
     ecorisk_object,
@@ -215,8 +222,15 @@ plot_ecorisk_map <- function(
 #'             for the regular EcoRisk plot
 #' @param title_size scaling factor for tile. defaults to 1
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_biome_internal_distribution(
+#'   data = biomes,
+#'   file = "./biomes.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
 plot_ecorisk_radial_to_screen <- function(data, # nolint
                                           title = "",
@@ -486,8 +500,15 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
 #' @param eps write as eps or png
 #' @param leg_yes logical. whether to plot legend or not. defaults to TRUE
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_biome_internal_distribution(
+#'   data = biomes,
+#'   file = "./biomes.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
 plot_ecorisk_radial <- function(data,
                                 file,
@@ -554,8 +575,15 @@ plot_ecorisk_radial <- function(data,
 #' @param yrange range for y axis default c(0,1)
 #' @param leg_yes plot legend (default TRUE)
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_biome_internal_distribution(
+#'   data = biomes,
+#'   file = "./biomes.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
 plot_overtime_to_screen <- function(data,
                                     timerange,
@@ -631,43 +659,51 @@ plot_overtime_to_screen <- function(data,
 #' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
 #'             3[min,mean,max])
 #' @param biome_names names of biomes
-#' @param file to write into
+#' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param yrange range for y axis (default c(0,1))
 #' @param timerange of the data input
 #' @param eps write as eps or png
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_biome_internal_distribution(
+#'   data = biomes,
+#'   file = "./biomes.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
-plot_ecorisk_over_time_panel <- function(data, # nolint
+plot_ecorisk_over_time_panel <- function(data, 
                                          biome_names,
-                                         file,
+                                         file = NULL,
                                          yrange = c(0, 1),
                                          timerange,
                                          eps = FALSE,
                                          varnames = NULL) {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
-  if (length(which(data < 0 | data > 1)) > 0) {
-    warning("Values in data outside the expected EcoRisk range [0..1].")
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+  
+    if (length(which(data < 0 | data > 1)) > 0) {
+      warning("Values in data outside the expected EcoRisk range [0..1].")
+    }
+  
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+        horizontal = FALSE, onefile = FALSE, width = 15,
+        height = 10, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+        width = 5.25, height = 3.5, units = "in", res = 300,
+        pointsize = 6, type = "cairo"
+      )
+    }
   }
-
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 15,
-      height = 10, paper = "special"
-    )
-  } else {
-    grDevices::png(file,
-      width = 5.25, height = 3.5, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
-    )
-  }
-
   d <- length(data[, 1, 1, 1])
   graphics::par(oma = c(0, 0, 0, 0), mar = c(3, 2, 0.5, 0))
   if (d == 16 | d == 4) {
@@ -732,7 +768,7 @@ plot_ecorisk_over_time_panel <- function(data, # nolint
     colz <- RColorBrewer::brewer.pal(length(varnames), "Set2")
     graphics::legend("center", legend = varnames, fill = colz, cex = 1)
   }
-  grDevices::dev.off()
+  if (!is.null(file)) grDevices::dev.off()
 }
 
 
@@ -744,40 +780,49 @@ plot_ecorisk_over_time_panel <- function(data, # nolint
 #' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
 #'             3[min,mean,max])
 #' @param biome_names names of biomes
-#' @param file to write into
+#' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param use_quantile is it quantiles or minmeanmax data? - text for whiskers
 #' @param eps write as eps or png
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_ecorisk_radial_panel(
+#'   data = ecorisk_disaggregated_full[-c(3,18,19),c(1:5,8,9,13),],
+#'   biome_names = biomes,
+#'   file = "./biomes.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
 plot_ecorisk_radial_panel <- function(data,
                                       biome_names,
-                                      file,
+                                      file = NULL,
                                       use_quantile = TRUE,
                                       eps = FALSE) {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
-  if (length(which(data < 0 | data > 1)) > 0) {
-    warning("Values in data outside the expected EcoRisk range [0..1].")
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+  
+    if (length(which(data < 0 | data > 1)) > 0) {
+      warning("Values in data outside the expected EcoRisk range [0..1].")
+    }
+  
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+        horizontal = FALSE, onefile = FALSE, width = 15,
+        height = 10, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+        width = 5.25, height = 3.5, units = "in", res = 300,
+        pointsize = 6, type = "cairo"
+      )
+    }
   }
-
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 15,
-      height = 10, paper = "special"
-    )
-  } else {
-    grDevices::png(file,
-      width = 5.25, height = 3.5, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
-    )
-  }
-
   d <- length(data[, 1, 1])
   if (d == 16 | d == 4) {
     k <- sqrt(d)
@@ -823,35 +868,65 @@ plot_ecorisk_radial_panel <- function(data,
     type = "legend2", title_size = 1, use_quantile = use_quantile
   )
 
-  grDevices::dev.off()
+  if (!is.null(file)) grDevices::dev.off()
 }
 
 
-#' Plot biomes
+#' Plot biomes with mercator projection
 #'
-#' Function to plot biome classification
+#' Function to plot biomes to file (or screen) using mercator projection
 #'
 #' @param biome_ids biome id as given by classify_biomes
 #' @param biome_name_length length of biome names in legend: 1 - abbreviation,
 #'        2 - short name, 3 - full biome name
-#' @param order legend order: either "plants" to first have forests, then
+#' @param order_legend legend order: either "plants" to first have forests, then
 #'        grasslands, then tundra ..., or "zones" to go from north to south
 #'        (default: "plants")
+#' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param title character string title for plot, default empty
 #' @param title_size size of title in cex units (defaukt: 2)
 #' @param leg_yes whether to plot legend (default: True)
 #' @param leg_scale size of legend in cex units (default 0.5)
+#' @param eps write as eps, replacing png in filename (default: True)
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_biomes_mercator(
+#'   biome_ids = biome_classification$biome_id,
+#'   file = "./biomes.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
-plot_biomes_to_screen <- function(biome_ids,
-                                  biome_name_length = 1,
-                                  order_legend = "plants",
-                                  title = "",
-                                  title_size = 2,
-                                  leg_yes = TRUE,
-                                  leg_scale = 0.5) {
+plot_biomes_mercator <- function(biome_ids,
+                        biome_name_length = 1,
+                        order_legend = "plants",
+                        file = NULL,
+                        title = "",
+                        title_size = 2,
+                        leg_yes = TRUE,
+                        leg_scale = 1,
+                        eps = FALSE) {
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+  
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+        horizontal = FALSE, onefile = FALSE, width = 22,
+        height = 8.5, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+        width = 7.25, height = 3.5, units = "in", res = 300,
+        pointsize = 6, type = "cairo"
+      )
+    }
+  }
   # setting up colors and biome names
   colz <- c(
     # warm
@@ -866,7 +941,7 @@ plot_biomes_to_screen <- function(biome_ids,
     # montane Tundra/Grassland
     "pink3"
   )
-
+  
   if (order_legend == "plants") {
     order_legend <- seq_len(19)
   } else if (order_legend == "zones") {
@@ -883,11 +958,11 @@ plot_biomes_to_screen <- function(biome_ids,
     colz[c(1, 2, 7, 8, 9, 10, 13, 12, 3, 4, 5, 14, 15, 16, 19, 11, 6, 17, 18)]
   )
   biome_class_names <- get_biome_names(biome_name_length)
-
+  
   if (!(length(biome_class_names) == length(biome_class_cols))) {
     stop("Size of biome class names and colors do not match -- should be 18.")
   }
-
+  
   # plotting
   brks <- seq(
     min(biome_ids, na.rm = TRUE) - 0.5,
@@ -900,8 +975,8 @@ plot_biomes_to_screen <- function(biome_ids,
   extent <- terra::ext(c(-180, 180, -60, 90))
   graphics::par(mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0), bty = "n")
   terra::plot(ra,
-    ext = extent, breaks = brks, col = biome_class_cols,
-    main = "", legend = FALSE, axes = FALSE
+              ext = extent, breaks = brks, col = biome_class_cols,
+              main = "", legend = FALSE, axes = FALSE
   )
   graphics::title(main = title, line = -2, cex.main = title_size)
   if (leg_yes) {
@@ -913,109 +988,81 @@ plot_biomes_to_screen <- function(biome_ids,
     )
   }
   maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
+  if (!is.null(file)) grDevices::dev.off()
 }
 
 
-#' Plot biomes to file with mercator projection
+#' Plot radial EcoRisk with 4/16 biomes
 #'
-#' Function to plot biome classification to file using mercator projection
+#' Function to plot to file (or screen) an aggregated radial status of EcoRisk 
+#' values [0-1] for the different sub-categories to file
 #'
-#' @param biome_ids biome id as given by classify_biomes
-#' @param biome_name_length length of biome names in legend: 1 - abbreviation,
-#'        2 - short name, 3 - full biome name
-#' @param order_legend legend order: either "plants" to first have forests, then
-#'        grasslands, then tundra ..., or "zones" to go from north to south
-#'        (default: "plants")
-#' @param file to write into
-#' @param title character string title for plot, default empty
-#' @param title_size size of title in cex units (defaukt: 2)
-#' @param leg_yes whether to plot legend (default: True)
-#' @param leg_scale size of legend in cex units (default 0.5)
-#' @param eps write as eps, replacing png in filename (default: True)
-#'
-#' @return None
-#'
-#' @export
-plot_biomes_mercator <- function(biome_ids,
-                        biome_name_length = 1,
-                        order_legend = "plants",
-                        file,
-                        title = "",
-                        title_size = 2,
-                        leg_yes = TRUE,
-                        leg_scale = 1,
-                        eps = FALSE) {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 22,
-      height = 8.5, paper = "special"
-    )
-  } else {
-    grDevices::png(file,
-      width = 7.25, height = 3.5, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
-    )
-  }
-  plot_biomes_to_screen(
-    biome_ids = biome_ids,
-    biome_name_length = biome_name_length,
-    order_legend = order_legend,
-    title = title,
-    title_size = title_size,
-    leg_yes = leg_yes,
-    leg_scale = leg_scale
-  )
-  grDevices::dev.off()
-}
-
-
-#' Plot radial EcoRisk plot to file with 4/16 biomes
-#'
-#' Function to plot an aggregated radial status of EcoRisk values [0-1]
-#' for the different sub-categories to file
-#'
-#' @param data input data with dimension c(nbiome_classes,3) -- Q10,Q50,Q90 each
+#' @param data EcoRisk data array c(4[biomes],[nEcoRiskcomponents],
+#'             3[min,median,max])
+#' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param biome_class_names to write into
 #' @param title character string title for plot, default empty
 #' @param title_size character string title for plot
 #' @param leg_scale character string title for plot
+#' @param eps write as eps, replacing png in filename (default: True)
 #' @param palette color palette to plot EcoRisk with, defaults to the Ostberg
 #'        color scheme white-blue-yellow-red
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_biome_internal_distribution(
+#'   data = biomes,
+#'   file = "./biomes.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
-plot_biome_averages_to_screen <- function(
-    data,
-    biome_class_names,
-    title = "",
-    title_size = 2,
-    leg_scale = 0.5,
-    palette = NULL) {
+plot_biome_averages <- function(data,
+                                file = NULL,
+                                biome_class_names,
+                                title = "",
+                                title_size = 2,
+                                leg_scale = 1,
+                                eps = FALSE,
+                                palette = NULL) {
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+  
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+        horizontal = FALSE, onefile = FALSE, width = 22,
+        height = 8.5, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+        width = 4, height = 3, units = "in", res = 300,
+        pointsize = 6, type = "cairo"
+      )
+    }
+  }
   # setting up colors and biome names
   brks <- seq(0, 1, 0.1)
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
-
+  
   if (is.null(palette)) {
     palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
   col_index <- floor(data[, 2] * 10) + 1
-
+  
   if (!(length(biome_class_names) == dim(data)[1])) {
     stop("Size of biome class names and data input do not match.")
   }
-
+  
   # plotting
   graphics::plot(NA,
-    xlim = c(0, 1), ylim = c(0, 1), main = title, axes = FALSE,
-    cex.main = title_size, xlab = "", ylab = ""
+                 xlim = c(0, 1), ylim = c(0, 1), main = title, axes = FALSE,
+                 cex.main = title_size, xlab = "", ylab = ""
   )
   graphics::legend(
     x = 0, y = 1, legend = biome_class_names,
@@ -1023,78 +1070,56 @@ plot_biome_averages_to_screen <- function(
     border = palette[col_index], cex = leg_scale,
     bg = "white", bty = "o"
   )
-}
-
-#' Plot radial EcoRisk plot to file with 4/16 biomes
-#'
-#' Function to plot an aggregated radial status of EcoRisk values [0-1]
-#' for the different sub-categories to file
-#'
-#' @param data EcoRisk data array c(4[biomes],[nEcoRiskcomponents],
-#'             3[min,median,max])
-#' @param file to write into
-#' @param biome_class_names to write into
-#' @param title character string title for plot, default empty
-#' @param title_size character string title for plot
-#' @param leg_scale character string title for plot
-#' @param eps write as eps, replacing png in filename (default: True)
-#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg
-#'        color scheme white-blue-yellow-red
-#'
-#' @return None
-#'
-#' @export
-plot_biome_averages <- function(data,
-                                file,
-                                biome_class_names,
-                                title = "",
-                                title_size = 2,
-                                leg_scale = 1,
-                                eps = FALSE,
-                                palette = NULL) {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 22,
-      height = 8.5, paper = "special"
-    )
-  } else {
-    grDevices::png(file,
-      width = 4, height = 3, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
-    )
-  }
-  plot_biome_averages_to_screen(
-    data = data, biome_class_names = biome_class_names,
-    title = title, title_size = title_size,
-    leg_scale = leg_scale, palette = palette
-  )
-  grDevices::dev.off()
+  if (!is.null(file)) grDevices::dev.off()
 }
 
 #' Plot crosstable showing (dis-)similarity between average biome pixels
 #'
-#' Function to plot a crosstable showing (dis-)similarity between average
-#' biome pixels based on EcoRisk (former gamma) metric from LPJmL simulations
+#' Function to plot to file (or screen) a crosstable showing (dis-)similarity 
+#' between average biome pixels based on EcoRisk (former Gamma) metric from 
+#' LPJmL simulations
 #'
 #' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
+#' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param lmar left margin for plot in lines (default: 3)
+#' @param eps write as eps or png
 #' @param palette color palette to plot EcoRisk with, defaults to the Ostberg
 #'        color scheme white-blue-yellow-red
 #'
-#' @return None
+#' @examples
+#' \dontrun{
+#' plot_ecorisk_cross_table(
+#'   data = crosstable,
+#'   file = "./ecorisk_crosstable.png"
+#' )
+#' }
 #'
+#' @md
 #' @export
-plot_ecorisk_cross_table_to_screen <- function(
-    # nolint
-    data,
-    lmar = 3,
-    palette = NULL) {
+plot_ecorisk_cross_table <- function(data,
+                                     file = NULL,
+                                     lmar = 3,
+                                     eps = FALSE,
+                                     palette = NULL) {
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+  
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+        horizontal = FALSE, onefile = FALSE, width = 22,
+        height = 8.5, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+        width = 6, height = 3, units = "in", res = 300,
+        pointsize = 6, type = "cairo"
+      )
+    }
+  }
   # data prep
   data <- round(data, digits = 2)
   x <- seq_len(ncol(data))
@@ -1105,83 +1130,37 @@ plot_ecorisk_cross_table_to_screen <- function(
     palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
   brks <- seq(0, 1, 0.1)
-
+  
   # plot margins
   graphics::par(mar = c(0, lmar, 2, 0)) # bltr
-
+  
   graphics::image(x, y, t(data),
-    col = palette,
-    breaks = brks,
-    xaxt = "n",
-    yaxt = "n",
-    xlab = "",
-    ylab = "",
-    ylim = c(max(y) + 0.5, min(y) - 0.5)
+                  col = palette,
+                  breaks = brks,
+                  xaxt = "n",
+                  yaxt = "n",
+                  xlab = "",
+                  ylab = "",
+                  ylim = c(max(y) + 0.5, min(y) - 0.5)
   )
   graphics::text(centers[, 2], centers[, 1], c(data), col = "black")
-
+  
   # add margin text
   graphics::mtext(attributes(data)$dimnames[[2]],
-    at = seq_len(ncol(data)),
-    padj = -1
+                  at = seq_len(ncol(data)),
+                  padj = -1
   )
   graphics::mtext(attributes(data)$dimnames[[1]],
-    at = seq_len(nrow(data)),
-    side = 2,
-    las = 1,
-    adj = 1,
-    line = 1
+                  at = seq_len(nrow(data)),
+                  side = 2,
+                  las = 1,
+                  adj = 1,
+                  line = 1
   )
-
+  
   # add black lines
   graphics::abline(h = y + 0.5)
   graphics::abline(v = x + 0.5)
-}
-
-
-#' Plot crosstable to file showing (dis-)similarity between average biome pixels
-#'
-#' Function to plot to file a crosstable showing (dis-)similarity between
-#' average biome pixels based on EcoRisk (former Gamma) metric from LPJmL
-#' simulations
-#'
-#' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
-#' @param file to write into
-#' @param lmar left margin for plot in lines (default: 3)
-#' @param eps write as eps or png
-#' @param palette color palette to plot EcoRisk with, defaults to the Ostberg
-#'        color scheme white-blue-yellow-red
-#'
-#' @return None
-#'
-#' @export
-plot_ecorisk_cross_table <- function(data,
-                                     file,
-                                     lmar = 3,
-                                     eps = FALSE,
-                                     palette = NULL) {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 22,
-      height = 8.5, paper = "special"
-    )
-  } else {
-    grDevices::png(file,
-      width = 6, height = 3, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
-    )
-  }
-
-  plot_ecorisk_cross_table_to_screen(
-    data = data,
-    lmar = lmar,
-    palette = palette
-  )
-  grDevices::dev.off()
+  
+  if (!is.null(file)) grDevices::dev.off()
 }

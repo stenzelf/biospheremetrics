@@ -9,10 +9,16 @@
 #' folder
 #'
 #' @param biocol_data biocol data list object (returned from calc_biocol)
-#' containing biocol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
-#' npp_bioenergy_overtime, biocol_overtime, npp_harv_overtime,
-#' biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, npp all in GtC
-#' @param path_write folder to write into
+#'        containing biocol_overtime, biocol_overtime_abs, 
+#'        biocol_overtime_abs_frac_piref, biocol_overtime_frac_piref, 
+#'        biocol_overtime_frac, biocol_overtime_abs_frac, npp_harv_overtime, 
+#'        npp_luc_overtime, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
+#'        harvest_grasslands_overtime, harvest_bioenergy_overtime, 
+#'        harvest_cft_overtime, rharvest_cft_overtime, fire_overtime, 
+#'        timber_harvest_overtime, wood_harvest_overtime, biocol, biocol_frac, 
+#'        npp, biocol_frac_piref, npp_potential, npp_ref, harvest_cft, 
+#'        rharvest_cft, biocol_harvest, biocol_luc - all in GtC
+#' @param path_write folder to write outputs into
 #' @param plotyears range of years to plot over time
 #' @param min_val y-axis minimum value for plot over time
 #' @param max_val y-axis maximum value for plot over time
@@ -21,11 +27,27 @@
 #' @param details show all harvest components or not
 #' @param mapyear year to plot biocol map for
 #' @param mapyear_buffer +- years around mapyear to average biocol
-#' (make sure these years exist in biocol_data)
+#'        (make sure these years exist in biocol_data) - default: 5
 #' @param highlightyear year(s) that should be highlighted in overtime plot
 #' @param eps write plots as eps, instead of png (default = FALSE)
 #'
-#' @return none
+#' @examples
+#' \dontrun{
+#' plot_biocol(
+#'    biocol_data = biocol,
+#'    path_write = "~/BioCol_plots/",
+#'    plotyears = c(1980,2014),
+#'    min_val = 0,
+#'    max_val = 90,
+#'    legendpos = "left",
+#'    start_year = 1980,
+#'    mapyear = 2000,
+#'    highlightyear = 2000,
+#'    eps = FALSE
+#' )
+#' }
+#'
+#' @md
 #' @export
 plot_biocol <- function(
     biocol_data,
@@ -169,10 +191,18 @@ plot_biocol <- function(
 #' @param legendtitle character string legend title
 #' @param zero_threshold smallest value to be distinguished from 0 in legend,
 #'        both for negative and positive values (default: 0.1)
+#' @param haberl_legend use color palette from Haberl et al.? (default: FALSE)
 #' @param eps write eps file instead of PNG (boolean) - (default: FALSE)
 #'
-#' @return none
+#' @examples
+#' \dontrun{
+#' plot_biocol_map(
+#'    data = biocol$biocol_frac[,"2000"]*100,
+#'    file = "./BioCol_map_yr2000.png",
+#' )
+#' }
 #'
+#' @md
 #' @export
 plot_biocol_map <- function(
     data,
@@ -181,11 +211,11 @@ plot_biocol_map <- function(
     legendtitle = "",
     zero_threshold = 0.001,
     eps = FALSE,
-    haberllegend = FALSE) {
+    haberl_legend = FALSE) {
   path_write <- dirname(file)
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
 
-  if (haberllegend) {
+  if (haberl_legend) {
     brks <- c(
       -400, -200, -100, -50, -zero_threshold,
       zero_threshold, 10, 20, 30, 40, 50, 60, 70, 80, 100
@@ -277,13 +307,29 @@ plot_biocol_map <- function(
 #' @param legendpos position of legend (default: "topleft")
 #' @param highlight_years year(s) that should be highlighted in overtime plot
 #' (default: 2000)
-#' @param details show all harvest components or not
+#' @param details show all harvest components or not, (default: FALSE)
 #' @param ref reference period for biocol ("pi" or "act"), to either use
 #'        biocol_data$biocol_overtime_perc_piref or biocol_data$biocol_overtime
 #' @param eps write plots as eps, instead of png (default = FALSE)
 #'
-#' @return none
+#' @examples
+#' \dontrun{
+#' plot_biocol_ts(
+#'   biocol_data = biocol_data,
+#'   file = "./BioCol_overtime_LPJmL_1550-2015.png"),
+#'   first_year = 1550,
+#'   plot_years = c(1550,2015),
+#'   min_val = 0,
+#'   max_val = 80,
+#'   ref = "pi",
+#'   legendpos = "topleft",
+#'   details = TRUE,
+#'   max_val = max_val,
+#'   highlight_years = c(1900,2000)
+#'   )
+#' }
 #'
+#' @md
 #' @export
 plot_biocol_ts <- function(
     biocol_data,

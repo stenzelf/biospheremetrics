@@ -54,13 +54,16 @@
 #' @param external_wood_harvest_file path to R-file containing processed
 #'        timeline of maps for LUH2_v2h woodharvest
 #'
-#' @return list data object containing BioCol and components as arrays: biocol,
-#'         biocol_overtime, biocol_overtime_piref, biocol_frac, npp_potential,
-#'         biocol_overtime_abs_frac_piref, biocol_frac_piref, npp_act_overtime,
-#'         npp_pot_overtime, npp_eco_overtime, npp_ref, harvest_cft_overtime,
-#'         npp_luc_overtime, rharvest_cft_overtime, fire_overtime,
-#'         timber_harvest_overtime, harvest_cft, rharvest_cft,
-#'         wood_harvest_overtime, biocol_harvest, biocol_luc
+#' @return list data object containing BioCol and components as arrays: 
+#'         biocol_overtime, biocol_overtime_abs, biocol_overtime_abs_frac_piref, 
+#'         biocol_overtime_frac_piref, biocol_overtime_frac, 
+#'         biocol_overtime_abs_frac, npp_harv_overtime, npp_luc_overtime, 
+#'         npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
+#'         harvest_grasslands_overtime, harvest_bioenergy_overtime, 
+#'         harvest_cft_overtime, rharvest_cft_overtime, fire_overtime, 
+#'         timber_harvest_overtime, wood_harvest_overtime, biocol, biocol_frac, 
+#'         npp, biocol_frac_piref, npp_potential, npp_ref, harvest_cft, 
+#'         rharvest_cft, biocol_harvest, biocol_luc
 #'
 #' @export
 read_calc_biocol <- function(

@@ -42,17 +42,15 @@
 #' @examples
 #' \dontrun{
 #' plot_global(
-#'   data = rowMeans(
-#'     biocol_data$biocol[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
-#'   ),
-#'   file = paste0(path_write, "BioCol_absolute_", mapyear, ".png"),
+#'   data = biocol_data$biocol[,"2015"]),
+#'   file = "BioCol_absolute_2015.png",
 #'   type = "exp",
 #'   pow2min = 0,
 #'   pow2max = 12,
 #'   legendtitle = "GtC",
 #'   leg_yes = TRUE,
 #'   only_pos = FALSE,
-#'   eps = eps
+#'   eps = FALSE
 #' )
 #' }
 #'
