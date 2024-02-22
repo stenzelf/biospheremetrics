@@ -127,8 +127,8 @@ average_nyear_window <- function(x, # nolint
                            window = replace_multiple_id),
                    dimnames = append(dimnames(y)[c("cell", third_dim)],
                                      list(window = rep(dimnames(y)[[3]],
-                                                        nmultiple))))
-      # return as original year dimension
+                                                       nmultiple))))
+        # return as original year dimension
       } else {
         # years vector also for non multiples (subset only partly recycled)
         years <- rep(NA, dim(orig_x)[["year"]]) %>%
@@ -144,7 +144,7 @@ average_nyear_window <- function(x, # nolint
       # check if not multiple - then only partly recylce array
       if ((dim(z)[3] - replace_multiple_id) > 0) {
         z[, , (replace_multiple_id + 1):dim(z)[3]] <- (
-          y[, , seq_len(dim(z)[3] - replace_multiple_id)]
+          y[, , seq_len(dim(z)[3] - replace_multiple_id), drop = FALSE]
         )
       }
       return(z)

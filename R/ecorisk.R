@@ -49,13 +49,15 @@ ecorisk_wrapper <- function(path_ref,
                             debug = FALSE,
                             external_variability = FALSE,
                             c2vr = NULL) {
-
   # check timespan consistency
   nyears <- length(time_span_reference)
   nyears_scen <- length(time_span_scenario)
-  if ( (! nyears == window) || nyears_scen < window) {
-    stop(paste0("Timespan in reference is not equal to window size (", window,
-                "), or scenario timespan is smaller than window size."))
+  if ((!nyears == window) || nyears_scen < window) {
+    stop(
+      "Timespan in reference is not equal to window size (",
+      window,
+      "), or scenario timespan is smaller than window size."
+    )
   }
 
   # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
@@ -740,7 +742,6 @@ read_ecorisk_data <- function(
     time_span_scenario,
     nitrogen,
     debug = FALSE) {
-
   file_type <- tools::file_ext(files_reference$grid)
 
   if (file_type %in% c("json", "clm")) {
