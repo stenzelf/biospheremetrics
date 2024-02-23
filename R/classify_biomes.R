@@ -43,7 +43,7 @@
 #' @examples
 #' \dontrun{
 #' classify_biomes(
-#'   path_data = "/p/projects/open/Fabian/runs/Gamma/output/historic_gamma",
+#'   path_data = "/path/to/lpjml_run/to/classify",
 #'   timespan = c(1982:2011)
 #' )
 #' }

@@ -35,7 +35,7 @@ library("biospheremetrics")
 alternatively, you can also load it from source:
 
 ```R
-devtools::load_all("/p/projects/open/Fabian/LPJbox/biospheremetrics_paper/")
+devtools::load_all("<path_to_biospheremetrics>"")
 ```
 
 ## Scripts

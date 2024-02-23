@@ -2,7 +2,9 @@
 % Please edit documentation in R/biocol.R
 \name{read_calc_biocol}
 \alias{read_calc_biocol}
-\title{Calculate BioCol based on a PNV run and LU run of LPJmL}
+\title{Calculate BioCol based on file lists from a PNV run and LU run of LPJmL.
+Do not use this function directly, unless you are instructed to do so, there
+is a wrapper called calc_biocol() which is for use of endusers.}
 \usage{
 read_calc_biocol(
   files_scenario,
@@ -21,9 +23,10 @@ read_calc_biocol(
   grass_scaling = FALSE,
   npp_threshold = 20,
   epsilon = 0.001,
-  grass_harvest_file = "grazing_data.RData",
-  external_fire_file = "human_ignition_fraction.RData",
-  external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData"
+  grass_harvest_file = NULL,
+  external_fire_file = NULL,
+  external_wood_harvest_file = NULL,
+  suppressWarnings = TRUE
 )
 }
 \arguments{
@@ -92,6 +95,8 @@ fraction c(cell,month,year) since 1500}
 
 \item{external_wood_harvest_file}{path to R-file containing processed
 timeline of maps for LUH2_v2h woodharvest}
+
+\item{suppressWarnings}{suppress warnings default: TRUE}
 }
 \value{
 list data object containing BioCol and components as arrays: 

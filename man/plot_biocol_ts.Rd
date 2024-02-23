@@ -6,7 +6,7 @@
 \usage{
 plot_biocol_ts(
   biocol_data,
-  file,
+  file = NULL,
   first_year,
   plot_years,
   highlight_years = 2000,
