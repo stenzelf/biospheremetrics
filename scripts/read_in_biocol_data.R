@@ -1,14 +1,15 @@
 library(devtools)
 library(magrittr)
-devtools::load_all("/p/projects/open/Fabian/LPJbox/biospheremetrics_paper/")
+library(biospheremetrics)
+library(lpjmlkit)
 
-run_folder <- "/p/projects/open/Fabian/runs/metrics_202306/output/lu_1500_2014/"
-pnv_folder <- "/p/projects/open/Fabian/runs/metrics_202306/output/pnv_1500_2014/"
-out_folder <- "/p/projects/open/Fabian/Metrics/"
-lpj_input <- "/p/projects/lpjml/input/historical/"
+run_folder <- "./output/lu_1500_2014/"
+pnv_folder <- "./output/pnv_1500_2014/"
+out_folder <- "./Metrics/"
+lpj_input <- "./historical/"
 
 # read grid
-grid <- lpjmlkit::read_io(paste0(run_folder, "grid.bin.json"))$data %>% drop()
+grid <- read_io(paste0(run_folder, "grid.bin.json"))$data %>% drop()
 # calculate cell area
 lat <- grid[, 2]
 lon <- grid[, 1]
@@ -16,12 +17,16 @@ lon <- grid[, 1]
 ################# mcol ################
 
 vars_biocol <- data.frame(
-  row.names = c("grid", "npp", "pft_npp", "pft_harvest", "pft_rharvest",
-                "firec", "timber_harvest", "cftfrac", "fpc"),
-  outname = c("grid.bin.json", "mnpp.bin.json", "pft_npp.bin.json",
-              "pft_harvest.pft.bin.json", "pft_rharvest.pft.bin.json",
-              "firec.bin.json", "timber_harvestc.bin.json",
-              "cftfrac.bin.json", "fpc.bin.json"),
+  row.names = c(
+    "grid", "npp", "pft_npp", "pft_harvest", "pft_rharvest",
+    "firec", "timber_harvest", "cftfrac", "fpc"
+  ),
+  outname = c(
+    "grid.bin.json", "mnpp.bin.json", "pft_npp.bin.json",
+    "pft_harvest.pft.bin.json", "pft_rharvest.pft.bin.json",
+    "firec.bin.json", "timber_harvestc.bin.json",
+    "cftfrac.bin.json", "fpc.bin.json"
+  ),
   timestep = c("Y", "M", "Y", "Y", "Y", "Y", "Y", "Y", "Y")
 )
 
@@ -43,4 +48,5 @@ biocol <- calc_biocol(
   external_wood_harvest_file = "/p/projects/open/LanduseData/LUH2_v2h/wood_harvest_biomass_sum_1500-2014_67420.RData",
   varnames = vars_biocol,
   grass_scaling = FALSE,
-  include_fire = FALSE)
+  include_fire = FALSE
+)

@@ -2,7 +2,9 @@
 % Please edit documentation in R/biocol.R
 \name{read_calc_biocol}
 \alias{read_calc_biocol}
-\title{Calculate BioCol based on a PNV run and LU run of LPJmL}
+\title{Calculate BioCol based on file lists from a PNV run and LU run of LPJmL.
+Do not use this function directly, unless you are instructed to do so, there
+is a wrapper called calc_biocol() which is for use of endusers.}
 \usage{
 read_calc_biocol(
   files_scenario,
@@ -21,9 +23,10 @@ read_calc_biocol(
   grass_scaling = FALSE,
   npp_threshold = 20,
   epsilon = 0.001,
-  grass_harvest_file = "grazing_data.RData",
-  external_fire_file = "human_ignition_fraction.RData",
-  external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData"
+  grass_harvest_file = NULL,
+  external_fire_file = NULL,
+  external_wood_harvest_file = NULL,
+  suppressWarnings = TRUE
 )
 }
 \arguments{
@@ -92,15 +95,20 @@ fraction c(cell,month,year) since 1500}
 
 \item{external_wood_harvest_file}{path to R-file containing processed
 timeline of maps for LUH2_v2h woodharvest}
+
+\item{suppressWarnings}{suppress warnings when reading files (default: TRUE)}
 }
 \value{
-list data object containing BioCol and components as arrays: biocol,
-        biocol_overtime, biocol_overtime_piref, biocol_frac, npp_potential,
-        biocol_overtime_abs_frac_piref, biocol_frac_piref, npp_act_overtime,
-        npp_pot_overtime, npp_eco_overtime, npp_ref, harvest_cft_overtime,
-        npp_luc_overtime, rharvest_cft_overtime, fire_overtime,
-        timber_harvest_overtime, harvest_cft, rharvest_cft,
-        wood_harvest_overtime, biocol_harvest, biocol_luc
+list data object containing BioCol and components as arrays: 
+        biocol_overtime, biocol_overtime_abs, biocol_overtime_abs_frac_piref, 
+        biocol_overtime_frac_piref, biocol_overtime_frac, 
+        biocol_overtime_abs_frac, npp_harv_overtime, npp_luc_overtime, 
+        npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
+        harvest_grasslands_overtime, harvest_bioenergy_overtime, 
+        harvest_cft_overtime, rharvest_cft_overtime, fire_overtime, 
+        timber_harvest_overtime, wood_harvest_overtime, biocol, biocol_frac, 
+        npp, biocol_frac_piref, npp_potential, npp_ref, harvest_cft, 
+        rharvest_cft, biocol_harvest, biocol_luc
 }
 \description{
 Function to calculate BioCol based on a PNV run and LU run of LPJmL

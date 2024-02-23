@@ -1,5 +1,5 @@
 # function to get file extension
-get_file_ext <- function(path) {
+get_major_file_ext <- function(path) {
   # Get all files in path
   all_files <- list.files(
     path,
@@ -8,22 +8,27 @@ get_file_ext <- function(path) {
 
   # Get file extensions
   all_file_types <- all_files %>%
-  strsplit("/") %>%
-  sapply(utils::tail, 1) %>%
-  strsplit("^([^\\.]+)") %>%
+    strsplit("/") %>%
+    sapply(utils::tail, 1) %>%
+    strsplit("\\.") %>%
     sapply(function(x) {
-      y <- x[2]
-      return(y)
+      y <- x[-1]
+      if ("json" %in% y) {
+        return(paste(tail(strsplit(y, "\\."), 2), collapse = "."))
+      } else {
+        return(tail(strsplit(y, "\\."), 1))
+      }
     }) %>%
-    substr(2, nchar(.))
+    unlist()
+
 
   # Get most frequent file types
-  #TODO not yet working
+  # TODO not yet working
   most_frequent <- all_file_types %>%
     factor() %>%
     table() %>%
     names() %>%
-    .[1:5]
+    .[seq_len(5)]
 
   # 5 exemplaric files to detect type
   files_to_check <- sapply(
@@ -32,23 +37,25 @@ get_file_ext <- function(path) {
       y[which(z == x)[1]]
     },
     y = all_files,
-    z = all_file_types)
+    z = all_file_types
+  ) %>%
+    na.omit()
 
   # Detect actual LPJmL data type
   types <- sapply(
     files_to_check,
     lpjmlkit:::detect_io_type
   ) %>%
-  stats::setNames(names(.), .)
+    stats::setNames(names(.), .)
 
   # Assign file type after ranking which is available
   # first preferable: "meta", second: "clm", last: "raw"
   if ("meta" %in% names(types)) {
-   file_type <- types["meta"]
+    file_type <- types["meta"]
   } else if ("clm" %in% names(types)) {
-   file_type <- types["clm"]
+    file_type <- types["clm"]
   } else if ("raw" %in% names(types)) {
-   file_type <- types["raw"]
+    file_type <- types["raw"]
   }
   return(file_type)
 }
@@ -60,15 +67,12 @@ get_filenames <- function(path, # nolint
                           diff_output_files,
                           input_files,
                           file_ext) {
-
   file_names <- list()
   # Iterate over required outputs
   for (ofile in names(output_files)) {
-
-  # Get required max. temporal resolution and convert to nstep
+    # Get required max. temporal resolution and convert to nstep
     resolution <- output_files[[ofile]]$resolution
-    nstep <- switch(
-      resolution,
+    nstep <- switch(resolution,
       annual = 1,
       monthly = 12,
       daily = 365,
@@ -78,9 +82,7 @@ get_filenames <- function(path, # nolint
     # If input file supplied use it as first priority
     if (ofile %in% names(input_files)) {
       file_name <- input_files[[ofile]]
-
     } else if (ofile %in% names(diff_output_files)) {
-
       # If different output file should be used - as second priority
       file_name <- paste0(
         path, "/",
@@ -92,7 +94,6 @@ get_filenames <- function(path, # nolint
     }
 
     if (!is.null(file_name)) {
-
       # Check if data could be read in
       meta <- lpjmlkit::read_meta(file_name)
 
@@ -107,9 +108,8 @@ get_filenames <- function(path, # nolint
         )
       }
 
-    # If nothing specified try to read required files from provided path
+      # If nothing specified try to read required files from provided path
     } else {
-
       # Iterate over different used file name options (e.g. runoff, mrunoff, ...) # nolint
       for (cfile in seq_along(output_files[[ofile]]$file_name)) {
         file_name <- paste0(
@@ -130,7 +130,7 @@ get_filenames <- function(path, # nolint
 
         # At end of iteraton raise error that no matching file_name was found
         if (cfile == length(output_files[[ofile]]$file_name) &&
-            !output_files[[ofile]]$optional) {
+          !output_files[[ofile]]$optional) {
           stop(
             paste0(
               "No matching output for ", dQuote(ofile),
@@ -147,10 +147,34 @@ get_filenames <- function(path, # nolint
 }
 
 
-# list required output files
+ 
+#' List required output files for given metric
+#'
+#' List required output files for given metric based on parameter file
+#' `inst/extfiles/metric_files.yml`
+#'
+#' @param metric character string/list of strings. metrics to list outputs for
+#'        can be one of: 
+#'        "all" - list all outputs for all metrics
+#'        "ecorisk" - list outputs for ecorisk metric without nitrogen
+#'        "ecorisk_nitrogen" - list outputs for ecorisk metric with nitrogen
+#'        "biocol" - list outputs for biocol metric
+#'        "biome" - list outputs for the biome classification
+#' @param only_first_filename if several legal output names are listed, only 
+#'        output the first of them (default: TRUE)
+#' 
+#' @return list object with required outputs, their required temporal resolution 
+#'         and if it is optional
+#' 
+#' @examples
+#' \dontrun{
+#' list_outputs(metric = "ecorisk_nitrogen")
+#' }
+#'
+#' @md
+#' @export
 list_outputs <- function(metric = "all",
                          only_first_filename = TRUE) {
-
   metric <- process_metric(metric = metric)
 
   system.file(
@@ -160,23 +184,31 @@ list_outputs <- function(metric = "all",
   ) %>%
     yaml::read_yaml() %>%
     get_outputs(metric, only_first_filename)
-
 }
 
+# List arguments of functions used in metrics from metric_files.yml
+list_function_args <- function(metric = "all") {
+
+  metric <- process_metric(metric = metric)
+
+  system.file(
+    "extdata",
+    "metric_files.yml",
+    package = "boundaries"
+  ) %>%
+    yaml::read_yaml() %>%
+    get_function_args(metric)
+
+}
 
 # Translate metric options into internal metric names
 process_metric <- function(metric = "all") {
   all_metrics <- c(
-    "meco", "meco_nitrogen", "mcol", "biome", "nitrogen", "lsc",
-    "bluewater", "greenwater", "water", "biosphere"
+    "ecorisk", "ecorisk_nitrogen", "biocol", "biome"
   )
 
   if ("all" %in% metric) {
     metric <- all_metrics
-  }
-
-  if ("benchmark" %in% metric) {
-    metric <- "benchmark"
   }
 
   metric <- match.arg(
@@ -196,15 +228,15 @@ get_outputs <- function(x, metric_name, only_first_filename) { # nolint
   outputs <- list()
   # Iterate over all metrics
   for (metric in x$metric[metric_name]) {
-
     # Iterate over all unique keys
     for (item in names(metric$output)) {
-
       # Check if output is already in list or if it has higher resolution
       if (!item %in% names(outputs) ||
-          (item %in% names(outputs) &&
-           higher_res(metric$output[[item]]$resolution,
-                      outputs[[item]]$resolution))
+        (item %in% names(outputs) &&
+          higher_res(
+            metric$output[[item]]$resolution,
+            outputs[[item]]$resolution
+          ))
       ) {
         # Assign output resolution from metric file
         outputs[[item]]$resolution <- metric$output[[item]]$resolution
@@ -222,6 +254,24 @@ get_outputs <- function(x, metric_name, only_first_filename) { # nolint
 }
 
 
+# Get arguments of functions used in metrics
+get_function_args <- function(x, metric_name) {
+
+  # List functions of metrics (metric_name)
+  funs <- list()
+
+  for (metric in x$metric[metric_name]) {
+    funs[[metric$fun_name]] <- metric$funs
+  }
+
+  # Get arguments of functions
+  funs %>%
+    lapply(function(x) {
+      unlist(
+        lapply(mget(x, inherits = TRUE), methods::formalArgs), use.names = FALSE
+      )
+    })
+}
 # Check if resolution of x is higher than resolution of y
 higher_res <- function(x, y) {
   levels <- c("annual", "monthly", "daily")
@@ -235,6 +285,33 @@ higher_res <- function(x, y) {
   }
 }
 
+# split calculation string for variable addition/subtraction into signs & vars 
+split_sign <- function(string) {
+  # add spaces around +- signs
+  string <- gsub(
+    "-",
+    " - ",
+    gsub("+", " + ", string, fixed = TRUE),
+    fixed = TRUE
+  )
+  # reduce multiple spaces to one
+  string <- trimws(gsub("\\s+", " ", string))
+  a <- strsplit(string, " ")[[1]]
+  if (length(a) == 1) {
+    outarray <- array("", dim = c(1, 2))
+  } else {
+    outarray <- array("", dim = c(round( (length(a)+1) / 2), 2))
+  }
+  for (i in seq_along(a)){
+    i2 <- floor(i / 2 + 1)
+    if (i == 1 && !(grepl(a[1], "+-", fixed = TRUE))) outarray[1, 1] <- "+"
+    
+    if (grepl(a[i], "+-", fixed = TRUE)) outarray[i2, 1] <- a[i]
+    else outarray[i2, 2] <- a[i]
+  }
+  colnames(outarray) <- c("sign", "variable")
+  return(outarray)
+}
 
 # Avoid note for "."...
 utils::globalVariables(".") # nolint:undesirable_function_linter

@@ -2,7 +2,9 @@
 % Please edit documentation in R/ecorisk.R
 \name{calc_ecorisk}
 \alias{calc_ecorisk}
-\title{Calculate the ecosystem change metric EcoRisk between 2 sets of states}
+\title{Calculate the ecosystem change metric EcoRisk between 2 sets of states
+This function is called by the wrapper function (ecorisk_wrapper), 
+unless you know what you are doing, don't use this function directly.}
 \usage{
 calc_ecorisk(
   fpc_ref,
@@ -18,7 +20,9 @@ calc_ecorisk(
   lon,
   cell_area,
   dimensions_only_local = FALSE,
-  nitrogen = TRUE
+  nitrogen = TRUE,
+  external_variability = FALSE,
+  c2vr = NULL
 )
 }
 \arguments{
@@ -52,6 +56,12 @@ for water/carbon/nitrogen fluxes and pools, or use an average of
 local change, global change and ecosystem balance (default FALSE)}
 
 \item{nitrogen}{include nitrogen outputs (default: TRUE)}
+
+\item{external_variability}{include external change_to_variability_ratio?
+(default: FALSE)}
+
+\item{c2vr}{list with external change_to_variability_ratios for each
+component (default: NULL)}
 }
 \value{
 list data object containing arrays of ecorisk_total,

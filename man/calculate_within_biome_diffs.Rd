@@ -14,7 +14,6 @@ calculate_within_biome_diffs(
   plotting = FALSE,
   plot_folder,
   time_span_reference,
-  vars_ecorisk,
   ecorisk_components = 13
 )
 }
@@ -29,6 +28,8 @@ relevant)}
 
 \item{create}{create new modified files, or read already existing ones?}
 
+\item{nitrogen}{include nitrogen outputs (default: TRUE)}
+
 \item{res}{how finegrained the distribution should be (resolution)}
 
 \item{plotting}{whether plots for each biome should be created}
@@ -37,6 +38,9 @@ relevant)}
 
 \item{time_span_reference}{suitable 30 year reference period (e.g.
 c(1901,1930), c(1550,1579))}
+
+\item{ecorisk_components}{integer. how many subcomponents does the 
+ecorisk object have?}
 }
 \value{
 data object with distibution - dim: c(biomes,ecorisk_variables,bins)

@@ -12,13 +12,15 @@ ecorisk_wrapper(
   save_ecorisk = NULL,
   nitrogen = TRUE,
   weighting = "equal",
-  varnames = NULL,
   time_span_reference,
   time_span_scenario,
   dimensions_only_local = FALSE,
   overtime = FALSE,
   window = 30,
-  debug = FALSE
+  debug = FALSE,
+  external_variability = FALSE,
+  c2vr = NULL,
+  suppressWarnings = TRUE
 )
 }
 \arguments{
@@ -39,10 +41,6 @@ calculation (default FALSE)}
 \item{weighting}{apply "old" (Ostberg-like), "new", or "equal" weighting of
 vegetation_structure_change weights (default "equal")}
 
-\item{varnames}{data.frame with names of output files (outname) and time res.
-(timestep) -- can be specified to account for variable file names
-(default NULL -- standard names as below)}
-
 \item{time_span_reference}{vector of years to use as scenario period}
 
 \item{time_span_scenario}{vector of years to use as scenario period}
@@ -56,15 +54,37 @@ local change, global change and ecosystem balance (default FALSE)}
 \item{window}{integer, number of years for window length (default: 30)}
 
 \item{debug}{write out all nitrogen state variables (default FALSE)}
+
+\item{external_variability}{use externally supplied variability for the
+reference period? experimental! (default: FALSE)}
+
+\item{c2vr}{external variability array}
+
+\item{suppressWarnings}{suppress warnings - default: TRUE}
 }
 \value{
 list data object containing arrays of ecorisk_total,
-        vegetation_structure_change, local_change, global_importance,
-        ecosystem_balance, carbon_stocks, carbon_fluxes, water_fluxes 
-        (+ nitrogen_stocks and nitrogen_fluxes)
+vegetation_structure_change, local_change, global_importance,
+ecosystem_balance, carbon_stocks, carbon_fluxes, water_fluxes
+(+ nitrogen_stocks and nitrogen_fluxes)
 }
 \description{
 Function to read in data for ecorisk, and call the calculation function once,
 if overtime is FALSE, or for each timeslice of length window years, if
 overtime is TRUE
+}
+\examples{
+\dontrun{
+ecorisk_wrapper(
+  path_ref = pnv_folder,
+  path_scen = run_folder,
+  read_saved_data = FALSE,
+  nitrogen = TRUE,
+  save_data = NULL,
+  save_ecorisk = NULL,
+  time_span_reference = c(1550:1579),
+  time_span_scenario = c(1987:2016)
+  )
+}
+
 }

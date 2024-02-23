@@ -26,9 +26,9 @@
 #' @return array with same amount of cells and months as x. 3rd dimension is
 #' defined by nyear_window, basically `dim(x)[3]/nyear_window` or equal to
 #' dim(x)[3] if `moving_average == TRUE` or `interpolate == TRUE`
-#'
-#' @md
+#' 
 #' @importFrom magrittr %>%
+#' @md
 #' @export
 average_nyear_window <- function(x, # nolint
                                  nyear_window = NULL,
@@ -65,7 +65,7 @@ average_nyear_window <- function(x, # nolint
   interpolate_spline <- function(x, y, nyear_window) {
     rep(NA, dim(y)["year"]) %>%
       `[<-`(seq(round(nyear_window / 2), dim(y)["year"], nyear_window),
-                value = x) %>%
+              value = x) %>%
       zoo::na.spline()
   }
 
@@ -73,7 +73,7 @@ average_nyear_window <- function(x, # nolint
   if (!is.null(nyear_window)) {
     if (!is.null(nyear_reference)) {
       orig_x <- x
-      x <- lpjmlkit::asub(x, year = 1:nyear_reference)
+      x <- lpjmlkit::asub(x, year = seq_len(nyear_reference))
     }
     # only valid for nyear_window <  years of x (dim(x)[3])
     if (nyear_window > 1 & nyear_window <= dim(x)["year"]) {
@@ -128,8 +128,8 @@ average_nyear_window <- function(x, # nolint
                            window = replace_multiple_id),
                    dimnames = append(dimnames(y)[c("cell", third_dim)],
                                      list(window = rep(dimnames(y)[[3]],
-                                                        nmultiple))))
-      # return as original year dimension
+                                                       nmultiple))))
+        # return as original year dimension
       } else {
         # years vector also for non multiples (subset only partly recycled)
         years <- rep(NA, dim(orig_x)[["year"]]) %>%
@@ -145,7 +145,7 @@ average_nyear_window <- function(x, # nolint
       # check if not multiple - then only partly recylce array
       if ((dim(z)[3] - replace_multiple_id) > 0) {
         z[, , (replace_multiple_id + 1):dim(z)[3]] <- (
-          y[, , seq_len(dim(z)[3] - replace_multiple_id)]
+          y[, , seq_len(dim(z)[3] - replace_multiple_id), drop = FALSE]
         )
       }
       return(z)
