@@ -36,7 +36,7 @@ all in GtC}
 \item{highlight_years}{year(s) that should be highlighted in overtime plot
 (default: 2000)}
 
-\item{details}{show all harvest components or not}
+\item{details}{show all harvest components or not, (default: FALSE)}
 
 \item{min_val}{y-axis minimum value for plot over time (default: 0)}
 
@@ -49,10 +49,25 @@ all in GtC}
 \item{ref}{reference period for biocol ("pi" or "act"), to either use
 biocol_data$biocol_overtime_perc_piref or biocol_data$biocol_overtime}
 }
-\value{
-none
-}
 \description{
 Plot to file a comparison over time of global sums of BioCol, NPPpot, NPPeco,
 and NPPact, with legend similar to Krausmann et al. 2013
+}
+\examples{
+\dontrun{
+plot_biocol_ts(
+  biocol_data = biocol_data,
+  file = "./BioCol_overtime_LPJmL_1550-2015.png"),
+  first_year = 1550,
+  plot_years = c(1550,2015),
+  min_val = 0,
+  max_val = 80,
+  ref = "pi",
+  legendpos = "topleft",
+  details = TRUE,
+  max_val = max_val,
+  highlight_years = c(1900,2000)
+  )
+}
+
 }

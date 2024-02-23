@@ -15,8 +15,8 @@ plot_ecorisk_radial_to_screen(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c([nEcoRiskcomponents],
-3[min,mean,max])}
+\item{data}{EcoRisk data array c(\link{nEcoRiskcomponents},
+3\link{min,mean,max})}
 
 \item{title}{character string title for plot, default empty}
 
@@ -28,10 +28,16 @@ for the regular EcoRisk plot}
 
 \item{title_size}{scaling factor for tile. defaults to 1}
 }
-\value{
-None
-}
 \description{
-Function to plot an aggregated radial status of EcoRisk values [0-1]
+Function to plot an aggregated radial status of EcoRisk values \link{0-1}
 for the different sub-categories to screen
+}
+\examples{
+\dontrun{
+plot_biome_internal_distribution(
+  data = biomes,
+  file = "./biomes.png"
+)
+}
+
 }

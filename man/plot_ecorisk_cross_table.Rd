@@ -2,14 +2,20 @@
 % Please edit documentation in R/plot_ecorisk.R
 \name{plot_ecorisk_cross_table}
 \alias{plot_ecorisk_cross_table}
-\title{Plot crosstable to file showing (dis-)similarity between average biome pixels}
+\title{Plot crosstable showing (dis-)similarity between average biome pixels}
 \usage{
-plot_ecorisk_cross_table(data, file, lmar = 3, eps = FALSE, palette = NULL)
+plot_ecorisk_cross_table(
+  data,
+  file = NULL,
+  lmar = 3,
+  eps = FALSE,
+  palette = NULL
+)
 }
 \arguments{
-\item{data}{crosstable data as array with [nbiomes,nbiomes] and row/colnames}
+\item{data}{crosstable data as array with \link{nbiomes,nbiomes} and row/colnames}
 
-\item{file}{to write into}
+\item{file}{to write into (if not supplied - default NULL - prints to screen)}
 
 \item{lmar}{left margin for plot in lines (default: 3)}
 
@@ -18,11 +24,17 @@ plot_ecorisk_cross_table(data, file, lmar = 3, eps = FALSE, palette = NULL)
 \item{palette}{color palette to plot EcoRisk with, defaults to the Ostberg
 color scheme white-blue-yellow-red}
 }
-\value{
-None
-}
 \description{
-Function to plot to file a crosstable showing (dis-)similarity between
-average biome pixels based on EcoRisk (former Gamma) metric from LPJmL
-simulations
+Function to plot to file (or screen) a crosstable showing (dis-)similarity
+between average biome pixels based on EcoRisk (former Gamma) metric from
+LPJmL simulations
+}
+\examples{
+\dontrun{
+plot_ecorisk_cross_table(
+  data = crosstable,
+  file = "./ecorisk_crosstable.png"
+)
+}
+
 }

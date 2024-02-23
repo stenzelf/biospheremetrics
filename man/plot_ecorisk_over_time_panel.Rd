@@ -7,7 +7,7 @@
 plot_ecorisk_over_time_panel(
   data,
   biome_names,
-  file,
+  file = NULL,
   yrange = c(0, 1),
   timerange,
   eps = FALSE,
@@ -15,12 +15,12 @@ plot_ecorisk_over_time_panel(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
-3[min,mean,max])}
+\item{data}{EcoRisk data array c(4/19\link{biomes},\link{nEcoRiskcomponents},
+3\link{min,mean,max})}
 
 \item{biome_names}{names of biomes}
 
-\item{file}{to write into}
+\item{file}{to write into (if not supplied - default NULL - prints to screen)}
 
 \item{yrange}{range for y axis (default c(0,1))}
 
@@ -28,11 +28,17 @@ plot_ecorisk_over_time_panel(
 
 \item{eps}{write as eps or png}
 }
-\value{
-None
-}
 \description{
 Function to plot a panel of 4/16 timelines per biome aggregated EcoRisk
-values [0-1]
+values \link{0-1}
 to file
+}
+\examples{
+\dontrun{
+plot_biome_internal_distribution(
+  data = biomes,
+  file = "./biomes.png"
+)
+}
+
 }

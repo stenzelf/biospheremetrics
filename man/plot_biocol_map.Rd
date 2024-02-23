@@ -11,7 +11,7 @@ plot_biocol_map(
   legendtitle = "",
   zero_threshold = 0.001,
   eps = FALSE,
-  haberllegend = FALSE
+  haberl_legend = FALSE
 )
 }
 \arguments{
@@ -28,12 +28,20 @@ both for negative and positive values (default: 0.1)}
 
 \item{eps}{write eps file instead of PNG (boolean) - (default: FALSE)}
 
+\item{haberl_legend}{use color palette from Haberl et al.? (default: FALSE)}
+
 \item{plotyears}{range of years to plot over time}
-}
-\value{
-none
 }
 \description{
 Plot global map of BioCol to file with legend colors similar to
 Haberl et al. 2007
+}
+\examples{
+\dontrun{
+plot_biocol_map(
+   data = biocol$biocol_frac[,"2000"]*100,
+   file = "./BioCol_map_yr2000.png",
+)
+}
+
 }

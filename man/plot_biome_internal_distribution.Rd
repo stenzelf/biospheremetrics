@@ -7,8 +7,8 @@
 plot_biome_internal_distribution(
   data,
   file = NULL,
-  biomes_abbrv,
-  scale,
+  biomes_abbrv = NULL,
+  scale = 1,
   title = "",
   legendtitle = "",
   eps = FALSE,
@@ -22,7 +22,8 @@ dim: c(biomes,bins)}
 
 \item{file}{to write into, if not supplied (default is NULL) write to screen}
 
-\item{biomes_abbrv}{character vector. abbreviated names of biomes}
+\item{biomes_abbrv}{character vector. abbreviated names of biomes
+(defaults to NULL -> extract dimension names from data)}
 
 \item{scale}{scaling factor for distribution. defaults to 1}
 
@@ -42,7 +43,7 @@ Function to plot the distribution of similarity within biomes
 \dontrun{
 plot_biome_internal_distribution(
   data = biomes,
-  file = "/temp/biomes.png"
+  file = "./biomes.png"
 )
 }
 

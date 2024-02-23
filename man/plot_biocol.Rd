@@ -21,11 +21,17 @@ plot_biocol(
 }
 \arguments{
 \item{biocol_data}{biocol data list object (returned from calc_biocol)
-containing biocol, npp_eco_overtime, npp_act_overtime, npp_pot_overtime,
-npp_bioenergy_overtime, biocol_overtime, npp_harv_overtime,
-biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, npp all in GtC}
+containing biocol_overtime, biocol_overtime_abs,
+biocol_overtime_abs_frac_piref, biocol_overtime_frac_piref,
+biocol_overtime_frac, biocol_overtime_abs_frac, npp_harv_overtime,
+npp_luc_overtime, npp_act_overtime, npp_pot_overtime, npp_eco_overtime,
+harvest_grasslands_overtime, harvest_bioenergy_overtime,
+harvest_cft_overtime, rharvest_cft_overtime, fire_overtime,
+timber_harvest_overtime, wood_harvest_overtime, biocol, biocol_frac,
+npp, biocol_frac_piref, npp_potential, npp_ref, harvest_cft,
+rharvest_cft, biocol_harvest, biocol_luc - all in GtC}
 
-\item{path_write}{folder to write into}
+\item{path_write}{folder to write outputs into}
 
 \item{plotyears}{range of years to plot over time}
 
@@ -42,16 +48,30 @@ biocol_overtime_perc_piref, biocol_perc, biocol_perc_piref, npp all in GtC}
 \item{mapyear}{year to plot biocol map for}
 
 \item{mapyear_buffer}{+- years around mapyear to average biocol
-(make sure these years exist in biocol_data)}
+(make sure these years exist in biocol_data) - default: 5}
 
 \item{highlightyear}{year(s) that should be highlighted in overtime plot}
 
 \item{eps}{write plots as eps, instead of png (default = FALSE)}
 }
-\value{
-none
-}
 \description{
 Wrapper function to plot absolute biocol, overtime, maps, and npp into given
 folder
+}
+\examples{
+\dontrun{
+plot_biocol(
+   biocol_data = biocol,
+   path_write = "~/BioCol_plots/",
+   plotyears = c(1980,2014),
+   min_val = 0,
+   max_val = 90,
+   legendpos = "left",
+   start_year = 1980,
+   mapyear = 2000,
+   highlightyear = 2000,
+   eps = FALSE
+)
+}
+
 }

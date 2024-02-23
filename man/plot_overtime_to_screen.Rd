@@ -15,7 +15,7 @@ plot_overtime_to_screen(
 }
 \arguments{
 \item{data}{EcoRisk data array
-c(4/19[biomes],8/10[nEcoRiskcomponents],3[min,mean,max],timeslices)}
+c(4/19\link{biomes},8/10\link{nEcoRiskcomponents},3\link{min,mean,max},timeslices)}
 
 \item{timerange}{of the data input}
 
@@ -23,9 +23,15 @@ c(4/19[biomes],8/10[nEcoRiskcomponents],3[min,mean,max],timeslices)}
 
 \item{leg_yes}{plot legend (default TRUE)}
 }
-\value{
-None
-}
 \description{
 Function to plot timeline of EcoRisk variables to screen
+}
+\examples{
+\dontrun{
+plot_biome_internal_distribution(
+  data = biomes,
+  file = "./biomes.png"
+)
+}
+
 }
