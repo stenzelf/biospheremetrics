@@ -40,7 +40,7 @@ get_major_file_ext <- function(path) {
     z = all_file_types
   ) %>%
     na.omit()
-  browser()
+
   # Detect actual LPJmL data type
   types <- sapply(
     files_to_check,

@@ -334,7 +334,7 @@ plot_biocol_map <- function(
 #' @export
 plot_biocol_ts <- function(
     biocol_data,
-    file,
+    file = NULL,
     first_year,
     plot_years,
     highlight_years = 2000,
@@ -472,8 +472,7 @@ plot_biocol_ts <- function(
       ylim = c(0, 0.4),
       col = colz[9],
       xaxs = "i",
-      yaxs = "i",
-      axes = FALSE
+      yaxs = "i"
     )
   } else if (ref == "act") {
     graphics::plot(
@@ -498,8 +497,7 @@ plot_biocol_ts <- function(
       ylim = c(0, 0.4),
       col = colz[9],
       xaxs = "i",
-      yaxs = "i",
-      axes = FALSE
+      yaxs = "i"
     )
   } else {
     stop(paste0("Unknown value for parameter ref: ", ref, " - Aborting."))
