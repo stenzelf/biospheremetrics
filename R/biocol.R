@@ -53,6 +53,7 @@
 #'        fraction c(cell,month,year) since 1500
 #' @param external_wood_harvest_file path to R-file containing processed
 #'        timeline of maps for LUH2_v2h woodharvest
+#' @param suppressWarnings suppress warnings default: TRUE
 #'
 #' @return list data object containing BioCol and components as arrays: 
 #'         biocol_overtime, biocol_overtime_abs, biocol_overtime_abs_frac_piref, 
@@ -86,7 +87,8 @@ read_calc_biocol <- function(
     epsilon = 0.001, # gC/m2
     grass_harvest_file = NULL,
     external_fire_file = NULL,
-    external_wood_harvest_file = NULL) {
+    external_wood_harvest_file = NULL,
+    suppressWarnings = TRUE) {
   if (is.null(files_reference)) {
     files_reference <- list(npp = baseline_npp_file)
   }

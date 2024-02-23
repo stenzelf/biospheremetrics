@@ -9,6 +9,10 @@ run_folder <- paste0(system.file("extdata","run","lu_1500_2016",package = "biosp
 pnv_folder <- paste0(system.file("extdata","run","pnv_1500_2016",package = "biospheremetrics"),"/")
 out_folder <- paste0(tempdir(),"/")
 
+grid <- lpjmlkit::read_io(
+  paste0(run_folder,"grid.bin.json")
+)
+
 biocol <- biospheremetrics::calc_biocol(
   path_lu = run_folder,
   path_pnv = pnv_folder,
@@ -41,3 +45,4 @@ ecorisk <- ecorisk_wrapper(
   time_span_reference = c(1550:1579),
   time_span_scenario = c(1987:2016)
   )
+ecorisk$ecorisk_total

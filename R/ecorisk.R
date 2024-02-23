@@ -728,6 +728,7 @@ calc_ecorisk <- function(fpc_ref,
 #' @param nitrogen include nitrogen outputs for pools and fluxes into EcoRisk
 #'                 calculation (default FALSE)
 #' @param debug write out all nitrogen state variables (default FALSE)
+#' @param suppressWarnings suppress writing of Warnings, default: TRUE
 #'
 #' @return list data object containing arrays of state_ref, mean_state_ref,
 #'         state_scen, mean_state_scen, fpc_ref, fpc_scen, bft_ref, bft_scen,
@@ -741,7 +742,8 @@ read_ecorisk_data <- function(
     time_span_reference,
     time_span_scenario,
     nitrogen,
-    debug = FALSE) {
+    debug = FALSE,
+    suppressWarnings = TRUE) {
   file_type <- tools::file_ext(files_reference$grid)
 
   if (file_type %in% c("json", "clm")) {
