@@ -83,7 +83,7 @@ test_that("test calc_biocal", {
   # test for expected array dimensions
   expect_true(
     sapply(biocol, function(x) {
-      all(dim(x) == c(2, 517)) || all(dim(x) == c(2, 30) || all(dim(x) == NULL))
+      all(dim(x) == c(2, 516)) || all(dim(x) == c(2, 30)) || all(dim(x) == NULL)
     }) %>%
       all() %>%
       suppressWarnings()

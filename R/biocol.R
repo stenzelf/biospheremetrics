@@ -495,7 +495,6 @@ read_calc_biocol <- function(
     biocol_overtime / npp_pot_overtime
   )
   biocol_luc <- npp_potential - npp
-  # browser()
   # biocol_luc2 <- (npp_potential - pftnpp_cft) * apply(cftfrac[, , -c(grass_bands, bp_bands)], c("cell", "year"), sum) +
   #               (npp_potential - pftnpp_grasslands) * apply(cftfrac[, , grass_bands], c("cell", "year"), sum) +
   #               (npp_potential - pftnpp_bioenergy) * apply(cftfrac[, , bp_bands], c("cell", "year"), sum)
