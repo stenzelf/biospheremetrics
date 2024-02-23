@@ -627,9 +627,10 @@ calc_biocol <- function(
     external_wood_harvest = FALSE,
     grass_scaling = FALSE,
     npp_threshold = 20,
-    grass_harvest_file = "grazing_data.RData",
-    external_fire_file = "human_ignition_fraction.RData",
-    external_wood_harvest_file = "wood_harvest_biomass_sum_1500-2014_67420.RData") {
+    grass_harvest_file = NULL,
+    external_fire_file = NULL,
+    external_wood_harvest_file = NULL) {
+  
   metric_files <- system.file(
     "extdata",
     "metric_files.yml",
@@ -665,6 +666,7 @@ calc_biocol <- function(
     cftfrac = paste0(path_pnv, outputs$cftfrac$name, ".", file_extension),
     fpc = paste0(path_pnv, outputs$fpc$name, ".", file_extension)
   )
+  if (is.null(reference_npp_file)) reference_npp_file <- files_baseline$npp
   files_reference <- list(
     npp = reference_npp_file
   )

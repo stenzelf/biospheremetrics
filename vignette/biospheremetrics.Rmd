@@ -44,4 +44,21 @@ list_outputs(metric = "ecorisk_nitrogen")
 list_outputs(metric = "ecorisk_nitrogen")
 ```
 
-Note that `starwars` is a tibble, a modern reimagining of the data frame. It's particularly useful for large datasets because it only prints the first few rows. You can learn more about tibbles at <https://tibble.tidyverse.org>; in particular you can convert data frames to tibbles with `as_tibble()`.
+## Demo case
+
+The package contains some demo LPJmL simulation data for two cells. 
+Define the folders for run (simulation with climate change and land-use) and
+pnv (potential natural vegetation - climate change, but no land-use) and a 
+temporary output folder, if you want to test to write to files.
+```{r}
+run_folder <- paste0(system.file("extdata","run","lu_1500_2016",package = "biospheremetrics"),"/")
+pnv_folder <- paste0(system.file("extdata","run","pnv_1500_2016",package = "biospheremetrics"),"/")
+out_folder <- paste0(tempdir(),"/")
+```
+## BioCol
+
+```{r}
+```
+```{r}
+```
+## Example use

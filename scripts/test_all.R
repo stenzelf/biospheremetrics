@@ -16,7 +16,6 @@ biocol <- biospheremetrics::calc_biocol(
   start_year = 1500,
   stop_year = 2016,
   reference_npp_time_span = 1510:1539,
-  reference_npp_file = paste0(pnv_folder,"npp.bin.json"),
   read_saved_data = FALSE,
   save_data = FALSE
 )
