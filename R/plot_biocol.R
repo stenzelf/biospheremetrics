@@ -206,15 +206,31 @@ plot_biocol <- function(
 #' @export
 plot_biocol_map <- function(
     data,
-    file,
+    file = NULL,
     title = "",
     legendtitle = "",
     zero_threshold = 0.001,
     eps = FALSE,
     haberl_legend = FALSE) {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+    
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+                            horizontal = FALSE, onefile = FALSE, width = 22,
+                            height = 8.5, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+                     width = 7.25, height = 3.5, units = "in", res = 300,
+                     pointsize = 6, type = "cairo"
+      )
+    }
+  }
   if (haberl_legend) {
     brks <- c(
       -400, -200, -100, -50, -zero_threshold,
@@ -255,20 +271,6 @@ plot_biocol_map <- function(
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
 
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 22,
-      height = 8.5, paper = "special"
-    )
-  } else {
-    grDevices::png(file,
-      width = 7.25, height = 3.5, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
-    )
-  }
   ra <- terra::rast(ncols = 720, nrows = 360)
   range <- range(data)
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
@@ -284,7 +286,7 @@ plot_biocol_map <- function(
     x = -180, y = 50, fill = palette, border = palette,
     legend = classes, title = legendtitle
   )
-  grDevices::dev.off()
+  if (!is.null(file)) grDevices::dev.off()
 }
 
 #' Plot absolute BioCol, overtime, maps, and npp into given folder
@@ -345,9 +347,26 @@ plot_biocol_ts <- function(
     ext = FALSE,
     eps = FALSE,
     ref = "pi") {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+    
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+                            horizontal = FALSE, onefile = FALSE, width = 22,
+                            height = 8.5, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+                     width = 3.5, height = 3, units = "in", res = 300,
+                     pointsize = 6, type = "cairo"
+      )
+    }
+  }
+  
   last_year <- first_year + length(biocol_data$npp_act_overtime) - 1
   colz <- c(
     "slateblue", "gold", "green3", "grey60", "red3",
@@ -355,20 +374,7 @@ plot_biocol_ts <- function(
     "yellow", "turquoise", "darkgreen"
   )
 
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 22,
-      height = 8.5, paper = "special"
-    )
-  } else {
-    grDevices::png(file,
-      width = 3.5, height = 3, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
-    )
-  }
+
 
   graphics::par(bty = "o", oma = c(0, 0, 0, 0), mar = c(4, 5, 1, 3))
   graphics::plot(NA,
@@ -531,5 +537,5 @@ plot_biocol_ts <- function(
       ), col = colz[seq_len(9)], lty = 1, cex = 1
     )
   }
-  grDevices::dev.off()
+  if (!is.null(file)) grDevices::dev.off()
 }

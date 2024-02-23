@@ -2,13 +2,13 @@
 % Please edit documentation in R/plot_ecorisk.R
 \name{plot_biomes_mercator}
 \alias{plot_biomes_mercator}
-\title{Plot biomes to file with mercator projection}
+\title{Plot biomes with mercator projection}
 \usage{
 plot_biomes_mercator(
   biome_ids,
   biome_name_length = 1,
   order_legend = "plants",
-  file,
+  file = NULL,
   title = "",
   title_size = 2,
   leg_yes = TRUE,
@@ -26,7 +26,7 @@ plot_biomes_mercator(
 grasslands, then tundra ..., or "zones" to go from north to south
 (default: "plants")}
 
-\item{file}{to write into}
+\item{file}{to write into (if not supplied - default NULL - prints to screen)}
 
 \item{title}{character string title for plot, default empty}
 
@@ -38,9 +38,15 @@ grasslands, then tundra ..., or "zones" to go from north to south
 
 \item{eps}{write as eps, replacing png in filename (default: True)}
 }
-\value{
-None
-}
 \description{
-Function to plot biome classification to file using mercator projection
+Function to plot biomes to file (or screen) using mercator projection
+}
+\examples{
+\dontrun{
+plot_biomes_mercator(
+  biome_ids = biome_classification$biome_id,
+  file = "./biomes.png"
+)
+}
+
 }

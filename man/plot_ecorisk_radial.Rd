@@ -14,8 +14,8 @@ plot_ecorisk_radial(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
-3[min,mean,max])}
+\item{data}{EcoRisk data array c(4/19\link{biomes},\link{nEcoRiskcomponents},
+3\link{min,mean,max})}
 
 \item{file}{to write into}
 
@@ -29,10 +29,16 @@ plot_ecorisk_radial(
 'legend2' for value legend, or 'regular' (default setting)
 for the regular EcoRisk plot}
 }
-\value{
-None
-}
 \description{
-Function to plot an aggregated radial status of EcoRisk values [0-1]
+Function to plot an aggregated radial status of EcoRisk values \link{0-1}
 for the different sub-categories to file
+}
+\examples{
+\dontrun{
+plot_biome_internal_distribution(
+  data = biomes,
+  file = "./biomes.png"
+)
+}
+
 }

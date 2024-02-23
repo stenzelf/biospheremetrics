@@ -43,9 +43,15 @@ color scheme white-blue-yellow-red}
 
 \item{leg_scale}{scaling factor for legend. defaults to 1}
 }
-\value{
-None
-}
 \description{
-Function to plot a global map of EcoRisk values [0-1] per grid cell to file
+Function to plot a global map of EcoRisk values \link{0-1} per grid cell to file
+}
+\examples{
+\dontrun{
+plot_biome_internal_distribution(
+  data = biomes,
+  file = "./biomes.png"
+)
+}
+
 }
