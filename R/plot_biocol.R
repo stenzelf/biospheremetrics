@@ -185,12 +185,11 @@ plot_biocol <- function(
 #' Haberl et al. 2007
 #'
 #' @param data array containing BioCol percentage value for each gridcell
-#' @param file character string for location/file to save plot to
-#' @param plotyears range of years to plot over time
-#' @param title character string title for plot
-#' @param legendtitle character string legend title
+#' @param file to write into, if not supplied (default is NULL) write to screen
+#' @param title character string title for plot (default: "")
+#' @param legendtitle character string legend title (default: "")
 #' @param zero_threshold smallest value to be distinguished from 0 in legend,
-#'        both for negative and positive values (default: 0.1)
+#'        both for negative and positive values (default: 0.001)
 #' @param haberl_legend use color palette from Haberl et al.? (default: FALSE)
 #' @param eps write eps file instead of PNG (boolean) - (default: FALSE)
 #'
@@ -206,15 +205,30 @@ plot_biocol <- function(
 #' @export
 plot_biocol_map <- function(
     data,
-    file,
+    file = NULL,
     title = "",
     legendtitle = "",
     zero_threshold = 0.001,
-    eps = FALSE,
-    haberl_legend = FALSE) {
-  path_write <- dirname(file)
-  dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
+    haberl_legend = FALSE,
+    eps = FALSE) {
+  if (!is.null(file)) {
+    path_write <- dirname(file)
+    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
+    if (eps) {
+      file <- strsplit(file, ".", fixed = TRUE)[[1]]
+      file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
+      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
+      grDevices::postscript(file,
+                            horizontal = FALSE, onefile = FALSE, width = 22,
+                            height = 8.5, paper = "special"
+      )
+    } else {
+      grDevices::png(file,
+                     width = 7.25, height = 3.5, units = "in", res = 300,
+                     pointsize = 6, type = "cairo"
+      )
+    }
+  }
   if (haberl_legend) {
     brks <- c(
       -400, -200, -100, -50, -zero_threshold,
@@ -255,20 +269,7 @@ plot_biocol_map <- function(
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
 
-  if (eps) {
-    file <- strsplit(file, ".", fixed = TRUE)[[1]]
-    file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
-    grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-    grDevices::postscript(file,
-      horizontal = FALSE, onefile = FALSE, width = 22,
-      height = 8.5, paper = "special"
-    )
-  } else {
-    grDevices::png(file,
-      width = 7.25, height = 3.5, units = "in", res = 300,
-      pointsize = 6, type = "cairo"
-    )
-  }
+  
   ra <- terra::rast(ncols = 720, nrows = 360)
   range <- range(data)
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
@@ -284,7 +285,7 @@ plot_biocol_map <- function(
     x = -180, y = 50, fill = palette, border = palette,
     legend = classes, title = legendtitle
   )
-  grDevices::dev.off()
+  if (!is.null(file)) grDevices::dev.off()
 }
 
 #' Plot absolute BioCol, overtime, maps, and npp into given folder
