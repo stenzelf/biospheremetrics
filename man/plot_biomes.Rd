@@ -21,13 +21,12 @@ supplied, the plot is displayed to screen (default: NULL)}
 
 \item{display_area}{boolean, adding occupied area per biome (default: FALSE)}
 
+\item{cellarea}{array with cellareas per gridcell in m2}
+
 \item{order_legend}{in which order the biomes should be displayed
 default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)}
 
 \item{bg_col}{character, specify background possible (\code{NA} for transparent)}
-
-\item{to_robinson}{logical to define if robinson projection should be used
-for plotting}
 }
 \description{
 Plots a map with the biome distribution as derived from a lpjml run based

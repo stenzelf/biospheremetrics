@@ -36,12 +36,12 @@ plot_ecorisk_map(
 
 \item{eps}{write as eps or png}
 
+\item{title_size}{size of the title (default: 1)}
+
 \item{leg_yes}{logical. whether to plot legend or not. defaults to TRUE}
 
 \item{palette}{color palette to plot EcoRisk with, defaults to the Ostberg
 color scheme white-blue-yellow-red}
-
-\item{leg_scale}{scaling factor for legend. defaults to 1}
 }
 \description{
 Function to plot a global map of EcoRisk values \link{0-1} per grid cell to file

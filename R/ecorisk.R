@@ -28,6 +28,9 @@
 #' @param window integer, number of years for window length (default: 30)
 #' @param debug write out all nitrogen state variables (default FALSE)
 #' @param suppressWarnings suppress warnings - default: TRUE
+#' @param external_variability use externally supplied variability for the 
+#'        reference period? experimental! (default: FALSE)
+#' @param c2vr external variability array
 #'
 #' @return list data object containing arrays of ecorisk_total,
 #'         vegetation_structure_change, local_change, global_importance,
@@ -771,11 +774,11 @@ read_ecorisk_data <- function(
     # read grid
     grid <- lpjmlkit::read_io(
       files_reference$grid
-    )
+    ) %>% suppressWarnings()
     # calculate cell area
     cell_area <- drop(lpjmlkit::read_io(
       filename = files_reference$terr_area
-    )$data) # in m2
+    )$data) %>% suppressWarnings() # in m2
     lat <- grid$data[, , 2]
     lon <- grid$data[, , 1]
     ncells <- length(lat)
@@ -2268,10 +2271,13 @@ disaggregate_into_biomes <- function(data, # nolint
 #' @param intra_biome_distrib_file file to additionally write results to
 #' @param create create new modified files, or read already existing ones?
 #' @param res how finegrained the distribution should be (resolution)
+#' @param nitrogen include nitrogen outputs (default: TRUE)
 #' @param plotting whether plots for each biome should be created
 #' @param plot_folder folder to plot into
 #' @param time_span_reference suitable 30 year reference period (e.g.
 #'                            c(1901,1930), c(1550,1579))
+#' @param ecorisk_components integer. how many subcomponents does the 
+#'        ecorisk object have?
 
 #' @return data object with distibution - dim: c(biomes,ecorisk_variables,bins)
 #'
@@ -2285,7 +2291,6 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
                                          plotting = FALSE,
                                          plot_folder,
                                          time_span_reference,
-                                         vars_ecorisk,
                                          ecorisk_components = 13) {
   biomes_abbrv <- get_biome_names(1)
   # nbiomes, nEcoRiskvars, nHISTclasses

@@ -11,7 +11,6 @@ calc_biocol(
   stop_year,
   reference_npp_time_span = NULL,
   reference_npp_file = NULL,
-  varnames = NULL,
   gridbased = TRUE,
   read_saved_data = FALSE,
   save_data = FALSE,
@@ -81,6 +80,8 @@ fraction c(cell,month,year) since 1500}
 
 \item{external_wood_harvest_file}{path to R-file containing processed
 timeline of maps for LUH2_v2h woodharvest}
+
+\item{suppressWarnings}{suppress warnings when reading files (default: TRUE)}
 }
 \value{
 list data object containing BioCol and components as arrays: biocol,

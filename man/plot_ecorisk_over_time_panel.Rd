@@ -27,6 +27,8 @@ plot_ecorisk_over_time_panel(
 \item{timerange}{of the data input}
 
 \item{eps}{write as eps or png}
+
+\item{varnames}{list vector with variable names}
 }
 \description{
 Function to plot a panel of 4/16 timelines per biome aggregated EcoRisk

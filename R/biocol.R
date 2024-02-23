@@ -55,7 +55,7 @@
 #'        fraction c(cell,month,year) since 1500
 #' @param external_wood_harvest_file path to R-file containing processed
 #'        timeline of maps for LUH2_v2h woodharvest
-#' @param suppressWarnings suppress warnings default: TRUE
+#' @param suppressWarnings suppress warnings when reading files (default: TRUE)
 #'
 #' @return list data object containing BioCol and components as arrays: 
 #'         biocol_overtime, biocol_overtime_abs, biocol_overtime_abs_frac_piref, 
@@ -150,11 +150,11 @@ read_calc_biocol <- function(
       # read grid
       grid <- lpjmlkit::read_io(
         files_baseline$grid
-      )
+      ) %>% suppressWarnings()
       # calculate cell area
       cellarea <- drop(lpjmlkit::read_io(
         filename = files_baseline$terr_area
-      )$data) # in m2
+      )$data) %>% suppressWarnings() # in m2
       lat <- grid$data[, , 2]
       lon <- grid$data[, , 1]
 
@@ -164,7 +164,7 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop() # gC/m2
+        drop() %>% suppressWarnings() # gC/m2
       npp[npp < epsilon] <- 0
 
       if (!is.null(files_reference)) {
@@ -174,7 +174,7 @@ read_calc_biocol <- function(
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-          drop()
+          drop() %>% suppressWarnings()
         npp_ref[npp_ref < epsilon] <- 0
       }
 
@@ -295,7 +295,7 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        drop() # gC/m2
+        drop() %>% suppressWarnings()  # gC/m2
       npp_potential[npp_potential < epsilon] <- 0
 
       fpc <- lpjmlkit::read_io(
@@ -303,7 +303,8 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(subset = list(band = "natural stand fraction"))
+        lpjmlkit::as_array(subset = list(band = "natural stand fraction")) %>% 
+        suppressWarnings()
 
       pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
     } else if (file_type == "nc") { # to be added
@@ -604,6 +605,7 @@ read_calc_biocol <- function(
 #'        fraction c(cell,month,year) since 1500
 #' @param external_wood_harvest_file path to R-file containing processed
 #'        timeline of maps for LUH2_v2h woodharvest
+#' @param suppressWarnings suppress warnings when reading files (default: TRUE)
 #'
 #' @return list data object containing BioCol and components as arrays: biocol,
 #'         biocol_overtime, biocol_overtime_piref, biocol_frac, npp_potential,
@@ -637,7 +639,6 @@ calc_biocol <- function(
     stop_year,
     reference_npp_time_span = NULL,
     reference_npp_file = NULL,
-    varnames = NULL,
     gridbased = TRUE,
     read_saved_data = FALSE,
     save_data = FALSE,

@@ -27,6 +27,10 @@ plot_ecorisk_radial_to_screen(
 for the regular EcoRisk plot}
 
 \item{title_size}{scaling factor for tile. defaults to 1}
+
+\item{titleline}{line at which the title will be displayed. defaults to -2}
+
+\item{use_quantile}{use quantiles or min,mean,max. defaults to TRUE}
 }
 \description{
 Function to plot an aggregated radial status of EcoRisk values \link{0-1}

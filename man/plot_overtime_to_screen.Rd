@@ -22,6 +22,10 @@ c(4/19\link{biomes},8/10\link{nEcoRiskcomponents},3\link{min,mean,max},timeslice
 \item{yrange}{range for y axis default c(0,1)}
 
 \item{leg_yes}{plot legend (default TRUE)}
+
+\item{leg_only}{plot only the legend? default: FALSE}
+
+\item{varnames}{manual override of ecorisk subvariable names - default: NULL}
 }
 \description{
 Function to plot timeline of EcoRisk variables to screen

@@ -96,7 +96,7 @@ fraction c(cell,month,year) since 1500}
 \item{external_wood_harvest_file}{path to R-file containing processed
 timeline of maps for LUH2_v2h woodharvest}
 
-\item{suppressWarnings}{suppress warnings default: TRUE}
+\item{suppressWarnings}{suppress warnings when reading files (default: TRUE)}
 }
 \value{
 list data object containing BioCol and components as arrays: 

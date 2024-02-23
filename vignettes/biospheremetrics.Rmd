@@ -76,10 +76,11 @@ produce the required outputs.
 A list of required outputs per metric (e.g. for EcoRisk with nitrogen) can be 
 obtained like this:
 ```{r}
-list_outputs(metric = "ecorisk_nitrogen")
+biospheremetrics::list_outputs(metric = "ecorisk_nitrogen")
 ```
+
 ```{r}
-list_outputs(metric = "ecorisk_nitrogen")
+biospheremetrics::list_outputs(metric = "ecorisk_nitrogen")
 ```
 
 We have however included some demo data, to check out some functionality without
@@ -135,7 +136,7 @@ biospheremetrics::plot_biocol_ts(
 Let's have a look at the EcoRist indicator next and compute it based on the 
 folders with demo data:
 ```{r}
-ecorisk <- ecorisk_wrapper(
+ecorisk <- biospheremetrics::ecorisk_wrapper(
   path_ref = pnv_folder,
   path_scen = run_folder,
   read_saved_data = FALSE,
@@ -174,7 +175,7 @@ Afterwards reload/compile the package.
 
 The following application example calculates the metrics BioCol and EcoRisk from a global run:
 
-```{r}
+```{r, echo = TRUE, eval = FALSE, highlight = TRUE}
 run_folder <- "./output/lu_1500_2014/"
 pnv_folder <- "./output/pnv_1500_2014/"
 out_folder <- "./biospheremetrics/"
@@ -185,7 +186,7 @@ lpj_input <- "/path/to/historical/lpjml/input/data/"
 # for longer spans (500 years) - use separate script ("read_in_BioCol_data.R") 
 # and submit as cluster job using "sbatch R_read_in_BioCol_data.sh" - analysis for "biocol overtime" below
 
-biocol <- calc_biocol(
+biocol <- biospheremetrics::calc_biocol(
   path_lu = run_folder,
   path_pnv = pnv_folder,
   gridbased = TRUE,
@@ -197,7 +198,7 @@ biocol <- calc_biocol(
   npp_threshold = 20,
 )
 
-plot_biocol(
+biospheremetrics::plot_biocol(
   biocol_data = biocol,
   path_write = paste0(out_folder,"BioCol/"),
   plotyears = c(1980,2014),
@@ -213,7 +214,7 @@ plot_biocol(
 ############## analyse and plot biocol overtime #################
 # first submit `R_read_BioCol_data.sh` to cluster via slurm to read in and process the input files, a lot of memory is required for this
 # then here only read the preprocessed data file (read_saved_data = TRUE)
-biocol_overtime <- calc_biocol(
+biospheremetrics::biocol_overtime <- calc_biocol(
   path_lu = run_folder,
   path_pnv = pnv_folder,
   gridbased = TRUE,
@@ -226,7 +227,7 @@ biocol_overtime <- calc_biocol(
   data_file = "</path/to/saved/data/file>" # from script read_in_biocol_data
 )
 
-plot_biocol(
+biospheremetrics::plot_biocol(
   biocol_data = biocol_overtime,
   path_write = paste0(out_folder,"BioCol/"),
   plotyears = c(1550,2014),
@@ -241,7 +242,7 @@ plot_biocol(
 
 ################# compute EcoRisk ################
 
-ecorisk <- ecorisk_wrapper(
+ecorisk <- biospheremetrics::ecorisk_wrapper(
   path_ref = pnv_folder, 
   path_scen = run_folder, 
   read_saved_data = FALSE,
@@ -255,76 +256,76 @@ ecorisk <- ecorisk_wrapper(
 )
 
 # plot ecorisk
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "ecorisk_total",
   file = paste0(out_folder,"EcoRisk/ecorisk.png"),
-  title="ecorisk"
+  title = "ecorisk"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "vegetation_structure_change",
   file = paste0(out_folder, "EcoRisk/vs.png"),
   title = "vegetation structure change"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "local_change",
   file = paste0(out_folder, "EcoRisk/lc.png"),
   title = "local change"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "global_importance",
   file = paste0(out_folder, "EcoRisk/gi.png"),
   title = "global importance"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "ecosystem_balance",
   file = paste0(out_folder, "EcoRisk/eb.png"),
   title = "ecosystem balance")
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "carbon_stocks",
   file = paste0(out_folder, "EcoRisk/cs.png"),
   title = "carbon_stocks"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "carbon_fluxes",
   file = paste0(out_folder, "EcoRisk/cf.png"),
   title = "carbon_fluxes"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "water_stocks",
   file = paste0(out_folder, "EcoRisk/ws.png"),
   title = " water_stocks"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "water_fluxes",
   file = paste0(out_folder, "EcoRisk/wf.png"),
   title = " water_fluxes"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "nitrogen_stocks",
   file = paste0(out_folder, "EcoRisk/ns.png"),
   title = " nitrogen_stocks"
 )
 
-plot_ecorisk_map(
+biospheremetrics::plot_ecorisk_map(
   ecorisk_object = ecorisk,
   plot_dimension = "nitrogen_fluxes",
   file = paste0(out_folder, "EcoRisk/nf.png"),
@@ -333,7 +334,7 @@ plot_ecorisk_map(
 
 ################# ecorisk biomes ################
 
-biome_classes <- classify_biomes(
+biome_classes <- biospheremetrics::classify_biomes(
   path_reference = pnv_folder,
   files_reference = list(
     grid = paste0(pnv_folder,"grid.bin.json"),
@@ -348,7 +349,7 @@ biome_classes <- classify_biomes(
   montane_arctic_proxy = list(elevation = 1000) 
 )
 
-biome_classes_pi <- classify_biomes(
+biome_classes_pi <- biospheremetrics::classify_biomes(
   path_reference = pnv_folder,
   files_reference = list(
     grid = paste0(pnv_folder,"grid.bin.json"),
@@ -363,17 +364,17 @@ biome_classes_pi <- classify_biomes(
   montane_arctic_proxy = list(elevation = 1000) 
 )
 
-plot_biomes_mercator(biome_ids = biome_classes$biome_id,
+biospheremetrics::plot_biomes_mercator(biome_ids = biome_classes$biome_id,
             file = paste0(out_folder,"EcoRisk/biomes_2005-2014.png"),
             order_legend = seq_len(19)
             )
-plot_biomes_mercator(biome_ids = biome_classes_pi$biome_id,
+biospheremetrics::plot_biomes_mercator(biome_ids = biome_classes_pi$biome_id,
             file = paste0(out_folder,"EcoRisk/biomes_1901-1910.png"),
             order_legend = seq_len(19)
             )
 
 # compute median ecorisk values for biomes/large worldregions
-ecorisk_disaggregated_full <- disaggregate_into_biomes(
+ecorisk_disaggregated_full <- biospheremetrics::disaggregate_into_biomes(
   data = ecorisk,
   biome_class = biome_classes,
   type = "quantile",
@@ -381,14 +382,14 @@ ecorisk_disaggregated_full <- disaggregate_into_biomes(
 )
 ecorisk_disaggregated_full[is.na(ecorisk_disaggregated_full)] <- 0
 
-ecorisk_disaggregated_4regions <- disaggregate_into_biomes(
+ecorisk_disaggregated_4regions <- biospheremetrics::disaggregate_into_biomes(
   data = ecorisk,
   biome_class = biome_classes,
   type = "quantile",
   classes = "4biomes"
 )
 
-plot_ecorisk_radial_panel(
+biospheremetrics::plot_ecorisk_radial_panel(
   data = ecorisk_disaggregated_full[-c(17,18,19),,], 
   biome_names = get_biome_names(1)[-c(17,18,19)],
   file = paste0(out_folder,"EcoRisk/EcoRisk_panel_1564_vs_2002.png"),
@@ -396,7 +397,7 @@ plot_ecorisk_radial_panel(
   eps = TRUE
 )
 
-plot_ecorisk_radial_panel(
+biospheremetrics::plot_ecorisk_radial_panel(
   data = ecorisk_disaggregated_4regions[,,], 
   biome_names = c("tropics","temperate","boreal","arctic"),
   file = paste0(out_folder,"EcoRisk/EcoRisk_4regions_1564_vs_2002.png"),
@@ -410,14 +411,14 @@ plot_ecorisk_radial_panel(
 
 load("/path/to/ecorisk_overtime_gamma.RData") # containing ecorisk object
 
-ecorisk_overtime_allbiomes <- disaggregate_into_biomes(
+ecorisk_overtime_allbiomes <- biospheremetrics::disaggregate_into_biomes(
   data = ecorisk,
   biome_class = biome_classes,
   type = "quantile",
   classes = "allbiomes"
 )
 
-plot_ecorisk_over_time_panel(
+biospheremetrics::plot_ecorisk_over_time_panel(
   data = ecorisk_overtime_allbiomes,
   timerange = c(1916,2003),
   biome_names = c("tropic","temperate","boreal","arctic"),
@@ -425,14 +426,14 @@ plot_ecorisk_over_time_panel(
   eps = TRUE
 )
 
-ecorisk_overtime_biome16 <- disaggregate_into_biomes(
+ecorisk_overtime_biome16 <- biospheremetrics::disaggregate_into_biomes(
   data = ecorisk,
   biome_class = biome_classes,
   type = "quantile",
   classes = "allbiomes"
 )
 
-plot_ecorisk_over_time_panel(
+biospheremetrics::plot_ecorisk_over_time_panel(
   data = ecorisk_overtime_biome16[-c(3,17,18),,,],
   timerange = c(1916,2003),
   biome_names = get_biome_names(1)[-c(3,17,18)], 

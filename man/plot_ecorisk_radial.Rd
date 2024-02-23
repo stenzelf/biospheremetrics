@@ -25,9 +25,7 @@ plot_ecorisk_radial(
 
 \item{eps}{write as eps or png}
 
-\item{type}{plot type, 'legend1' for variable and color legend,
-'legend2' for value legend, or 'regular' (default setting)
-for the regular EcoRisk plot}
+\item{use_quantile}{show quantiles or min,mean,max}
 }
 \description{
 Function to plot an aggregated radial status of EcoRisk values \link{0-1}

@@ -7,8 +7,7 @@
 #' @param file_name character string for location/file to save plot to, if not 
 #'                  supplied, the plot is displayed to screen (default: NULL)
 #' @param display_area boolean, adding occupied area per biome (default: FALSE)
-#' @param to_robinson logical to define if robinson projection should be used
-#' for plotting
+#' @param cellarea array with cellareas per gridcell in m2
 #' @param order_legend in which order the biomes should be displayed
 #'        default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)
 #' @param bg_col character, specify background possible (`NA` for transparent)

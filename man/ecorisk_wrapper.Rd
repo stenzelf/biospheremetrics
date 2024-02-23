@@ -55,6 +55,11 @@ local change, global change and ecosystem balance (default FALSE)}
 
 \item{debug}{write out all nitrogen state variables (default FALSE)}
 
+\item{external_variability}{use externally supplied variability for the
+reference period? experimental! (default: FALSE)}
+
+\item{c2vr}{external variability array}
+
 \item{suppressWarnings}{suppress warnings - default: TRUE}
 }
 \value{

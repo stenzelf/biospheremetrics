@@ -27,6 +27,8 @@
 #'            symmetrically between min and max, if onlypos = FALSE)
 #' @param col_pos color palette for the positives
 #' @param col_neg color palette for the negatives
+#' @param brks breaks for manual plotting type (type=man) default: NULL
+#' @param palette palette for manual plotting type (type=man) default: NULL
 #' @param type string indicating whether to plot manual (man),
 #'             exponential (exp) or linear (lin) legend (default: exp).
 #'             man requires: parameters brks and palette defined,

@@ -107,8 +107,8 @@ plot_biome_internal_distribution <- function(
 #' @param title character string title for plot, default empty
 #' @param legendtitle character string legend title
 #' @param eps write as eps or png
+#' @param title_size size of the title (default: 1)
 #' @param leg_yes logical. whether to plot legend or not. defaults to TRUE
-#' @param leg_scale scaling factor for legend. defaults to 1
 #' @param palette color palette to plot EcoRisk with, defaults to the Ostberg
 #'        color scheme white-blue-yellow-red
 #'
@@ -221,6 +221,8 @@ plot_ecorisk_map <- function(
 #'             'legend2' for value legend, or 'regular' (default setting)
 #'             for the regular EcoRisk plot
 #' @param title_size scaling factor for tile. defaults to 1
+#' @param titleline line at which the title will be displayed. defaults to -2
+#' @param use_quantile use quantiles or min,mean,max. defaults to TRUE
 #'
 #' @examples
 #' \dontrun{
@@ -494,9 +496,7 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
 #'             3[min,mean,max])
 #' @param file to write into
 #' @param title character string title for plot, default empty
-#' @param type plot type, 'legend1' for variable and color legend,
-#'             'legend2' for value legend, or 'regular' (default setting)
-#'             for the regular EcoRisk plot
+#' @param use_quantile show quantiles or min,mean,max
 #' @param eps write as eps or png
 #' @param leg_yes logical. whether to plot legend or not. defaults to TRUE
 #'
@@ -574,6 +574,8 @@ plot_ecorisk_radial <- function(data,
 #' @param timerange of the data input
 #' @param yrange range for y axis default c(0,1)
 #' @param leg_yes plot legend (default TRUE)
+#' @param leg_only plot only the legend? default: FALSE
+#' @param varnames manual override of ecorisk subvariable names - default: NULL
 #'
 #' @examples
 #' \dontrun{
@@ -663,6 +665,7 @@ plot_overtime_to_screen <- function(data,
 #' @param yrange range for y axis (default c(0,1))
 #' @param timerange of the data input
 #' @param eps write as eps or png
+#' @param varnames list vector with variable names 
 #'
 #' @examples
 #' \dontrun{

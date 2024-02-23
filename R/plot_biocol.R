@@ -305,6 +305,8 @@ plot_biocol_map <- function(
 #' (default: 2000)
 #' @param min_val y-axis minimum value for plot over time (default: 0)
 #' @param max_val y-axis maximum value for plot over time (default: 100)
+#' @param max_val_right maximum value for the BioCol y-axis labs right
+#'        (default: 0.45)
 #' @param legendpos position of legend (default: "topleft")
 #' @param highlight_years year(s) that should be highlighted in overtime plot
 #' (default: 2000)
@@ -343,7 +345,6 @@ plot_biocol_ts <- function(
     max_val = 100,
     max_val_right = 0.45,
     legendpos = "topleft",
-    ext = FALSE,
     eps = FALSE,
     ref = "pi") {
   if (!is.null(file)) {

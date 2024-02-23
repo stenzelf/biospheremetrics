@@ -56,6 +56,12 @@ boreal forest threshold will be classified as boreal tundra.}
 \item{avg_nyear_args}{list of arguments to be passed to
 \link[biospheremetrics]{average_nyear_window} (see for more info). To be used for # nolint
 time series analysis}
+
+\item{input_files}{`list` with input file paths to be used instead of outputs
+default: empty list}
+
+\item{diff_output_files}{`list` with output files, to be used from another 
+location than the output folders - default: empty list}
 }
 \value{
 list object containing biome_id (main biome per grid cell [dim=c(ncells)]), # nolint

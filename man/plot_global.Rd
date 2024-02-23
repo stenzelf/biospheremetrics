@@ -45,6 +45,10 @@ symmetrically between min and max, if onlypos = FALSE)}
 \item{max}{for linear legend: upper end of data range to plot (0 is placed
 symmetrically between min and max, if onlypos = FALSE)}
 
+\item{brks}{breaks for manual plotting type (type=man) default: NULL}
+
+\item{palette}{palette for manual plotting type (type=man) default: NULL}
+
 \item{col_pos}{color palette for the positives}
 
 \item{type}{string indicating whether to plot manual (man),

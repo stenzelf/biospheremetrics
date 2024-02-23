@@ -15,7 +15,6 @@ plot_biocol_ts(
   max_val = 100,
   max_val_right = 0.45,
   legendpos = "topleft",
-  ext = FALSE,
   eps = FALSE,
   ref = "pi"
 )
@@ -41,6 +40,9 @@ all in GtC}
 \item{min_val}{y-axis minimum value for plot over time (default: 0)}
 
 \item{max_val}{y-axis maximum value for plot over time (default: 100)}
+
+\item{max_val_right}{maximum value for the BioCol y-axis labs right
+(default: 0.45)}
 
 \item{legendpos}{position of legend (default: "topleft")}
 
