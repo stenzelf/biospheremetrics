@@ -186,6 +186,20 @@ list_outputs <- function(metric = "all",
     get_outputs(metric, only_first_filename)
 }
 
+# List arguments of functions used in metrics from metric_files.yml
+list_function_args <- function(metric = "all") {
+
+  metric <- process_metric(metric = metric)
+
+  system.file(
+    "extdata",
+    "metric_files.yml",
+    package = "boundaries"
+  ) %>%
+    yaml::read_yaml() %>%
+    get_function_args(metric)
+
+}
 
 # Translate metric options into internal metric names
 process_metric <- function(metric = "all") {
@@ -240,6 +254,24 @@ get_outputs <- function(x, metric_name, only_first_filename) { # nolint
 }
 
 
+# Get arguments of functions used in metrics
+get_function_args <- function(x, metric_name) {
+
+  # List functions of metrics (metric_name)
+  funs <- list()
+
+  for (metric in x$metric[metric_name]) {
+    funs[[metric$fun_name]] <- metric$funs
+  }
+
+  # Get arguments of functions
+  funs %>%
+    lapply(function(x) {
+      unlist(
+        lapply(mget(x, inherits = TRUE), methods::formalArgs), use.names = FALSE
+      )
+    })
+}
 # Check if resolution of x is higher than resolution of y
 higher_res <- function(x, y) {
   levels <- c("annual", "monthly", "daily")
@@ -253,6 +285,33 @@ higher_res <- function(x, y) {
   }
 }
 
+# split calculation string for variable addition/subtraction into signs & vars 
+split_sign <- function(string) {
+  # add spaces around +- signs
+  string <- gsub(
+    "-",
+    " - ",
+    gsub("+", " + ", string, fixed = TRUE),
+    fixed = TRUE
+  )
+  # reduce multiple spaces to one
+  string <- trimws(gsub("\\s+", " ", string))
+  a <- strsplit(string, " ")[[1]]
+  if (length(a) == 1) {
+    outarray <- array("", dim = c(1, 2))
+  } else {
+    outarray <- array("", dim = c(round( (length(a)+1) / 2), 2))
+  }
+  for (i in seq_along(a)){
+    i2 <- floor(i / 2 + 1)
+    if (i == 1 && !(grepl(a[1], "+-", fixed = TRUE))) outarray[1, 1] <- "+"
+    
+    if (grepl(a[i], "+-", fixed = TRUE)) outarray[i2, 1] <- a[i]
+    else outarray[i2, 2] <- a[i]
+  }
+  colnames(outarray) <- c("sign", "variable")
+  return(outarray)
+}
 
 # Avoid note for "."...
 utils::globalVariables(".") # nolint:undesirable_function_linter

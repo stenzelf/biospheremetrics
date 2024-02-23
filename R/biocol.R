@@ -3,7 +3,9 @@
 
 ################# BioCol calc functions  ###################
 
-#' Calculate BioCol based on a PNV run and LU run of LPJmL
+#' Calculate BioCol based on file lists from a PNV run and LU run of LPJmL.
+#' Do not use this function directly, unless you are instructed to do so, there
+#' is a wrapper called calc_biocol() which is for use of endusers.
 #'
 #' Function to calculate BioCol based on a PNV run and LU run of LPJmL
 #' @param files_scenario list with variable names and corresponding file paths
@@ -611,6 +613,22 @@ read_calc_biocol <- function(
 #'         timber_harvest_overtime, harvest_cft, rharvest_cft,
 #'         wood_harvest_overtime, biocol_harvest, biocol_luc
 #'
+#' @examples
+#' \dontrun{
+#' calc_biocol(
+#'   path_lu = run_folder,
+#'   path_pnv = pnv_folder,
+#'   gridbased = TRUE,
+#'   start_year = 1980,
+#'   stop_year = 2014,
+#'   reference_npp_time_span = 1510:1539, 
+#'   read_saved_data = FALSE,
+#'   save_data = FALSE,
+#'   npp_threshold = 20,
+#'   )
+#' }
+#'
+#' @md
 #' @export
 calc_biocol <- function(
     path_lu,
@@ -631,7 +649,8 @@ calc_biocol <- function(
     npp_threshold = 20,
     grass_harvest_file = NULL,
     external_fire_file = NULL,
-    external_wood_harvest_file = NULL) {
+    external_wood_harvest_file = NULL,
+    suppressWarnings = TRUE) {
   
   metric_files <- system.file(
     "extdata",
@@ -691,7 +710,8 @@ calc_biocol <- function(
       npp_threshold = npp_threshold,
       grass_harvest_file = grass_harvest_file,
       external_fire_file = external_fire_file,
-      external_wood_harvest_file = external_wood_harvest_file
+      external_wood_harvest_file = external_wood_harvest_file,
+      suppressWarnings = suppressWarnings
     )
   )
 }

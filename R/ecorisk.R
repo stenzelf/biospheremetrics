@@ -27,12 +27,28 @@
 #' @param overtime logical: calculate ecorisk as time-series? (default: FALSE)
 #' @param window integer, number of years for window length (default: 30)
 #' @param debug write out all nitrogen state variables (default FALSE)
+#' @param suppressWarnings suppress warnings - default: TRUE
 #'
 #' @return list data object containing arrays of ecorisk_total,
 #'         vegetation_structure_change, local_change, global_importance,
 #'         ecosystem_balance, carbon_stocks, carbon_fluxes, water_fluxes
 #'         (+ nitrogen_stocks and nitrogen_fluxes)
 #'
+#' @examples
+#' \dontrun{
+#' ecorisk_wrapper(
+#'   path_ref = pnv_folder,
+#'   path_scen = run_folder,
+#'   read_saved_data = FALSE,
+#'   nitrogen = TRUE,
+#'   save_data = NULL,
+#'   save_ecorisk = NULL,
+#'   time_span_reference = c(1550:1579),
+#'   time_span_scenario = c(1987:2016)
+#'   )
+#' }
+#'
+#' @md
 #' @export
 ecorisk_wrapper <- function(path_ref,
                             path_scen,
@@ -48,7 +64,8 @@ ecorisk_wrapper <- function(path_ref,
                             window = 30,
                             debug = FALSE,
                             external_variability = FALSE,
-                            c2vr = NULL) {
+                            c2vr = NULL,
+                            suppressWarnings = TRUE) {
   # check timespan consistency
   nyears <- length(time_span_reference)
   nyears_scen <- length(time_span_scenario)
@@ -178,7 +195,8 @@ ecorisk_wrapper <- function(path_ref,
       nitrogen = nitrogen,
       time_span_reference = time_span_reference,
       time_span_scenario = time_span_scenario,
-      debug = debug
+      debug = debug,
+      suppressWarnings = suppressWarnings
     )
     # extract variables from return list object and give them proper names
     state_ref <- returned_vars$state_ref
@@ -266,6 +284,8 @@ ecorisk_wrapper <- function(path_ref,
 }
 
 #' Calculate the ecosystem change metric EcoRisk between 2 sets of states
+#' This function is called by the wrapper function (ecorisk_wrapper), 
+#' unless you know what you are doing, don't use this function directly.
 #'
 #' Function to calculate the ecosystem change metric EcoRisk, based on
 #' gamma/vegetation_structure_change
@@ -716,7 +736,8 @@ calc_ecorisk <- function(fpc_ref,
 }
 
 #' Read in output data from LPJmL to calculate the ecosystem change metric
-#' EcoRisk
+#' EcoRisk. This function is called by the wrapper function (ecorisk_wrapper), 
+#' unless you know what you are doing, don't use this function directly.
 #'
 #' Utility function to read in output data from LPJmL for calculation of EcoRisk
 #'

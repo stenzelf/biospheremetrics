@@ -71,7 +71,7 @@ devtools::load_all("<path_to_biospheremetrics>")
 ```
 
 ## Preparations
-In order to compute the indicators it is thus necessary to first run LPJmL, and 
+In order to compute the indicators it is necessary to first run LPJmL, and 
 produce the required outputs.
 A list of required outputs per metric (e.g. for EcoRisk with nitrogen) can be 
 obtained like this:
@@ -157,6 +157,19 @@ ecorisk$global_importance
 ecorisk$ecosystem_balance
 ```
 
+## Metrics definitions and file names
+In the file `./inst/extdata/metric_files.yml` the filenames and how they make up
+certain metric components (mostly EcoRisk) are defined. 
+Usually you should not need to change anything here, start your LPJmL run with
+the required outputs already with the right names, using the list_outputs()
+function. 
+
+If you need to change sth here, please be careful. To change definitions, you 
+currently need clone the package and modify the 
+`./inst/extdata/metric_files.yml` file locally. 
+Afterwards reload/compile the package.
+
+
 ## Example use
 
 The following application example calculates the metrics BioCol and EcoRisk from a global run:
@@ -210,7 +223,7 @@ biocol_overtime <- calc_biocol(
   read_saved_data = TRUE,
   save_data = FALSE,
   npp_threshold = 20,
-  data_file = "</path/to/saved/data/file>"
+  data_file = "</path/to/saved/data/file>" # from script read_in_biocol_data
 )
 
 plot_biocol(
@@ -227,35 +240,15 @@ plot_biocol(
 )
 
 ################# compute EcoRisk ################
-vars_ecorisk <- data.frame(
-  row.names = c("grid","fpc", "fpc_bft", "cftfrac", "firec", "npp", "runoff",
-                "transp", "vegc", "firef", "rh", "harvestc", "rharvestc",
-                "pft_harvestc", "pft_rharvestc", "evap", "interc", "discharge",
-                "soilc", "litc", "swc", "vegn", "soilnh4", "soilno3",
-                "leaching", "n2o_denit", "n2o_nit", "n2_emis", "bnf",
-                "n_volatilization"),
-  outname = c("grid.bin.json", "fpc.bin.json", "fpc_bft.bin.json",
-              "cftfrac.bin.json", "firec.bin.json", "mnpp.bin.json",
-              "mrunoff.bin.json", "mtransp.bin.json", "vegc.bin.json",
-              "firef.bin.json", "mrh.bin.json", "flux_harvest.bin.json",
-              "flux_rharvest.bin.json", "pft_harvest.pft.bin.json",
-              "pft_rharvest.pft.bin.json", "mevap.bin.json",
-              "minterc.bin.json", "mdischarge.bin.json", "soilc.bin.json",
-              "litc.bin.json", "mswc.bin.json", "vegn.bin.json",
-              "soilnh4.bin.json", "soilno3.bin.json", "mleaching.bin.json",
-              "mn2o_denit.bin.json", "mn2o_nit.bin.json", "mn2_emis.bin.json",
-              "mbnf.bin.json", "mn_volatilization.bin.json")
-)
 
 ecorisk <- ecorisk_wrapper(
   path_ref = pnv_folder, 
   path_scen = run_folder, 
-  read_saved_data = TRUE,
+  read_saved_data = FALSE,
   nitrogen = TRUE,
-  varnames = vars_ecorisk,
   weighting = "equal",
-  save_data = "/p/projects/open/Fabian/Metrics/data/ecorisk_202306_data.RData",
-  save_ecorisk = "/p/projects/open/Fabian/Metrics/data/ecorisk_202306_gamma.RData",
+  save_data = NULL
+  save_ecorisk = NULL,
   time_span_reference = c(1550:1579),
   time_span_scenario = c(1985:2014),
   dimensions_only_local = FALSE
@@ -336,8 +329,8 @@ biome_classes <- classify_biomes(
     fpc = paste0(pnv_folder,"fpc.bin.json"),
     vegc = paste0(pnv_folder,"vegc.bin.json"),
     pft_lai = paste0(pnv_folder,"pft_lai.bin.json"),
-    temp = "/p/projects/lpjml/input/historical/GSWP3-W5E5/tas_gswp3-w5e5_1901-2016.clm",
-    elevation = "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin"
+    temp = paste0(lpj_input,"/GSWP3-W5E5/tas_gswp3-w5e5_1901-2016.clm"),
+    elevation = paste0(lpj_input,"/input_VERSION2/elevation.bin")
   ),
   time_span_reference = as.character(1985:2014), 
   savanna_proxy = list(pft_lai = 6),
@@ -351,21 +344,21 @@ biome_classes_pi <- classify_biomes(
     fpc = paste0(pnv_folder,"fpc.bin.json"),
     vegc = paste0(pnv_folder,"vegc.bin.json"),
     pft_lai = paste0(pnv_folder,"pft_lai.bin.json"),
-    temp = "/p/projects/lpjml/input/historical/GSWP3-W5E5/tas_gswp3-w5e5_1901-2016.clm",
-    elevation = "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin"
+    temp = paste0(lpj_input,"/GSWP3-W5E5/tas_gswp3-w5e5_1901-2016.clm"),
+    elevation = paste0(lpj_input,"/input_VERSION2/elevation.bin")
   ),
   time_span_reference = as.character(1901:1910), 
   savanna_proxy = list(pft_lai = 6),
   montane_arctic_proxy = list(elevation = 1000) 
 )
 
-plot_biomes(biome_data = biome_classes,
+plot_biomes_mercator(biome_data = biome_classes,
             display_area = TRUE,
             cellarea = cellarea,
             file_name = paste0(out_folder,"EcoRisk/biomes_2005-2014.png"),
             order_legend = seq_len(19),
             to_robinson = FALSE)
-plot_biomes(biome_data=biome_classes_pi,
+plot_biomes_mercator(biome_data=biome_classes_pi,
             display_area = TRUE,
             cellarea = cellarea,
             file_name = paste0(out_folder,"EcoRisk/biomes_1901-1910.png"),
