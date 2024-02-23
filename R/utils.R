@@ -40,7 +40,7 @@ get_major_file_ext <- function(path) {
     z = all_file_types
   ) %>%
     na.omit()
-
+  browser()
   # Detect actual LPJmL data type
   types <- sapply(
     files_to_check,
@@ -147,7 +147,32 @@ get_filenames <- function(path, # nolint
 }
 
 
-# list required output files
+ 
+#' List required output files for given metric
+#'
+#' List required output files for given metric based on parameter file
+#' `inst/extfiles/metric_files.yml`
+#'
+#' @param metric character string/list of strings. metrics to list outputs for
+#'        can be one of: 
+#'        "all" - list all outputs for all metrics
+#'        "ecorisk" - list outputs for ecorisk metric without nitrogen
+#'        "ecorisk_nitrogen" - list outputs for ecorisk metric with nitrogen
+#'        "biocol" - list outputs for biocol metric
+#'        "biome" - list outputs for the biome classification
+#' @param only_first_filename if several legal output names are listed, only 
+#'        output the first of them (default: TRUE)
+#' 
+#' @return list object with required outputs, their required temporal resolution 
+#'         and if it is optional
+#' 
+#' @examples
+#' \dontrun{
+#' list_outputs(metric = "ecorisk_nitrogen")
+#' }
+#'
+#' @md
+#' @export
 list_outputs <- function(metric = "all",
                          only_first_filename = TRUE) {
   metric <- process_metric(metric = metric)
@@ -165,16 +190,11 @@ list_outputs <- function(metric = "all",
 # Translate metric options into internal metric names
 process_metric <- function(metric = "all") {
   all_metrics <- c(
-    "meco", "meco_nitrogen", "mcol", "biome", "nitrogen", "lsc",
-    "bluewater", "greenwater", "water", "biosphere"
+    "ecorisk", "ecorisk_nitrogen", "biocol", "biome"
   )
 
   if ("all" %in% metric) {
     metric <- all_metrics
-  }
-
-  if ("benchmark" %in% metric) {
-    metric <- "benchmark"
   }
 
   metric <- match.arg(

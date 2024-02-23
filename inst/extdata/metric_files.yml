@@ -7,18 +7,23 @@ metric:
         # LPJmL output IDs with required resolution
         output: &biome_output
             grid:
+                name: "grid"
                 resolution: "annual"
                 optional: false
             fpc:
+                name: "fpc"
                 resolution: "annual"
                 optional: false
             vegc:
+                name: "vegc"
                 resolution: "annual"
                 optional: true
             pft_lai:
+                name: "pft_lai"
                 resolution: "annual"
                 optional: true
             temp: 
+                name: "temp"
                 resolution: "annual"
                 optional: true
         # Called boundaries functions

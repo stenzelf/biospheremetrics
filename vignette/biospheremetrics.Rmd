@@ -1,0 +1,47 @@
+---
+title: "Computing biospheremetrics"
+author: "Fabian Stenzel"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  # pdf_document: default
+  md_document:
+    variant: gfm
+knit: (function(inputFile, encoding){
+  rmarkdown::render(inputFile, encoding = encoding,
+  output_format = "all") })
+vignette: >
+  %\VignetteIndexEntry{Computing biospheremetrics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+**biospheremetrics** is an R package to calculate two complementary terrestrial 
+biosphere integrity indicators: 
+* human colonization of the biosphere (BioCol) 
+* risk of ecosystem destabilization (EcoRisk)
+
+based on outputs from simulations with a dynamic vegetation model 
+(currently only LPJmL <https://github.com/PIK-LPJmL/LPJmL>).
+**biospheremetrics** utilizes the read functions of the lpjmlkit (<https://github.com/PIK-LPJmL/lpjmlkit>) package. 
+
+## Preparations
+In order to compute the indicators it is thus necessary to first run LPJmL, and 
+produce the required outputs.
+A list of required outputs per metric (e.g. for EcoRisk with nitrogen) can be 
+obtained like this:
+```{r}
+list_outputs(metric = "ecorisk_nitrogen")
+```
+```{r}
+list_outputs(metric = "ecorisk_nitrogen")
+```
+
+Note that `starwars` is a tibble, a modern reimagining of the data frame. It's particularly useful for large datasets because it only prints the first few rows. You can learn more about tibbles at <https://tibble.tidyverse.org>; in particular you can convert data frames to tibbles with `as_tibble()`.

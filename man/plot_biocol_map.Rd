@@ -6,31 +6,29 @@
 \usage{
 plot_biocol_map(
   data,
-  file,
+  file = NULL,
   title = "",
   legendtitle = "",
   zero_threshold = 0.001,
-  eps = FALSE,
-  haberl_legend = FALSE
+  haberl_legend = FALSE,
+  eps = FALSE
 )
 }
 \arguments{
 \item{data}{array containing BioCol percentage value for each gridcell}
 
-\item{file}{character string for location/file to save plot to}
+\item{file}{to write into, if not supplied (default is NULL) write to screen}
 
-\item{title}{character string title for plot}
+\item{title}{character string title for plot (default: "")}
 
-\item{legendtitle}{character string legend title}
+\item{legendtitle}{character string legend title (default: "")}
 
 \item{zero_threshold}{smallest value to be distinguished from 0 in legend,
-both for negative and positive values (default: 0.1)}
-
-\item{eps}{write eps file instead of PNG (boolean) - (default: FALSE)}
+both for negative and positive values (default: 0.001)}
 
 \item{haberl_legend}{use color palette from Haberl et al.? (default: FALSE)}
 
-\item{plotyears}{range of years to plot over time}
+\item{eps}{write eps file instead of PNG (boolean) - (default: FALSE)}
 }
 \description{
 Plot global map of BioCol to file with legend colors similar to
