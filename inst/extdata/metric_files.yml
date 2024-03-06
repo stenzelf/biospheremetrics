@@ -7,23 +7,18 @@ metric:
         # LPJmL output IDs with required resolution
         output: &biome_output
             grid:
-                name: "grid"
                 resolution: "annual"
                 optional: false
             fpc:
-                name: "fpc"
                 resolution: "annual"
                 optional: false
             vegc:
-                name: "vegc"
                 resolution: "annual"
                 optional: true
             pft_lai:
-                name: "pft_lai"
                 resolution: "annual"
                 optional: true
             temp: 
-                name: "temp"
                 resolution: "annual"
                 optional: true
         # Called boundaries functions
@@ -35,107 +30,81 @@ metric:
         # LPJmL output IDs with required resolution
         output: &ecorisk_output
             grid:
-                name: "grid"
                 resolution: "annual"
                 optional: false
             terr_area:
-                name: "terr_area"
                 resolution: "annual"
                 optional: false
             fpc:
-                name: "fpc"
                 resolution: "annual"
                 optional: false
             fpc_bft:
-                name: "fpc_bft"
                 resolution: "annual"
                 optional: false
             cftfrac:
-                name: "cftfrac"
                 resolution: "annual"
                 optional: false
             firec:
-                name: "firec"
                 resolution: "annual"
                 optional: false
             npp:
-                name: "npp"
                 resolution: "annual"
                 optional: false
             gpp:
-                name: "gpp"
                 resolution: "annual"
                 optional: false
             runoff:
-                name: "runoff"
                 resolution: "annual"
                 optional: false
             irrig:     
-                name: "irrig"           
                 resolution: "annual"
                 optional: false
             transp:
-                name: "transp"
                 resolution: "annual"
                 optional: false
             vegc:
-                name: "vegc"
                 resolution: "annual"
                 optional: false
             firef:
-                name: "firef"
                 resolution: "annual"
                 optional: false
             harvestc:
-                name: "harvestc"
                 resolution: "annual"
                 optional: false
             evap:
-                name: "evap"
                 resolution: "annual"
                 optional: false
             interc:
-                name: "interc"
                 resolution: "annual"
                 optional: false
             soilc:
-                name: "soilc"
                 resolution: "annual"
                 optional: false
             litc:
-                name: "litc"
                 resolution: "annual"
                 optional: false
             swc:
-                name: "swc"
                 resolution: "annual"
                 optional: false
             swc_vol:
-                name: "swc_vol"
                 resolution: "annual"
                 optional: false
             swe:
-                name: "swe"
                 resolution: "annual"
                 optional: false
             res_storage:
-                name: "res_storage"
                 resolution: "annual"
                 optional: false
             irrig_stor:
-                name: "irrig_stor"
                 resolution: "annual"
                 optional: false
             rivervol:
-                name: "rivervol"
                 resolution: "annual"
                 optional: false
             lakevol:
-                name: "lakevol"
                 resolution: "annual"
                 optional: false
             prec:
-                name: "prec"
                 resolution: "annual"
                 optional: false
         metric_class: &ecorisk_classes
@@ -170,15 +139,12 @@ metric:
         output:
             <<: *ecorisk_output
             vegn:
-                name: "vegn"
                 resolution: "annual"
                 optional: false
             harvestn:
-                name: "harvestn"
                 resolution: "annual"
                 optional: false
             firen:
-                name: "firen"
                 resolution: "annual"
                 optional: false
             soilnh4:
@@ -186,43 +152,33 @@ metric:
                 resolution: "annual"
                 optional: false
             soilno3:
-                name: "soilno3"
                 resolution: "annual"
                 optional: false
             leaching:
-                name: "leaching"
                 resolution: "annual"
                 optional: false
             n2o_denit:
-                name: "n2o_denit"
                 resolution: "annual"
                 optional: false
             n2o_nit:
-                name: "n2o_nit"
                 resolution: "annual"
                 optional: false
             n2_emis:
-                name: "n2_emis"
                 resolution: "annual"
                 optional: false
             bnf:
-                name: "bnf"
                 resolution: "annual"
                 optional: false
             ndepos:
-                name: "ndepos"
                 resolution: "annual"
                 optional: false
             n_volatilization:
-                name: "n_volatilization"
                 resolution: "annual"
                 optional: false
             nfert_agr:
-                name: "nfert_agr"
                 resolution: "annual"
                 optional: false
             nmanure_agr:
-                name: "nmanure_agr"
                 resolution: "annual"
                 optional: false
         metric_class: 
@@ -246,43 +202,33 @@ metric:
         # LPJmL output IDs with required resolution
         output:
             grid:
-                name: "grid"
                 resolution: "annual"
                 optional: false
             terr_area:
-                name: "terr_area"
                 resolution: "annual"
                 optional: false
             npp:
-                name: "npp"
                 resolution: "annual"
                 optional: false
             pft_npp:
-                name: "pft_npp"
                 resolution: "annual"
                 optional: false
             pft_harvestc:
-                name: "pft_harvest.pft"
                 resolution: "annual"
                 optional: false
             pft_rharvestc:
-                name: "pft_rharvest.pft"
                 resolution: "annual"
                 optional: false
             firec:
-                name: "firec"
                 resolution: "annual"
                 optional: false
             timber_harvestc:
-                name: "timber_harvestc"
                 resolution: "annual"
                 optional: false
             cftfrac:
-                name: "cftfrac"
                 resolution: "annual"
                 optional: false
             fpc:
-                name: "fpc"
                 resolution: "annual"
                 optional: false
         # Called boundaries functions
@@ -293,41 +239,50 @@ metric:
 # Allowed output file names for LPJmL output IDs
 # ---------------------------------------------------------------------------- #
 file_name:
-    grid: ["grid"]
-    discharge: ["discharge", "mdischarge"]
-    irrig: ["irrig", "mirrig"]
-    rootmoist:  ["rootmoist", "mrootmoist"]
-    swc: ["swc", "mswc"]
-    fpc: ["fpc"]
-    fpc_bft: ["fpc_bft"]
+    bnf: ["bnf", "mbnf"]
     cftfrac: ["cftfrac"]
-    firec: ["firec", "mfirec"]
-    npp: ["npp", "mnpp"]
-    runoff: ["runoff", "mrunoff"]
-    transp: ["transp", "mtransp"]
-    vegc: ["vegc"]
-    firef: ["firef", "mfiref"]
-    rh: ["rh"]
-    rd: ["rd"]
-    harvestc: ["harvestc"]
     evap: ["evap", "mevap"]
+    firec: ["firec", "mfirec"]
+    firef: ["firef", "mfiref"]
+    firen: ["firen"]
+    fpc_bft: ["fpc_bft"]
+    fpc: ["fpc"]
+    gpp: ["gpp"]
+    grid: ["grid"]
+    harvestc: ["harvestc"]    
+    harvestn: ["harvestn"]
     interc: ["interc", "minterc"]
-    soilc: ["soilc"]
-    litc: ["litc"]
-    vegn: ["vegn"]
-    soilnh4: ["soilnh4"]
-    soilno3: ["soilno3"]
+    irrig: ["irrig", "mirrig"]
+    irrig_stor: ["irrig_stor"]
+    lakevol: ["lakevol"]
     leaching: ["leaching", "mleaching"]
+    litc: ["litc"]
+    n_volatilization: ["n_volatilization", "mn_volatilization"]
+    n2_emis: ["n2_emis", "mn2_emis"]
     n2o_denit: ["n2o_denit", "mn2o_denit"]
     n2o_nit: ["n2o_nit", "mn2o_nit"]
-    n2_emis: ["n2_emis", "mn2_emis"]
-    bnf: ["bnf", "mbnf"]
-    n_volatilization: ["n_volatilization", "mn_volatilization"]
-    pft_npp: ["pft_npp"]
+    ndepos: ["ndepos"]
+    nfert_agr: ["nfert_agr"]
+    nmanure_agr: ["nmanure_agr"]
+    npp: ["npp", "mnpp"]
     pft_harvestc: ["pft_harvestc"]
-    pft_rharvestc: ["pft_rharvestc"]
-    timber_harvestc: ["timber_harvestc"]
     pft_lai: ["pft_lai", "mpft_lai"]
-    temp: ["temp", "mtemp"]
-    pet: ["pet", "mpet"]
+    pft_npp: ["pft_npp"]
+    pft_rharvestc: ["pft_rharvestc"]
     prec: ["prec","mprec"]
+    res_storage: ["res_storage"]
+    rivervol: ["rivervol"]
+    runoff: ["runoff"]
+    soilc: ["soilc"]
+    soilnh4: ["soilnh4"]
+    soilno3: ["soilno3"]
+    swc: ["swc", "mswc"]
+    swc_vol: ["swc_vol"]
+    swe: ["swe"]
+    temp: ["temp", "mtemp"]
+    terr_area: ["terr_area"]
+    timber_harvestc: ["timber_harvestc"]
+    transp: ["transp", "mtransp"]
+    vegc: ["vegc"]
+    vegn: ["vegn"]
+

@@ -224,7 +224,6 @@ process_metric <- function(metric = "all") {
 # for input list a, all duplicate keys are unified, taking the value with
 #     highest temporal resolution (daily>monthly>annual)
 get_outputs <- function(x, metric_name, only_first_filename) { # nolint
-
   outputs <- list()
   # Iterate over all metrics
   for (metric in x$metric[metric_name]) {
