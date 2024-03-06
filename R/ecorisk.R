@@ -27,6 +27,10 @@
 #' @param overtime logical: calculate ecorisk as time-series? (default: FALSE)
 #' @param window integer, number of years for window length (default: 30)
 #' @param debug write out all nitrogen state variables (default FALSE)
+#' @param replace_input_file_names list with alternative names for output 
+#'        identifiers to replace the ones in inst/ext_files/metric_files.yml.
+#'        e.g. list(npp="mnpp") would replace the expected output for npp with 
+#'        mnpp followed by the automatically detected file extension (.bin.json)
 #' @param suppressWarnings suppress warnings - default: TRUE
 #' @param external_variability use externally supplied variability for the 
 #'        reference period? experimental! (default: FALSE)
@@ -66,6 +70,7 @@ ecorisk_wrapper <- function(path_ref,
                             overtime = FALSE,
                             window = 30,
                             debug = FALSE,
+                            replace_input_file_names = NULL,
                             external_variability = FALSE,
                             c2vr = NULL,
                             suppressWarnings = TRUE) {
@@ -95,8 +100,13 @@ ecorisk_wrapper <- function(path_ref,
   
   for (output in names(metric_files$metric$ecorisk_nitrogen$output)) {
     # Iterate over all outputs
-    files_scenario[[output]] <- paste0(path_scen, metric_files$file_name[[output]][1], ".", file_extension)
-    files_reference[[output]] <- paste0(path_ref, metric_files$file_name[[output]][1], ".", file_extension)
+    if (is.null(replace_input_file_names)){
+      files_scenario[[output]] <- paste0(path_scen, metric_files$file_name[[output]][1], ".", file_extension)
+      files_reference[[output]] <- paste0(path_ref, metric_files$file_name[[output]][1], ".", file_extension)
+    } else {
+      files_scenario[[output]] <- paste0(path_scen, replace_input_file_names$output, ".", file_extension)
+      files_reference[[output]] <- paste0(path_ref, replace_input_file_names$output, ".", file_extension)
+    }
   }
   
   if (overtime && (window != nyears)) stop("Overtime is enabled, but window \

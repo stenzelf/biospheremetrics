@@ -617,6 +617,10 @@ read_calc_biocol <- function(
 #'        fraction c(cell,month,year) since 1500
 #' @param external_wood_harvest_file path to R-file containing processed
 #'        timeline of maps for LUH2_v2h woodharvest
+#' @param replace_input_file_names list with alternative names for output 
+#'        identifiers to replace the ones in inst/ext_files/metric_files.yml.
+#'        e.g. list(npp="mnpp") would replace the expected output for npp with 
+#'        mnpp followed by the automatically detected file extension (.bin.json)
 #' @param suppressWarnings suppress warnings when reading files (default: TRUE)
 #'
 #' @return list data object containing BioCol and components as arrays: biocol,
@@ -663,6 +667,7 @@ calc_biocol <- function(
     grass_harvest_file = NULL,
     external_fire_file = NULL,
     external_wood_harvest_file = NULL,
+    replace_input_file_names = NULL,
     suppressWarnings = TRUE) {
   
   metric_files <- system.file(
@@ -680,8 +685,13 @@ calc_biocol <- function(
   
   for (output in names(metric_files$metric$biocol$output)) {
     # Iterate over all outputs
-    files_scenario[[output]] <- paste0(path_lu, metric_files$file_name[[output]][1], ".", file_extension)
-    files_baseline[[output]] <- paste0(path_pnv, metric_files$file_name[[output]][1], ".", file_extension)
+    if (is.null(replace_input_file_names)){
+      files_scenario[[output]] <- paste0(path_lu, metric_files$file_name[[output]][1], ".", file_extension)
+      files_baseline[[output]] <- paste0(path_pnv, metric_files$file_name[[output]][1], ".", file_extension)
+    } else {
+      files_scenario[[output]] <- paste0(path_lu, replace_input_file_names$output, ".", file_extension)
+      files_baseline[[output]] <- paste0(path_pnv, replace_input_file_names$output, ".", file_extension)
+    }
   }
   
   if (is.null(reference_npp_file)) reference_npp_file <- files_baseline$npp
