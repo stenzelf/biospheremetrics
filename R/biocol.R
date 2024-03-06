@@ -680,8 +680,8 @@ calc_biocol <- function(
   
   for (output in names(metric_files$metric$biocol$output)) {
     # Iterate over all outputs
-    files_scenario[[output]] <- paste0(path_scen, metric_files$file_name[[output]][1], ".", file_extension)
-    files_baseline[[output]] <- paste0(path_ref, metric_files$file_name[[output]][1], ".", file_extension)
+    files_scenario[[output]] <- paste0(path_lu, metric_files$file_name[[output]][1], ".", file_extension)
+    files_baseline[[output]] <- paste0(path_pnv, metric_files$file_name[[output]][1], ".", file_extension)
   }
   
   if (is.null(reference_npp_file)) reference_npp_file <- files_baseline$npp
