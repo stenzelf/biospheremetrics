@@ -59,9 +59,10 @@
 #'
 #' @return list data object containing BioCol and components as arrays: 
 #'         biocol_overtime, biocol_overtime_abs, biocol_overtime_abs_frac_piref, 
-#'         biocol_overtime_frac_piref, biocol_overtime_frac, 
-#'         biocol_overtime_abs_frac, npp_harv_overtime, npp_luc_overtime, 
-#'         npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
+#'         biocol_overtime_abs_frac, biocol_overtime_pos,
+#'         biocol_overtime_pos_frac_piref,biocol_overtime_pos_frac,
+#'         biocol_overtime_frac_piref, biocol_overtime_frac, npp_harv_overtime, 
+#'         npp_luc_overtime,npp_act_overtime, npp_pot_overtime,npp_eco_overtime, 
 #'         harvest_grasslands_overtime, harvest_bioenergy_overtime, 
 #'         harvest_cft_overtime, rharvest_cft_overtime, fire_overtime, 
 #'         timber_harvest_overtime, wood_harvest_overtime, biocol, biocol_frac, 
@@ -532,14 +533,25 @@ read_calc_biocol <- function(
   biocol_overtime_abs_frac_piref <- biocol_overtime_abs * 10^15 /
     mean(colSums(npp_ref * cellarea))
   biocol_overtime_abs_frac <- biocol_overtime_abs / npp_pot_overtime
-
+  
+  # take the abs of biocol and sum that up for overtime
+  biocol_pos <- biocol
+  biocol_pos[biocol_pos<0] <- 0
+  biocol_overtime_pos <- colSums(biocol_pos * cellarea) / 10^15
+  biocol_overtime_pos_frac_piref <- biocol_overtime_pos * 10^15 /
+    mean(colSums(npp_ref * cellarea))
+  biocol_overtime_pos_frac <- biocol_overtime_pos / npp_pot_overtime
+  
   return(list(
     biocol_overtime = biocol_overtime,
     biocol_overtime_abs = biocol_overtime_abs,
     biocol_overtime_abs_frac_piref = biocol_overtime_abs_frac_piref,
+    biocol_overtime_abs_frac = biocol_overtime_abs_frac,
+    biocol_overtime_pos = biocol_overtime_pos,
+    biocol_overtime_pos_frac_piref = biocol_overtime_pos_frac_piref,
+    biocol_overtime_pos_frac = biocol_overtime_pos_frac,
     biocol_overtime_frac_piref = biocol_overtime_frac_piref,
     biocol_overtime_frac = biocol_overtime_frac,
-    biocol_overtime_abs_frac = biocol_overtime_abs_frac,
     npp_harv_overtime = npp_harv_overtime,
     npp_luc_overtime = npp_luc_overtime,
     npp_act_overtime = npp_act_overtime,
@@ -660,34 +672,18 @@ calc_biocol <- function(
   ) %>%
     yaml::read_yaml()
 
-  file_extension <- get_major_file_ext(paste0(path_lu))
-  outputs <- metric_files$metric$biocol$output
-
   # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
-  files_scenario <- list(
-    grid = paste0(path_lu, outputs$grid$name, ".", file_extension),
-    terr_area = paste0(path_lu, outputs$terr_area$name, ".", file_extension),
-    npp = paste0(path_lu, outputs$npp$name, ".", file_extension),
-    pft_npp = paste0(path_lu, outputs$pft_npp$name, ".", file_extension),
-    pft_harvestc = paste0(path_lu, outputs$pft_harvestc$name, ".", file_extension),
-    pft_rharvestc = paste0(path_lu, outputs$pft_rharvestc$name, ".", file_extension),
-    firec = paste0(path_lu, outputs$firec$name, ".", file_extension),
-    timber_harvestc = paste0(path_lu, outputs$timber_harvestc$name, ".", file_extension),
-    cftfrac = paste0(path_lu, outputs$cftfrac$name, ".", file_extension),
-    fpc = paste0(path_lu, outputs$fpc$name, ".", file_extension)
-  )
-  files_baseline <- list(
-    grid = paste0(path_pnv, outputs$grid$name, ".", file_extension),
-    terr_area = paste0(path_pnv, outputs$terr_area$name, ".", file_extension),
-    npp = paste0(path_pnv, outputs$npp$name, ".", file_extension),
-    pft_npp = paste0(path_pnv, outputs$pft_npp$name, ".", file_extension),
-    pft_harvestc = paste0(path_pnv, outputs$pft_harvestc$name, ".", file_extension),
-    pft_rharvestc = paste0(path_pnv, outputs$pft_rharvestc$name, ".", file_extension),
-    firec = paste0(path_pnv, outputs$firec$name, ".", file_extension),
-    timber_harvestc = paste0(path_pnv, outputs$timber_harvestc$name, ".", file_extension),
-    cftfrac = paste0(path_pnv, outputs$cftfrac$name, ".", file_extension),
-    fpc = paste0(path_pnv, outputs$fpc$name, ".", file_extension)
-  )
+  file_extension <- get_major_file_ext(paste0(path_lu))
+  files_names <- metric_files$file_name
+  files_scenario <- list()
+  files_baseline <- list()
+  
+  for (output in names(metric_files$metric$biocol$output)) {
+    # Iterate over all outputs
+    files_scenario[[output]] <- paste0(path_scen, metric_files$file_name[[output]][1], ".", file_extension)
+    files_baseline[[output]] <- paste0(path_ref, metric_files$file_name[[output]][1], ".", file_extension)
+  }
+  
   if (is.null(reference_npp_file)) reference_npp_file <- files_baseline$npp
   files_reference <- list(
     npp = reference_npp_file

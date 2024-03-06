@@ -89,93 +89,16 @@ ecorisk_wrapper <- function(path_ref,
     yaml::read_yaml()
 
   file_extension <- get_major_file_ext(paste0(path_scen))
-  outputs <- metric_files$metric$ecorisk_nitrogen$output
-
-  files_scenario <- list(
-    grid = paste0(path_scen, outputs$grid$name, ".", file_extension),
-    terr_area = paste0(path_scen, outputs$terr_area$name, ".", file_extension),
-    fpc = paste0(path_scen, outputs$fpc$name, ".", file_extension),
-    fpc_bft = paste0(path_scen, outputs$fpc_bft$name, ".", file_extension),
-    cftfrac = paste0(path_scen, outputs$cftfrac$name, ".", file_extension),
-    firec = paste0(path_scen, outputs$firec$name, ".", file_extension),
-    npp = paste0(path_scen, outputs$npp$name, ".", file_extension),
-    runoff = paste0(path_scen, outputs$runoff$name, ".", file_extension),
-    transp = paste0(path_scen, outputs$transp$name, ".", file_extension),
-    vegc = paste0(path_scen, outputs$vegc$name, ".", file_extension),
-    firef = paste0(path_scen, outputs$firef$name, ".", file_extension),
-    harvestc = paste0(path_scen, outputs$harvestc$name, ".", file_extension),
-    evap = paste0(path_scen, outputs$evap$name, ".", file_extension),
-    interc = paste0(path_scen, outputs$interc$name, ".", file_extension),
-    soilc = paste0(path_scen, outputs$soilc$name, ".", file_extension),
-    litc = paste0(path_scen, outputs$litc$name, ".", file_extension),
-    swc = paste0(path_scen, outputs$swc$name, ".", file_extension),
-    swc_vol = paste0(path_scen, outputs$swc_vol$name, ".", file_extension),
-    swe = paste0(path_scen, outputs$swe$name, ".", file_extension),
-    vegn = paste0(path_scen, outputs$vegn$name, ".", file_extension),
-    soilnh4 = paste0(path_scen, outputs$soilnh4$name, ".", file_extension),
-    soilno3 = paste0(path_scen, outputs$soilno3$name, ".", file_extension),
-    leaching = paste0(path_scen, outputs$leaching$name, ".", file_extension),
-    n2o_denit = paste0(path_scen, outputs$n2o_denit$name, ".", file_extension),
-    n2o_nit = paste0(path_scen, outputs$n2o_nit$name, ".", file_extension),
-    n2_emis = paste0(path_scen, outputs$n2_emis$name, ".", file_extension),
-    bnf = paste0(path_scen, outputs$bnf$name, ".", file_extension),
-    n_volatilization = paste0(path_scen, outputs$n_volatilization$name, ".", file_extension),
-    gpp = paste0(path_scen, outputs$gpp$name, ".", file_extension),
-    res_storage = paste0(path_scen, outputs$res_storage$name, ".", file_extension),
-    lakevol = paste0(path_scen, outputs$lakevol$name, ".", file_extension),
-    prec = paste0(path_scen, outputs$prec$name, ".", file_extension),
-    irrig = paste0(path_scen, outputs$irrig$name, ".", file_extension),
-    nfert_agr = paste0(path_scen, outputs$nfert_agr$name, ".", file_extension),
-    nmanure_agr = paste0(path_scen, outputs$nmanure_agr$name, ".", file_extension),
-    ndepos = paste0(path_scen, outputs$ndepos$name, ".", file_extension),
-    firen = paste0(path_scen, outputs$firen$name, ".", file_extension),
-    harvestn = paste0(path_scen, outputs$harvestn$name, ".", file_extension),
-    irrig_stor = paste0(path_scen, outputs$irrig_stor$name, ".", file_extension),
-    rivervol = paste0(path_scen, outputs$rivervol$name, ".", file_extension)
-  )
-  files_reference <- list(
-    grid = paste0(path_ref, outputs$grid$name, ".", file_extension),
-    terr_area = paste0(path_ref, outputs$terr_area$name, ".", file_extension),
-    fpc = paste0(path_ref, outputs$fpc$name, ".", file_extension),
-    fpc_bft = paste0(path_ref, outputs$fpc_bft$name, ".", file_extension),
-    cftfrac = paste0(path_ref, outputs$cftfrac$name, ".", file_extension),
-    firec = paste0(path_ref, outputs$firec$name, ".", file_extension),
-    npp = paste0(path_ref, outputs$npp$name, ".", file_extension),
-    runoff = paste0(path_ref, outputs$runoff$name, ".", file_extension),
-    transp = paste0(path_ref, outputs$transp$name, ".", file_extension),
-    vegc = paste0(path_ref, outputs$vegc$name, ".", file_extension),
-    firef = paste0(path_ref, outputs$firef$name, ".", file_extension),
-    harvestc = paste0(path_ref, outputs$harvestc$name, ".", file_extension),
-    evap = paste0(path_ref, outputs$evap$name, ".", file_extension),
-    interc = paste0(path_ref, outputs$interc$name, ".", file_extension),
-    soilc = paste0(path_ref, outputs$soilc$name, ".", file_extension),
-    litc = paste0(path_ref, outputs$litc$name, ".", file_extension),
-    swc = paste0(path_ref, outputs$swc$name, ".", file_extension),
-    swc_vol = paste0(path_ref, outputs$swc_vol$name, ".", file_extension),
-    swe = paste0(path_ref, outputs$swe$name, ".", file_extension),
-    vegn = paste0(path_ref, outputs$vegn$name, ".", file_extension),
-    soilnh4 = paste0(path_ref, outputs$soilnh4$name, ".", file_extension),
-    soilno3 = paste0(path_ref, outputs$soilno3$name, ".", file_extension),
-    leaching = paste0(path_ref, outputs$leaching$name, ".", file_extension),
-    n2o_denit = paste0(path_ref, outputs$n2o_denit$name, ".", file_extension),
-    n2o_nit = paste0(path_ref, outputs$n2o_nit$name, ".", file_extension),
-    n2_emis = paste0(path_ref, outputs$n2_emis$name, ".", file_extension),
-    bnf = paste0(path_ref, outputs$bnf$name, ".", file_extension),
-    n_volatilization = paste0(path_ref, outputs$n_volatilization$name, ".", file_extension),
-    gpp = paste0(path_ref, outputs$gpp$name, ".", file_extension),
-    res_storage = paste0(path_ref, outputs$res_storage$name, ".", file_extension),
-    lakevol = paste0(path_ref, outputs$lakevol$name, ".", file_extension),
-    prec = paste0(path_ref, outputs$prec$name, ".", file_extension),
-    irrig = paste0(path_ref, outputs$irrig$name, ".", file_extension),
-    nfert_agr = paste0(path_ref, outputs$nfert_agr$name, ".", file_extension),
-    nmanure_agr = paste0(path_ref, outputs$nmanure_agr$name, ".", file_extension),
-    ndepos = paste0(path_ref, outputs$ndepos$name, ".", file_extension),
-    firen = paste0(path_ref, outputs$firen$name, ".", file_extension),
-    harvestn = paste0(path_ref, outputs$harvestn$name, ".", file_extension),
-    irrig_stor = paste0(path_ref, outputs$irrig_stor$name, ".", file_extension),
-    rivervol = paste0(path_ref, outputs$rivervol$name, ".", file_extension)
-  )
-
+  files_names <- metric_files$file_name
+  files_scenario <- list()
+  files_reference <- list()
+  
+  for (output in names(metric_files$metric$ecorisk_nitrogen$output)) {
+    # Iterate over all outputs
+    files_scenario[[output]] <- paste0(path_scen, metric_files$file_name[[output]][1], ".", file_extension)
+    files_reference[[output]] <- paste0(path_ref, metric_files$file_name[[output]][1], ".", file_extension)
+  }
+  
   if (overtime && (window != nyears)) stop("Overtime is enabled, but window \
                   length (", window, ") does not match the reference nyears.")
 
