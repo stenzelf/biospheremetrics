@@ -93,7 +93,9 @@ plot_global <- function(data,
       )
     }
   }
-
+  if (!is.null(min)){
+    if (min == 0) only_pos <- TRUE
+  }
   if (only_pos) {
     if (type == "exp") {
       if (is.null(pow2max) | is.null(pow2min)) {
@@ -146,6 +148,10 @@ plot_global <- function(data,
         grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) / 2 - 1) # nolint
       )
     } else { # type == man
+      if (is.null(palette)) {
+        message("Manual breaks, but not palette given, using default.")
+        palette <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_pos))(length(brks) - 1) # nolint
+      }
       if (only_pos) stop("Manual breaks and palette, but conflicting parameter
               only_pos == TRUE defined. Aborting.")
       legendticks <- brks
