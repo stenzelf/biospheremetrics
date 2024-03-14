@@ -2,14 +2,26 @@
 
 
 *The goal of biospheremetrics is to provide functions to calculate and plot 
-the biosphere integrity metrics M-ECO and M-ECO in an R package based on 
+the biosphere integrity metrics BioCol and Ecorisk in an R package based on 
 outputs of [LPJmL](https://gitlab.pik-potsdam.de/lpjml/LPJmL_internal).
 biospheremetrics utilizes the read functions of the 
 [lpjmlkit package](https://gitlab.pik-potsdam.de/lpjml/lpjmlkit).*
 
 ## Installation
 
-You can install `biospheremetrics` by git cloning this repository:
+The easiest way to install biospheremetrics is by directly loading it from github/gitlab depending on what you have access to:
+
+```R
+devtools::install_git("git@github.com:stenzelf/biospheremetrics.git")
+library(biospheremetrics)
+```
+or
+```R
+devtools::install_git("git@gitlab.pik-potsdam.de:stenzel/biospheremetrics.git")
+library(biospheremetrics)
+```
+
+Alternatively, you can install `biospheremetrics` by git cloning this repository:
 
 ```bash
 git clone https://gitlab.pik-potsdam.de/stenzel/biospheremetrics.git <path_to_biospheremetrics>
