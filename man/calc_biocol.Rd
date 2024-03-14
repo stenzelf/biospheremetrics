@@ -23,6 +23,7 @@ calc_biocol(
   grass_harvest_file = NULL,
   external_fire_file = NULL,
   external_wood_harvest_file = NULL,
+  replace_input_file_names = NULL,
   suppressWarnings = TRUE
 )
 }
@@ -80,6 +81,11 @@ fraction c(cell,month,year) since 1500}
 
 \item{external_wood_harvest_file}{path to R-file containing processed
 timeline of maps for LUH2_v2h woodharvest}
+
+\item{replace_input_file_names}{list with alternative names for output
+identifiers to replace the ones in inst/ext_files/metric_files.yml.
+e.g. list(npp="mnpp") would replace the expected output for npp with
+mnpp followed by the automatically detected file extension (.bin.json)}
 
 \item{suppressWarnings}{suppress warnings when reading files (default: TRUE)}
 }

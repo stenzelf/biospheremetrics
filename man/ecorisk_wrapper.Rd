@@ -18,6 +18,7 @@ ecorisk_wrapper(
   overtime = FALSE,
   window = 30,
   debug = FALSE,
+  replace_input_file_names = NULL,
   external_variability = FALSE,
   c2vr = NULL,
   suppressWarnings = TRUE
@@ -54,6 +55,11 @@ local change, global change and ecosystem balance (default FALSE)}
 \item{window}{integer, number of years for window length (default: 30)}
 
 \item{debug}{write out all nitrogen state variables (default FALSE)}
+
+\item{replace_input_file_names}{list with alternative names for output
+identifiers to replace the ones in inst/ext_files/metric_files.yml.
+e.g. list(npp="mnpp") would replace the expected output for npp with
+mnpp followed by the automatically detected file extension (.bin.json)}
 
 \item{external_variability}{use externally supplied variability for the
 reference period? experimental! (default: FALSE)}
