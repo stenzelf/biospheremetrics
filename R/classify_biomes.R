@@ -1,6 +1,4 @@
-# (a 2023-06-05 copy from the dev-branch of the boundaries package)
-
-#' Classify biomes 
+#' Classify biomes
 #'
 #' Classify biomes based on foliage protected cover (FPC) and temperature
 #' LPJmL output plus either vegetation carbon or pft_lai depending on
@@ -37,16 +35,21 @@
 #'        In the boreal zone, there is no woodland, everything below the
 #'        boreal forest threshold will be classified as boreal tundra.
 #' @param avg_nyear_args list of arguments to be passed to
-#'        \link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
+#'        \link[biospheremetrics]{average_nyear_window} (see for more info). To be used for # nolint
 #'        time series analysis
+#' @param input_files `list` with input file paths to be used instead of outputs
+#'        default: empty list
+#' @param diff_output_files `list` with output files, to be used from another 
+#' location than the output folders - default: empty list
 #' @return list object containing biome_id (main biome per grid cell [dim=c(ncells)]), # nolint
 #' and list of respective biome_names[dim=c(nbiomes)]
 #'
 #' @examples
 #' \dontrun{
 #' classify_biomes(
-#'   path_data = "/p/projects/open/Fabian/runs/Gamma/output/historic_gamma"
-#'   timespan = c(1982:2011))
+#'   path_data = "/path/to/lpjml_run/to/classify",
+#'   timespan = c(1982:2011)
+#' )
 #' }
 #'
 #' @export
@@ -59,17 +62,16 @@ classify_biomes <- function(path_reference = NULL,
                             avg_nyear_args = list(), # currently a place holder
                             input_files = list(),
                             diff_output_files = list()) {
-
   if (is.null(files_reference) && is.null(path_reference)) {
     stop("files_reference or path_reference must be provided")
-
   } else if (!is.null(path_reference) && is.null(files_reference)) {
     # Get main file type (meta, clm)
-    file_ext <- get_file_ext(path_reference)
+    file_ext <- get_major_file_ext(path_reference)
 
     # List required output files for each boundary
     output_files <- list_outputs("biome",
-                                 only_first_filename = FALSE)
+      only_first_filename = FALSE
+    )
 
     files_reference <- get_filenames(
       path = path_reference,
@@ -85,17 +87,21 @@ classify_biomes <- function(path_reference = NULL,
     names(savanna_proxy),
     c(NA, "vegc", "pft_lai")
   )
-  montane_arctic_proxy_name <- match.arg(names(montane_arctic_proxy),
-                                         c(NA, "elevation", "latitude"))
+  montane_arctic_proxy_name <- match.arg(
+    names(montane_arctic_proxy),
+    c(NA, "elevation", "latitude")
+  )
 
   # define default minimum tree cover for forest / woodland / savanna
-  min_tree_cover <- list("boreal forest" = 0.6,
-                         "temperate forest" = 0.6,
-                         "temperate woodland" = 0.3,
-                         "temperate savanna" = 0.1,
-                         "tropical forest" = 0.6,
-                         "tropical woodland" = 0.3,
-                         "tropical savanna" = 0.1)
+  min_tree_cover <- list(
+    "boreal forest" = 0.6,
+    "temperate forest" = 0.6,
+    "temperate woodland" = 0.3,
+    "temperate savanna" = 0.1,
+    "tropical forest" = 0.6,
+    "tropical woodland" = 0.3,
+    "tropical savanna" = 0.1
+  )
 
   # replace default values by values defined in tree_cover_thresholds
   # parameter -> won't be applied if not specified
@@ -111,15 +117,17 @@ classify_biomes <- function(path_reference = NULL,
 
   # test if forest threshold is always > woodland threshold > savanna threshold
   if (min_tree_cover[["temperate forest"]] <=
-        min_tree_cover[["temperate woodland"]] |
-      min_tree_cover[["temperate woodland"]] <=
-        min_tree_cover[["temperate savanna"]] |
-      min_tree_cover[["tropical woodland"]] <=
-        min_tree_cover[["tropical savanna"]] |
-      min_tree_cover[["tropical forest"]] <=
-        min_tree_cover[["tropical woodland"]]) {
-    stop(paste0("Tree cover threshold for forest are not always higher than",
-                "tree cover thresholds for woodland and savanna. Aborting."))
+    min_tree_cover[["temperate woodland"]] |
+    min_tree_cover[["temperate woodland"]] <=
+      min_tree_cover[["temperate savanna"]] |
+    min_tree_cover[["tropical woodland"]] <=
+      min_tree_cover[["tropical savanna"]] |
+    min_tree_cover[["tropical forest"]] <=
+      min_tree_cover[["tropical woodland"]]) {
+    stop(paste0(
+      "Tree cover threshold for forest are not always higher than",
+      "tree cover thresholds for woodland and savanna. Aborting."
+    ))
   }
   # -------------------------------------------------------------------------- #
   # read in relevant data
@@ -131,29 +139,31 @@ classify_biomes <- function(path_reference = NULL,
   lat <- lpjmlkit::as_array(grid, subset = list(band = 2)) %>%
     drop()
   fpc <- lpjmlkit::read_io(
-      files_reference$fpc,
-      subset = list(year = time_span_reference),
-      silent = TRUE
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array()
+    files_reference$fpc,
+    subset = list(year = time_span_reference),
+    silent = TRUE
+  ) %>%
+    lpjmlkit::transform(to = c("year_month_day")) %>%
+    lpjmlkit::as_array()
 
   temp <- lpjmlkit::read_io(
-      files_reference$temp,
-      subset = list(year = time_span_reference),
-      silent = TRUE
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate =
-                           list(month = sum, day = sum, band = sum)) %>%
-      suppressWarnings()
+    files_reference$temp,
+    subset = list(year = time_span_reference),
+    silent = TRUE
+  ) %>%
+    lpjmlkit::transform(to = c("year_month_day")) %>%
+    lpjmlkit::as_array(
+      aggregate =
+        list(month = sum, day = sum, band = sum)
+    ) %>%
+    suppressWarnings()
 
   if (!is.na(savanna_proxy_name)) {
     savanna_proxy_data <- lpjmlkit::read_io(
       files_reference[[savanna_proxy_name]],
       subset = list(year = time_span_reference),
       silent = TRUE
-      ) %>%
+    ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array(aggregate = list(month = sum)) %>%
       suppressWarnings()
@@ -165,7 +175,7 @@ classify_biomes <- function(path_reference = NULL,
         files_reference$elevation,
         silent = TRUE
       )$data %>%
-      drop()
+        drop()
     }
   }
 
@@ -175,8 +185,10 @@ classify_biomes <- function(path_reference = NULL,
   # average fpc
   avg_fpc <- do.call(
     average_nyear_window,
-    append(list(x = fpc),
-           avg_nyear_args)
+    append(
+      list(x = fpc),
+      avg_nyear_args
+    )
   )
 
   # average vegc or pft_lai
@@ -184,8 +196,10 @@ classify_biomes <- function(path_reference = NULL,
     avg_savanna_proxy_data <- drop(
       do.call(
         average_nyear_window,
-        append(list(x = savanna_proxy_data),
-               avg_nyear_args)
+        append(
+          list(x = savanna_proxy_data),
+          avg_nyear_args
+        )
       )
     )
   }
@@ -195,8 +209,10 @@ classify_biomes <- function(path_reference = NULL,
   # (67420, 1)
   avg_temp <- do.call(
     average_nyear_window,
-    append(list(x = temp), # fix_dimnames(temp, "temp", timespan, ncell, npft)),
-           avg_nyear_args)
+    append(
+      list(x = temp), # fix_dimnames(temp, "temp", timespan, ncell, npft)),
+      avg_nyear_args
+    )
   )
 
   # biome_names after biome classification in Ostberg et al. 2013
@@ -206,16 +222,18 @@ classify_biomes <- function(path_reference = NULL,
 
   # biome names
   biome_mapping <- system.file("extdata",
-                               "biomes.csv",
-                               package = "biospheremetrics") %>%
-                   readr::read_delim(col_types = readr::cols(), delim = ";")
+    "biomes.csv",
+    package = "biospheremetrics"
+  ) %>%
+    readr::read_delim(col_types = readr::cols(), delim = ";")
   biome_names <- biome_mapping$id
   names(biome_names) <- biome_mapping$name
 
 
   pft_categories <- system.file("extdata",
-                                "pft_categories.csv",
-                                package = "biospheremetrics") %>%
+    "pft_categories.csv",
+    package = "biospheremetrics"
+  ) %>%
     read_pft_categories() %>%
     dplyr::filter(., npft_proxy == npft)
 
@@ -261,9 +279,10 @@ classify_biomes <- function(path_reference = NULL,
 
   third_dim <- names(dim(avg_fpc))[
     !names(dim(avg_fpc)) %in% c("cell", "band")
-  ] %>% {
-    if (rlang::is_empty(.)) NULL else .
-  }
+  ] %>%
+    {
+      if (rlang::is_empty(.)) NULL else .
+    }
 
   fpc_tree_total <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_trees),
@@ -320,15 +339,13 @@ classify_biomes <- function(path_reference = NULL,
     na.rm = TRUE
   )
 
-  fpc_tree_broadleaf <- fpc_tree_total - fpc_tree_needle
-
   # use vegc 7500 gC/m2 or natLAI 6 as proxy threshold for forest/savanna
   #   "boundary
   if (!is.null(savanna_proxy)) {
     if (savanna_proxy_name == "pft_lai") {
       avg_savanna_proxy_data <- apply(
-        lpjmlkit::asub(avg_savanna_proxy_data, band = 1:npft) * # nolint
-          lpjmlkit::asub(avg_fpc, band = 2: (npft + 1)) *
+        lpjmlkit::asub(avg_savanna_proxy_data, band = seq_len(npft)) * # nolint
+          lpjmlkit::asub(avg_fpc, band = 2:(npft + 1)) *
           lpjmlkit::asub(avg_fpc, band = 1),
         c("cell", third_dim),
         sum
@@ -340,11 +357,13 @@ classify_biomes <- function(path_reference = NULL,
     is_savanna_proxy <- avg_savanna_proxy_data < savanna_proxy[[savanna_proxy_name]] # nolint
   } else {
     is_tropical_proxy <- array(TRUE,
-                               dim = dim(avg_temp),
-                               dimnames = dimnames(avg_temp))
+      dim = dim(avg_temp),
+      dimnames = dimnames(avg_temp)
+    )
     is_savanna_proxy <- array(FALSE,
-                               dim = dim(avg_temp),
-                               dimnames = dimnames(avg_temp))
+      dim = dim(avg_temp),
+      dimnames = dimnames(avg_temp)
+    )
   }
 
   # Desert
@@ -355,15 +374,15 @@ classify_biomes <- function(path_reference = NULL,
 
   # montane (for classification of montane grassland)
   if (!is.na(montane_arctic_proxy_name)) {
-      if (montane_arctic_proxy_name == "elevation") {
-        is_montane_artic <- elevation > montane_arctic_proxy[[
-          montane_arctic_proxy_name
-        ]]
-      } else if (montane_arctic_proxy_name == "latitude") {
-        is_montane_artic <- !(abs(lat) > montane_arctic_proxy[[
-          montane_arctic_proxy_name
-        ]])
-      }
+    if (montane_arctic_proxy_name == "elevation") {
+      is_montane_artic <- elevation > montane_arctic_proxy[[
+        montane_arctic_proxy_name
+      ]]
+    } else if (montane_arctic_proxy_name == "latitude") {
+      is_montane_artic <- !(abs(lat) > montane_arctic_proxy[[
+        montane_arctic_proxy_name
+      ]])
+    }
   }
 
   # FORESTS ------------------------------------------------------------------ #
@@ -379,9 +398,10 @@ classify_biomes <- function(path_reference = NULL,
   # Boreal Evergreen
   is_boreal_evergreen <- {
     is_boreal_forest &
-    lpjmlkit::asub(
-      avg_fpc, band = "boreal needleleaved evergreen tree"
-    ) == max_share_trees
+      lpjmlkit::asub(
+        avg_fpc,
+        band = "boreal needleleaved evergreen tree"
+      ) == max_share_trees
   }
 
   if (npft == 9) {
@@ -389,65 +409,65 @@ classify_biomes <- function(path_reference = NULL,
     # no simulation of boreal needleleaved summergreen trees
     is_boreal_broad_deciduous <- {
       is_boreal_forest &
-      (
+        (
+          lpjmlkit::asub(
+            avg_fpc,
+            band = "boreal broadleaved summergreen tree"
+          ) == max_share_trees
+        )
+    }
+  } else {
+    # Boreal Deciduous
+    is_boreal_broad_deciduous <- {
+      is_boreal_forest &
         lpjmlkit::asub(
           avg_fpc,
           band = "boreal broadleaved summergreen tree"
         ) == max_share_trees
-      )
-    }
-  } else {
- # Boreal Deciduous
-    is_boreal_broad_deciduous <- {
-      is_boreal_forest &
-      lpjmlkit::asub(
-        avg_fpc,
-        band = "boreal broadleaved summergreen tree"
-      ) == max_share_trees 
     }
 
     is_boreal_needle_deciduous <- {
       is_boreal_forest &
-      lpjmlkit::asub(
-        avg_fpc,
-        band = "boreal needleleaved summergreen tree"
-      ) == max_share_trees
+        lpjmlkit::asub(
+          avg_fpc,
+          band = "boreal needleleaved summergreen tree"
+        ) == max_share_trees
     }
   }
 
   # Temperate Coniferous Forest
   is_temperate_coniferous <- {
     is_temperate_forest &
-    lpjmlkit::asub(
-      avg_fpc,
-      band = "temperate needleleaved evergreen tree"
-    ) == max_share_trees
+      lpjmlkit::asub(
+        avg_fpc,
+        band = "temperate needleleaved evergreen tree"
+      ) == max_share_trees
   }
   # Temperate Broadleaved Evergreen Forest
   is_temperate_broadleaved_evergreen <- { # nolint
     is_temperate_forest &
-    lpjmlkit::asub(
-      avg_fpc,
-      band = "temperate broadleaved evergreen tree"
-    ) == max_share_trees
+      lpjmlkit::asub(
+        avg_fpc,
+        band = "temperate broadleaved evergreen tree"
+      ) == max_share_trees
   }
   # Temperate Broadleaved Deciduous Forest
   is_temperate_broadleaved_deciduous <- { # nolint
     is_temperate_forest &
-    lpjmlkit::asub(
-      avg_fpc,
-      band = "temperate broadleaved summergreen tree"
-    ) == max_share_trees
+      lpjmlkit::asub(
+        avg_fpc,
+        band = "temperate broadleaved summergreen tree"
+      ) == max_share_trees
   }
 
   # Tropical Rainforest
   is_tropical_evergreen <- {
     is_tropical_forest &
-    lpjmlkit::asub(
-      avg_fpc,
-      band = "tropical broadleaved evergreen tree"
-    ) == max_share_trees &
-    is_tropical_proxy
+      lpjmlkit::asub(
+        avg_fpc,
+        band = "tropical broadleaved evergreen tree"
+      ) == max_share_trees &
+      is_tropical_proxy
   }
 
   # Tropical Seasonal & Deciduous Forest
