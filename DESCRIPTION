@@ -1,13 +1,42 @@
 Package: biospheremetrics
 Type: Package
 Title: Biosphere integrity metrics for LPJmL
-Version: 0.3.0
-Author: Fabian Stenzel, Johanna Braun, Jannes Breier
+Version: 1.0.2
+Authors@R: c(
+    person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-5109-0048")),
+    person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = "aut", comment = c(ORCID = "0000-0002-9055-6904")),
+    person("Johanna", "Braun", , "jobraun@pik-potsdam.de", role = "aut", comment = c(ORCID = "0000-0002-8809-1044"))
+  )
 Maintainer: Fabian Stenzel <stenzel@pik-potsdam.de>
-Description: Functions to compute Biosphere integrity metrics BioCol and EcoRisk based on output from LPJmL
+Description: Functions to compute Biosphere integrity metrics BioCol and EcoRisk
+    based on output from LPJmL.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
-Depends:
-    lpjmlkit
+URL: https://github.com/stenzelf/biospheremetrics
+RoxygenNote: 7.3.1
+Imports:
+    lpjmlkit,
+    rlang,
+    tidyr,
+    dplyr,
+    readr,
+    magrittr,
+    yaml,
+    stats,
+    zoo,
+    utils,
+    abind,
+    fields,
+    fBasics,
+    RColorBrewer,
+    circlize,
+    graphics,
+    grDevices,
+    maps,
+    methods
+Suggests:
+    testthat (>= 3.0.0),
+    knitr
+VignetteBuilder: knitr
+Date: 2024-02-23
