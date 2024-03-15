@@ -96,7 +96,7 @@ biocol_overtime_abs_frac_piref, biocol_frac_piref, npp_act_overtime,
 npp_pot_overtime, npp_eco_overtime, npp_ref, harvest_cft_overtime,
 npp_luc_overtime, rharvest_cft_overtime, fire_overtime,
 timber_harvest_overtime, harvest_cft, rharvest_cft,
-wood_harvest_overtime, biocol_harvest, biocol_luc
+wood_harvest_overtime, biocol_harvest, biocol_luc, lat, lon, cellarea
 }
 \description{
 Wrapper function to calculate BioCol
@@ -109,7 +109,7 @@ calc_biocol(
   gridbased = TRUE,
   start_year = 1980,
   stop_year = 2014,
-  reference_npp_time_span = 1510:1539, 
+  reference_npp_time_span = 1510:1539,
   read_saved_data = FALSE,
   save_data = FALSE,
   npp_threshold = 20,

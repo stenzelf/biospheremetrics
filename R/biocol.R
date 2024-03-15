@@ -57,17 +57,17 @@
 #'        timeline of maps for LUH2_v2h woodharvest
 #' @param suppressWarnings suppress warnings when reading files (default: TRUE)
 #'
-#' @return list data object containing BioCol and components as arrays: 
-#'         biocol_overtime, biocol_overtime_abs, biocol_overtime_abs_frac_piref, 
+#' @return list data object containing BioCol and components as arrays:
+#'         biocol_overtime, biocol_overtime_abs, biocol_overtime_abs_frac_piref,
 #'         biocol_overtime_abs_frac, biocol_overtime_pos,
 #'         biocol_overtime_pos_frac_piref,biocol_overtime_pos_frac,
-#'         biocol_overtime_frac_piref, biocol_overtime_frac, npp_harv_overtime, 
-#'         npp_luc_overtime,npp_act_overtime, npp_pot_overtime,npp_eco_overtime, 
-#'         harvest_grasslands_overtime, harvest_bioenergy_overtime, 
-#'         harvest_cft_overtime, rharvest_cft_overtime, fire_overtime, 
-#'         timber_harvest_overtime, wood_harvest_overtime, biocol, biocol_frac, 
-#'         npp, biocol_frac_piref, npp_potential, npp_ref, harvest_cft, 
-#'         rharvest_cft, biocol_harvest, biocol_luc
+#'         biocol_overtime_frac_piref, biocol_overtime_frac, npp_harv_overtime,
+#'         npp_luc_overtime,npp_act_overtime, npp_pot_overtime,npp_eco_overtime,
+#'         harvest_grasslands_overtime, harvest_bioenergy_overtime,
+#'         harvest_cft_overtime, rharvest_cft_overtime, fire_overtime,
+#'         timber_harvest_overtime, wood_harvest_overtime, biocol, biocol_frac,
+#'         npp, biocol_frac_piref, npp_potential, npp_ref, harvest_cft,
+#'         rharvest_cft, biocol_harvest, biocol_luc, lat, lon, cellarea
 #'
 #' @export
 read_calc_biocol <- function(
@@ -304,7 +304,7 @@ read_calc_biocol <- function(
         subset = list(year = as.character(time_span_scenario))
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(subset = list(band = "natural stand fraction")) %>% 
+        lpjmlkit::as_array(subset = list(band = "natural stand fraction")) %>%
         suppressWarnings()
 
       pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
@@ -533,7 +533,7 @@ read_calc_biocol <- function(
   biocol_overtime_abs_frac_piref <- biocol_overtime_abs * 10^15 /
     mean(colSums(npp_ref * cellarea))
   biocol_overtime_abs_frac <- biocol_overtime_abs / npp_pot_overtime
-  
+
   # take the abs of biocol and sum that up for overtime
   biocol_pos <- biocol
   biocol_pos[biocol_pos<0] <- 0
@@ -541,7 +541,7 @@ read_calc_biocol <- function(
   biocol_overtime_pos_frac_piref <- biocol_overtime_pos * 10^15 /
     mean(colSums(npp_ref * cellarea))
   biocol_overtime_pos_frac <- biocol_overtime_pos / npp_pot_overtime
-  
+
   return(list(
     biocol_overtime = biocol_overtime,
     biocol_overtime_abs = biocol_overtime_abs,
@@ -573,7 +573,10 @@ read_calc_biocol <- function(
     harvest_cft = harvest_cft,
     rharvest_cft = rharvest_cft,
     biocol_harvest = biocol_harvest,
-    biocol_luc = biocol_luc
+    biocol_luc = biocol_luc,
+    lat = lat,
+    lon = lon,
+    cellarea = cellarea
   )) # , biocol_luc_piref = biocol_luc_piref))
 }
 
@@ -617,9 +620,9 @@ read_calc_biocol <- function(
 #'        fraction c(cell,month,year) since 1500
 #' @param external_wood_harvest_file path to R-file containing processed
 #'        timeline of maps for LUH2_v2h woodharvest
-#' @param replace_input_file_names list with alternative names for output 
+#' @param replace_input_file_names list with alternative names for output
 #'        identifiers to replace the ones in inst/ext_files/metric_files.yml.
-#'        e.g. list(npp="mnpp") would replace the expected output for npp with 
+#'        e.g. list(npp="mnpp") would replace the expected output for npp with
 #'        mnpp followed by the automatically detected file extension (.bin.json)
 #' @param suppressWarnings suppress warnings when reading files (default: TRUE)
 #'
@@ -629,7 +632,7 @@ read_calc_biocol <- function(
 #'         npp_pot_overtime, npp_eco_overtime, npp_ref, harvest_cft_overtime,
 #'         npp_luc_overtime, rharvest_cft_overtime, fire_overtime,
 #'         timber_harvest_overtime, harvest_cft, rharvest_cft,
-#'         wood_harvest_overtime, biocol_harvest, biocol_luc
+#'         wood_harvest_overtime, biocol_harvest, biocol_luc, lat, lon, cellarea
 #'
 #' @examples
 #' \dontrun{
@@ -639,7 +642,7 @@ read_calc_biocol <- function(
 #'   gridbased = TRUE,
 #'   start_year = 1980,
 #'   stop_year = 2014,
-#'   reference_npp_time_span = 1510:1539, 
+#'   reference_npp_time_span = 1510:1539,
 #'   read_saved_data = FALSE,
 #'   save_data = FALSE,
 #'   npp_threshold = 20,
@@ -669,7 +672,7 @@ calc_biocol <- function(
     external_wood_harvest_file = NULL,
     replace_input_file_names = NULL,
     suppressWarnings = TRUE) {
-  
+
   metric_files <- system.file(
     "extdata",
     "metric_files.yml",
@@ -682,18 +685,35 @@ calc_biocol <- function(
   files_names <- metric_files$file_name
   files_scenario <- list()
   files_baseline <- list()
-  
+
   for (output in names(metric_files$metric$biocol$output)) {
     # Iterate over all outputs
-    if (is.null(replace_input_file_names)){
-      files_scenario[[output]] <- paste0(path_lu, metric_files$file_name[[output]][1], ".", file_extension)
-      files_baseline[[output]] <- paste0(path_pnv, metric_files$file_name[[output]][1], ".", file_extension)
+    if (is.null(replace_input_file_names[[output]])){
+      for (file in metric_files$file_name[[output]]){
+        full_file_path_lu <- paste0(path_lu, file, ".", file_extension)
+        if (file.exists(full_file_path_lu)) {
+          files_scenario[[output]] <- full_file_path_lu
+        }
+        full_file_path_pnv <- paste0(path_pnv, file, ".", file_extension)
+        if (file.exists(full_file_path_pnv)) {
+          files_baseline[[output]] <- full_file_path_pnv
+        }
+      }
+      if (is.null(files_scenario[[output]])) {
+        stop("None of the default file names for ",output,
+             " were found in ",path_lu,"please check or define manually",
+             " using argument 'replace_input_file_names'. Stopping.")
+      }
+      if (is.null(files_baseline[[output]])) {
+        stop("None of the default file names for ",output,
+             " were found in ",path_pnv,"please check or define manually",
+             " using argument 'replace_input_file_names'. Stopping.")
+      }
     } else {
-      files_scenario[[output]] <- paste0(path_lu, replace_input_file_names$output, ".", file_extension)
-      files_baseline[[output]] <- paste0(path_pnv, replace_input_file_names$output, ".", file_extension)
+      files_scenario[[output]] <- paste0(path_lu, replace_input_file_names[[output]], ".", file_extension)
+      files_baseline[[output]] <- paste0(path_pnv, replace_input_file_names[[output]], ".", file_extension)
     }
   }
-  
   if (is.null(reference_npp_file)) reference_npp_file <- files_baseline$npp
   files_reference <- list(
     npp = reference_npp_file

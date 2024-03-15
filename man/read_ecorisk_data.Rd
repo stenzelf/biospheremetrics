@@ -3,7 +3,7 @@
 \name{read_ecorisk_data}
 \alias{read_ecorisk_data}
 \title{Read in output data from LPJmL to calculate the ecosystem change metric
-EcoRisk. This function is called by the wrapper function (ecorisk_wrapper), 
+EcoRisk. This function is called by the wrapper function (ecorisk_wrapper),
 unless you know what you are doing, don't use this function directly.}
 \usage{
 read_ecorisk_data(

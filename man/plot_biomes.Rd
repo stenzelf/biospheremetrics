@@ -8,25 +8,26 @@ plot_biomes(
   biome_data,
   file_name = NULL,
   display_area = FALSE,
+  to_robinson = TRUE,
   cellarea = NULL,
   order_legend = c(1, 2, 9, 10, 11, 3, 4, 5, 12, 13, 14, 6, 7, 8, 15, 16, 17, 18, 19),
   bg_col = "white"
 )
 }
 \arguments{
-\item{biome_data}{output (list object) from classify_biomes()}
+\item{biome_data}{output (list) from classify_biomes()}
 
-\item{file_name}{character string for location/file to save plot to, if not
-supplied, the plot is displayed to screen (default: NULL)}
+\item{file_name}{directory for saving the plot (character string)}
 
-\item{display_area}{boolean, adding occupied area per biome (default: FALSE)}
+\item{display_area}{boolean, adding occupied area per biome (default F)}
 
-\item{cellarea}{array with cellareas per gridcell in m2}
+\item{to_robinson}{logical to define if robinson projection should be used
+for plotting}
 
 \item{order_legend}{in which order the biomes should be displayed
 default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)}
 
-\item{bg_col}{character, specify background possible (\code{NA} for transparent)}
+\item{bg_col}{character, specify background possible (\code{NA} for transparent)#}
 }
 \description{
 Plots a map with the biome distribution as derived from a lpjml run based
@@ -34,10 +35,8 @@ on the "classify_biomes" function
 }
 \examples{
 \dontrun{
-plot_biomes(
-  biome_data = biomes,
-  file_name = "/temp/biomes.png"
-)
+ plot_biomes(biome_data = biomes,
+             file_name ="/p/projects/open/Johanna/R/biomes.pfd")
 }
 
 }

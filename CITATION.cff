@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it using the metadata from this file.
+type: software
+title: 'biospheremetrics: Functions to calculate and plot the biosphere integrity metrics BioCol and EcoRisk'
+version: 1.0.3
+date-released: '2024-03-15'
+abstract: An R package to calculate two complementary terrestrial biosphere integrity indicators: (1) human colonization of the biosphere (BioCol), (2) risk of ecosystem destabilization (EcoRisk) based on outputs from simulations with a dynamic vegetation model (currently only LPJmL <https://github.com/PIK-LPJmL/LPJmL>). It utilizes the read functions of the lpjmlkit (<https://github.com/PIK-LPJmL/lpjmlkit>) package. 
+authors:
+- family-names: Stenzel
+  given-names: Fabian
+  email: stenzel@pik-potsdam.de
+  orcid: 0000-0002-5109-0048
+- family-names: Breier
+  given-names: Jannes
+  email: jannesbr@pik-potsdam.de
+  orcid: 0000-0002-9055-6904
+- family-names: Braun
+  given-names: Johanna
+  email: jobraun@pik-potsdam.de
+  orcid: 0000-0002-8809-1044
+
+license: AGPL-3.0
+repository-code: https://github.com/stenzelf/biospheremetrics
+doi: 10.5281/zenodo.10699198

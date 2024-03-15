@@ -76,7 +76,13 @@ test_that("test calc_biocal", {
       "harvest_cft",
       "rharvest_cft",
       "biocol_harvest",
-      "biocol_luc"
+      "biocol_luc",
+      "biocol_overtime_pos",
+      "biocol_overtime_pos_frac_piref",
+      "biocol_overtime_pos_frac",
+      "lat",
+      "lon",
+      "cellarea"
     )
   )
 

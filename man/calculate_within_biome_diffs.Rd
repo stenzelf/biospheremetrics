@@ -39,7 +39,7 @@ relevant)}
 \item{time_span_reference}{suitable 30 year reference period (e.g.
 c(1901,1930), c(1550,1579))}
 
-\item{ecorisk_components}{integer. how many subcomponents does the 
+\item{ecorisk_components}{integer. how many subcomponents does the
 ecorisk object have?}
 }
 \value{

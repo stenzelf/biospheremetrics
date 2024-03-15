@@ -3,7 +3,7 @@
 \name{calc_ecorisk}
 \alias{calc_ecorisk}
 \title{Calculate the ecosystem change metric EcoRisk between 2 sets of states
-This function is called by the wrapper function (ecorisk_wrapper), 
+This function is called by the wrapper function (ecorisk_wrapper),
 unless you know what you are doing, don't use this function directly.}
 \usage{
 calc_ecorisk(
