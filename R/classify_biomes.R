@@ -35,14 +35,14 @@
 #'        In the boreal zone, there is no woodland, everything below the
 #'        boreal forest threshold will be classified as boreal tundra.
 #' @param avg_nyear_args list of arguments to be passed to
-#'        \link[biospheremetrics]{average_nyear_window} (see for more info). To be used for # nolint
-#'        time series analysis
+#'        \link[biospheremetrics]{average_nyear_window} (see for more info).
+#'        To be used for time series analysis
 #' @param input_files `list` with input file paths to be used instead of outputs
 #'        default: empty list
-#' @param diff_output_files `list` with output files, to be used from another 
+#' @param diff_output_files `list` with output files, to be used from another
 #' location than the output folders - default: empty list
-#' @return list object containing biome_id (main biome per grid cell [dim=c(ncells)]), # nolint
-#' and list of respective biome_names[dim=c(nbiomes)]
+#' @return list object containing biome_id (main biome per grid cell
+#'         [dim=c(ncells)]), and list of respective biome_names[dim=c(nbiomes)]
 #'
 #' @examples
 #' \dontrun{
@@ -344,7 +344,7 @@ classify_biomes <- function(path_reference = NULL,
   if (!is.null(savanna_proxy)) {
     if (savanna_proxy_name == "pft_lai") {
       avg_savanna_proxy_data <- apply(
-        lpjmlkit::asub(avg_savanna_proxy_data, band = seq_len(npft)) * # nolint
+        lpjmlkit::asub(avg_savanna_proxy_data, band = seq_len(npft)) *
           lpjmlkit::asub(avg_fpc, band = 2:(npft + 1)) *
           lpjmlkit::asub(avg_fpc, band = 1),
         c("cell", third_dim),
@@ -353,8 +353,10 @@ classify_biomes <- function(path_reference = NULL,
     } else {
       avg_savanna_proxy_data <- drop(avg_savanna_proxy_data)
     }
-    is_tropical_proxy <- avg_savanna_proxy_data >= savanna_proxy[[savanna_proxy_name]] # nolint
-    is_savanna_proxy <- avg_savanna_proxy_data < savanna_proxy[[savanna_proxy_name]] # nolint
+    is_tropical_proxy <- avg_savanna_proxy_data >=
+      savanna_proxy[[savanna_proxy_name]]
+    is_savanna_proxy <- avg_savanna_proxy_data <
+      savanna_proxy[[savanna_proxy_name]]
   } else {
     is_tropical_proxy <- array(TRUE,
       dim = dim(avg_temp),
@@ -587,23 +589,35 @@ classify_biomes <- function(path_reference = NULL,
   biome_class[is_desert] <- biome_names["Desert"]
 
   # forests
-  biome_class[is_boreal_evergreen] <- biome_names["Boreal Needleleaved Evergreen Forest"]
-  biome_class[is_boreal_broad_deciduous] <- biome_names["Boreal Broadleaved Deciduous Forest"]
-  biome_class[is_boreal_needle_deciduous] <- biome_names["Boreal Needleleaved Deciduous Forest"]
-  biome_class[is_temperate_coniferous] <- biome_names["Temperate Needleleaved Evergreen Forest"] # nolint
-  biome_class[is_temperate_broadleaved_evergreen] <- biome_names["Temperate Broadleaved Evergreen Forest"] # nolint
-  biome_class[is_temperate_broadleaved_deciduous] <- biome_names["Temperate Broadleaved Deciduous Forest"] # nolint
+  biome_class[is_boreal_evergreen] <- biome_names[
+    "Boreal Needleleaved Evergreen Forest"]
+  biome_class[is_boreal_broad_deciduous] <- biome_names[
+    "Boreal Broadleaved Deciduous Forest"]
+  biome_class[is_boreal_needle_deciduous] <- biome_names[
+    "Boreal Needleleaved Deciduous Forest"]
+  biome_class[is_temperate_coniferous] <- biome_names[
+    "Temperate Needleleaved Evergreen Forest"]
+  biome_class[is_temperate_broadleaved_evergreen] <- biome_names[
+    "Temperate Broadleaved Evergreen Forest"]
+  biome_class[is_temperate_broadleaved_deciduous] <- biome_names[
+    "Temperate Broadleaved Deciduous Forest"]
   biome_class[is_tropical_evergreen] <- biome_names["Tropical Rainforest"]
-  biome_class[is_tropical_raingreen] <- biome_names["Tropical Seasonal & Deciduous Forest"] # nolint
-  biome_class[is_tropical_forest_savanna] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
+  biome_class[is_tropical_raingreen] <- biome_names[
+    "Tropical Seasonal & Deciduous Forest"]
+  biome_class[is_tropical_forest_savanna] <- biome_names[
+    "Warm Woody Savanna, Woodland & Shrubland"]
 
   # woody savanna
-  biome_class[is_temperate_woody_savanna] <- biome_names["Temperate Woody Savanna, Woodland & Shrubland"] # nolint
-  biome_class[is_tropical_woody_savanna] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
+  biome_class[is_temperate_woody_savanna] <- biome_names[
+    "Temperate Woody Savanna, Woodland & Shrubland"]
+  biome_class[is_tropical_woody_savanna] <- biome_names[
+    "Warm Woody Savanna, Woodland & Shrubland"]
 
   # open shrubland / savanna
-  biome_class[is_temperate_shrubland] <- biome_names["Temperate Savanna & Open Shrubland"] # nolint
-  biome_class[is_tropical_shrubland] <- biome_names["Warm Savanna & Open Shrubland"] # nolint
+  biome_class[is_temperate_shrubland] <- biome_names[
+    "Temperate Savanna & Open Shrubland"]
+  biome_class[is_tropical_shrubland] <- biome_names[
+    "Warm Savanna & Open Shrubland"]
 
   # grassland
   biome_class[is_temperate_grassland] <- biome_names["Temperate Grassland"]
@@ -639,8 +653,8 @@ read_pft_categories <- function(file_path) {
                  names_prefix = "zone_",
                  values_to = "zone_value",
                  values_drop_na = TRUE) %>%
-    # all binary category columns (natural, needle, evergreen) in one categorical # nolint
-    #   category column
+    # all binary category columns (natural, needle, evergreen) in one
+    # category column
     tidyr::pivot_longer(cols = starts_with("category_"),
                  names_to = "category",
                  names_prefix = "category_",
@@ -652,7 +666,8 @@ read_pft_categories <- function(file_path) {
     tidyr::pivot_longer(cols = starts_with("lpjml_index_npft_"),
                  values_to = "lpjml_index",
                  names_to = "npft_proxy",
-                 names_transform = list(npft_proxy = function(x) suppressWarnings(as.numeric(x))), # nolint
+                 names_transform = list(npft_proxy =
+                                function(x) suppressWarnings(as.numeric(x))),
                  names_prefix = "lpjml_index_npft_") %>%
     return()
 }

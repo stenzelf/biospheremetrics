@@ -24,6 +24,8 @@ plot_biomes(
 \item{to_robinson}{logical to define if robinson projection should be used
 for plotting}
 
+\item{cellarea}{array with cellarea in m2 per gridcell (default NULL)}
+
 \item{order_legend}{in which order the biomes should be displayed
 default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)}
 

@@ -14,7 +14,7 @@
 #'    only pos values.
 #'
 #' @param data array with data to plot in LPJmL specific array c(67420)
-#' @param file character string for location/file to save plot to, if not 
+#' @param file character string for location/file to save plot to, if not
 #'             supplied, the plot is displayed to screen (default: NULL)
 #' @param title character string title for plot
 #' @param pow2max for exponential legend: upper (positive) end of data range to
@@ -114,13 +114,14 @@ plot_global <- function(data,
     }
     palette <- c(
       "white",
-      grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) - 2) # nolint
+      grDevices::colorRampPalette(
+        RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) - 2)
     )
   } else {
     if (type == "exp" || type == "lin") {
       if (type == "exp") {
         if (is.null(pow2max) | is.null(pow2min)) {
-          stop("For exponental legend, pow2min and pow2max need to be specified.")
+          stop("For exponental legend, pow2min and pow2max are required.")
         }
         legendticks <- c(
           -(2^seq(pow2max, pow2min, -1)), 2^seq(pow2min, pow2max, 1)
@@ -142,15 +143,18 @@ plot_global <- function(data,
       }
       palette <- c(
         rev(
-          grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_neg))(length(legendticks) / 2 - 1) # nolint
+          grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(9, col_neg))(length(legendticks) / 2 - 1)
         ),
         "white",
-        grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) / 2 - 1) # nolint
+        grDevices::colorRampPalette(
+          RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) / 2 - 1)
       )
     } else { # type == man
       if (is.null(palette)) {
         message("Manual breaks, but not palette given, using default.")
-        palette <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, col_pos))(length(brks) - 1) # nolint
+        palette <- grDevices::colorRampPalette(
+          RColorBrewer::brewer.pal(9, col_pos))(length(brks) - 1)
       }
       if (only_pos) stop("Manual breaks and palette, but conflicting parameter
               only_pos == TRUE defined. Aborting.")

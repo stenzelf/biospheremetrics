@@ -11,7 +11,7 @@
 #'             calculateWithInBiomeDiffs for each subcategory of ecorisk.
 #'             dim: c(biomes,bins)
 #' @param file to write into, if not supplied (default is NULL) write to screen
-#' @param biomes_abbrv character vector. abbreviated names of biomes 
+#' @param biomes_abbrv character vector. abbreviated names of biomes
 #'        (defaults to NULL -> extract dimension names from data)
 #' @param scale scaling factor for distribution. defaults to 1
 #' @param title character string title for plot, default empty
@@ -40,7 +40,7 @@ plot_biome_internal_distribution <- function(
     eps = FALSE,
     palette = NULL)
   {
-  
+
   if (!is.null(file)) {
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
@@ -62,12 +62,12 @@ plot_biome_internal_distribution <- function(
   res <- 1 / bins
   biomes <- di["biome"]
   if (is.null(biomes_abbrv)) biomes_abbrv <- names(data)$biome
-  
+
   if (is.null(palette)) {
     palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
   col_index <- floor(seq(res / 2, 1 - res / 2, res) * 10) + 1
-  
+
   graphics::par(mar = c(2, 4, 0, 0), oma = c(0, 0, 0, 0)) # bltr
   graphics::plot(NA,
                  xlim = c(0, 1), ylim = c(0, 20), xlab = "EcoRisk",
@@ -81,7 +81,8 @@ plot_biome_internal_distribution <- function(
     lab.breaks = brks, legend.shrink = 0.925,
     legend.args = list("", side = 3, font = 2, line = 1.5)
   )
-  graphics::mtext(biomes_abbrv, side = 2, line = 1, at = seq_len(biomes), las = 2)
+  graphics::mtext(biomes_abbrv, side = 2, line = 1,
+                  at = seq_len(biomes), las = 2)
   for (b in seq_len(biomes)) {
     graphics::rect(
       xleft = seq(0, 1 - res, res),
@@ -159,11 +160,11 @@ plot_ecorisk_map <- function(
   brks <- seq(0, 1, 0.1)
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
-  
+
   if (is.null(palette)) {
     palette = c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
-  
+
   if (!is.null(focus_biome)) {
     focus <- data
     focus[!(biome_classes == focus_biome)] <- NA
@@ -171,13 +172,13 @@ plot_ecorisk_map <- function(
     ra_f <- terra::rast(ncols = 720, nrows = 360)
     ra_f[terra::cellFromXY(ra_f, cbind(lon, lat))] <- focus
   }
-  
+
   ra <- terra::rast(ncols = 720, nrows = 360)
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
   range <- range(data)
   extent <- terra::ext(c(-180, 180, -60, 90))
   graphics::par(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n")
-  
+
   if (is.null(focus_biome)) {
     terra::plot(ra,
                 ext = extent, breaks = brks, col = palette, main = "",
@@ -193,10 +194,10 @@ plot_ecorisk_map <- function(
                 legend = FALSE, axes = FALSE, add = TRUE
     )
   }
-  
+
   title(main = title, line = -2, cex.main = title_size)
   maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
-  
+
   if (leg_yes) {
     fields::image.plot(
       legend.only = TRUE, col = palette, breaks = brks, zlim = range,
@@ -259,7 +260,8 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
     colz <- set[c(4, 7, 8, 11, 1, 10, 5, 6)]
     #   ecorisk vs         lc        gi        eb        ct       wt         nt
     angles <- matrix(
-      c(90, 270, 216, 252, 180, 216, 144, 180, 108, 144, -18, 18, -54, -18, 18, 54),
+      c(90, 270, 216, 252, 180, 216, 144, 180,
+        108, 144, -18, 18, -54, -18, 18, 54),
       byrow = TRUE,
       nrow = length(colz)
     )
@@ -521,7 +523,7 @@ plot_ecorisk_radial <- function(data,
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
   if (length(which(data < 0 | data > 1)) > 0) {
     warning(
-      "There are values in data outside the expected EcoRisk range [0..1]." # nolint
+      "There are values in data outside the expected EcoRisk range [0..1]."
     )
   }
 
@@ -665,7 +667,7 @@ plot_overtime_to_screen <- function(data,
 #' @param yrange range for y axis (default c(0,1))
 #' @param timerange of the data input
 #' @param eps write as eps or png
-#' @param varnames list vector with variable names 
+#' @param varnames list vector with variable names
 #'
 #' @examples
 #' \dontrun{
@@ -677,7 +679,7 @@ plot_overtime_to_screen <- function(data,
 #'
 #' @md
 #' @export
-plot_ecorisk_over_time_panel <- function(data, 
+plot_ecorisk_over_time_panel <- function(data,
                                          biome_names,
                                          file = NULL,
                                          yrange = c(0, 1),
@@ -687,11 +689,11 @@ plot_ecorisk_over_time_panel <- function(data,
   if (!is.null(file)) {
     path_write <- dirname(file)
     dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-  
+
     if (length(which(data < 0 | data > 1)) > 0) {
       warning("Values in data outside the expected EcoRisk range [0..1].")
     }
-  
+
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
       file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
@@ -806,11 +808,11 @@ plot_ecorisk_radial_panel <- function(data,
   if (!is.null(file)) {
     path_write <- dirname(file)
     dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-  
+
     if (length(which(data < 0 | data > 1)) > 0) {
       warning("Values in data outside the expected EcoRisk range [0..1].")
     }
-  
+
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
       file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
@@ -914,7 +916,7 @@ plot_biomes_mercator <- function(biome_ids,
   if (!is.null(file)) {
     path_write <- dirname(file)
     dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-  
+
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
       file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
@@ -944,7 +946,7 @@ plot_biomes_mercator <- function(biome_ids,
     # montane Tundra/Grassland
     "pink3"
   )
-  
+
   if (order_legend == "plants") {
     order_legend <- seq_len(19)
   } else if (order_legend == "zones") {
@@ -961,11 +963,11 @@ plot_biomes_mercator <- function(biome_ids,
     colz[c(1, 2, 7, 8, 9, 10, 13, 12, 3, 4, 5, 14, 15, 16, 19, 11, 6, 17, 18)]
   )
   biome_class_names <- get_biome_names(biome_name_length)
-  
+
   if (!(length(biome_class_names) == length(biome_class_cols))) {
     stop("Size of biome class names and colors do not match -- should be 18.")
   }
-  
+
   # plotting
   brks <- seq(
     min(biome_ids, na.rm = TRUE) - 0.5,
@@ -997,7 +999,7 @@ plot_biomes_mercator <- function(biome_ids,
 
 #' Plot radial EcoRisk with 4/16 biomes
 #'
-#' Function to plot to file (or screen) an aggregated radial status of EcoRisk 
+#' Function to plot to file (or screen) an aggregated radial status of EcoRisk
 #' values [0-1] for the different sub-categories to file
 #'
 #' @param data EcoRisk data array c(4[biomes],[nEcoRiskcomponents],
@@ -1032,7 +1034,7 @@ plot_biome_averages <- function(data,
   if (!is.null(file)) {
     path_write <- dirname(file)
     dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-  
+
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
       file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
@@ -1052,16 +1054,16 @@ plot_biome_averages <- function(data,
   brks <- seq(0, 1, 0.1)
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
-  
+
   if (is.null(palette)) {
     palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
   col_index <- floor(data[, 2] * 10) + 1
-  
+
   if (!(length(biome_class_names) == dim(data)[1])) {
     stop("Size of biome class names and data input do not match.")
   }
-  
+
   # plotting
   graphics::plot(NA,
                  xlim = c(0, 1), ylim = c(0, 1), main = title, axes = FALSE,
@@ -1078,8 +1080,8 @@ plot_biome_averages <- function(data,
 
 #' Plot crosstable showing (dis-)similarity between average biome pixels
 #'
-#' Function to plot to file (or screen) a crosstable showing (dis-)similarity 
-#' between average biome pixels based on EcoRisk (former Gamma) metric from 
+#' Function to plot to file (or screen) a crosstable showing (dis-)similarity
+#' between average biome pixels based on EcoRisk (former Gamma) metric from
 #' LPJmL simulations
 #'
 #' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
@@ -1107,7 +1109,7 @@ plot_ecorisk_cross_table <- function(data,
   if (!is.null(file)) {
     path_write <- dirname(file)
     dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-  
+
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
       file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
@@ -1133,10 +1135,10 @@ plot_ecorisk_cross_table <- function(data,
     palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
   }
   brks <- seq(0, 1, 0.1)
-  
+
   # plot margins
   graphics::par(mar = c(0, lmar, 2, 0)) # bltr
-  
+
   graphics::image(x, y, t(data),
                   col = palette,
                   breaks = brks,
@@ -1147,7 +1149,7 @@ plot_ecorisk_cross_table <- function(data,
                   ylim = c(max(y) + 0.5, min(y) - 0.5)
   )
   graphics::text(centers[, 2], centers[, 1], c(data), col = "black")
-  
+
   # add margin text
   graphics::mtext(attributes(data)$dimnames[[2]],
                   at = seq_len(ncol(data)),
@@ -1160,10 +1162,10 @@ plot_ecorisk_cross_table <- function(data,
                   adj = 1,
                   line = 1
   )
-  
+
   # add black lines
   graphics::abline(h = y + 0.5)
   graphics::abline(v = x + 0.5)
-  
+
   if (!is.null(file)) grDevices::dev.off()
 }

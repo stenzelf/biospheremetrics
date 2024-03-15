@@ -326,7 +326,8 @@ read_calc_biocol <- function(
     nat_bands <- seq_len(pftbands)
 
     if (!gridbased) { # needs to be scaled with standfrac
-      pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, , band = rep("natural stand fraction", pftbands)]
+      pftnpp[, , nat_bands] <- pftnpp[, , nat_bands] * fpc[, ,
+                                band = rep("natural stand fraction", pftbands)]
       pftnpp[, , -c(nat_bands)] <- pftnpp[, , -c(nat_bands)] * cftfrac
       harvest <- harvest * cftfrac
       rharvest <- rharvest * cftfrac
@@ -501,9 +502,7 @@ read_calc_biocol <- function(
     biocol_overtime / npp_pot_overtime
   )
   biocol_luc <- npp_potential - npp
-  # biocol_luc2 <- (npp_potential - pftnpp_cft) * apply(cftfrac[, , -c(grass_bands, bp_bands)], c("cell", "year"), sum) +
-  #               (npp_potential - pftnpp_grasslands) * apply(cftfrac[, , grass_bands], c("cell", "year"), sum) +
-  #               (npp_potential - pftnpp_bioenergy) * apply(cftfrac[, , bp_bands], c("cell", "year"), sum)
+
 
   # pick a PI window that excludes onset effects, but is reasonable early
 
@@ -680,7 +679,8 @@ calc_biocol <- function(
   ) %>%
     yaml::read_yaml()
 
-  # translate output names (from metric_files.yml) and folders to files_scenarios/reference lists
+  # translate output names (from metric_files.yml)
+  # and folders to files_scenarios/reference lists
   file_extension <- get_major_file_ext(paste0(path_lu))
   files_names <- metric_files$file_name
   files_scenario <- list()
@@ -710,8 +710,10 @@ calc_biocol <- function(
              " using argument 'replace_input_file_names'. Stopping.")
       }
     } else {
-      files_scenario[[output]] <- paste0(path_lu, replace_input_file_names[[output]], ".", file_extension)
-      files_baseline[[output]] <- paste0(path_pnv, replace_input_file_names[[output]], ".", file_extension)
+      files_scenario[[output]] <- paste0(path_lu,
+                        replace_input_file_names[[output]], ".", file_extension)
+      files_baseline[[output]] <- paste0(path_pnv,
+                        replace_input_file_names[[output]], ".", file_extension)
     }
   }
   if (is.null(reference_npp_file)) reference_npp_file <- files_baseline$npp

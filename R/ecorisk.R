@@ -941,7 +941,7 @@ read_ecorisk_data <- function(
               subset = list(year = as.character(time_span_scenario))
             ) %>%
               lpjmlkit::transform(to = c("year_month_day")) %>%
-              lpjmlkit::as_array(aggregate = list(month = sum, band = sum), ) %>%
+              lpjmlkit::as_array(aggregate = list(month = sum, band = sum), )%>%
               drop() %>%
               suppressWarnings()
           } else {
@@ -987,8 +987,10 @@ read_ecorisk_data <- function(
       }
     }
 
-    dimnames(state_scen) <- list(cell = 0:(ncells - 1), year = as.character(time_span_scenario), class = class_names)
-    dimnames(state_ref) <- list(cell = 0:(ncells - 1), year = as.character(time_span_reference), class = class_names)
+    dimnames(state_scen) <- list(cell = 0:(ncells - 1),
+                  year = as.character(time_span_scenario), class = class_names)
+    dimnames(state_ref) <- list(cell = 0:(ncells - 1),
+                  year = as.character(time_span_reference), class = class_names)
   } else if (file_type == "nc") { # to be added
     stop(
       "nc reading has not been updated to latest functionality. ",
@@ -1342,7 +1344,8 @@ calc_delta_v <- function(fpc_ref, # nolint
     barren_area_scen <- (
       1 - rowSums(cft_scen) -
         rowSums(fpc_scen[, 2:12]) * fpc_scen[, 1] +
-        rowSums(cft_scen[, c(16, 32)]) * (1 - rowSums(bft_scen[, c(4:9, 13:18)]))
+        rowSums(cft_scen[, c(16, 32)]) *
+        (1 - rowSums(bft_scen[, c(4:9, 13:18)]))
     )
 
     barren_area_scen[barren_area_scen < 0] <- 0
@@ -1452,7 +1455,8 @@ calc_delta_v <- function(fpc_ref, # nolint
 
     # tropicalness
     grass_attributes[, , 1] <- rep(
-      c(1, 0, 0, 0, 1, 1, 1, 0.5, 0, 1, 0.5, 1, 1, 0.5, 1, 0.5, NA, NA, 1, NA, NA), # nolint
+      c(1, 0, 0, 0, 1, 1, 1, 0.5, 0, 1, 0.5,
+        1, 1, 0.5, 1, 0.5, NA, NA, 1, NA, NA),
       each = ncells
     )
 
@@ -1531,28 +1535,38 @@ calc_delta_v <- function(fpc_ref, # nolint
   inner_sum_trees <- (
     # evergreenness
     abs(
-      rowSums(tree_area_ref[, ] * rep(tree_attributes[, 1], each = ncells), na.rm = TRUE) - # nolint
-        rowSums(tree_area_scen[, ] * rep(tree_attributes[, 1], each = ncells), na.rm = TRUE) # nolint
+      rowSums(tree_area_ref[, ] *
+                rep(tree_attributes[, 1], each = ncells), na.rm = TRUE) -
+        rowSums(tree_area_scen[, ] *
+                  rep(tree_attributes[, 1], each = ncells), na.rm = TRUE)
     ) * tree_weights[1] +
       # needleleavedness
       abs(
-        rowSums(tree_area_ref[, ] * rep(tree_attributes[, 2], each = ncells), na.rm = TRUE) - # nolint
-          rowSums(tree_area_scen[, ] * rep(tree_attributes[, 2], each = ncells), na.rm = TRUE) # nolint
+        rowSums(tree_area_ref[, ] *
+                  rep(tree_attributes[, 2], each = ncells), na.rm = TRUE) -
+          rowSums(tree_area_scen[, ] *
+                    rep(tree_attributes[, 2], each = ncells), na.rm = TRUE)
       ) * tree_weights[2] +
       # tropicalness
       abs(
-        rowSums(tree_area_ref[, ] * rep(tree_attributes[, 3], each = ncells), na.rm = TRUE) - # nolint
-          rowSums(tree_area_scen[, ] * rep(tree_attributes[, 3], each = ncells), na.rm = TRUE) # nolint
+        rowSums(tree_area_ref[, ] *
+                  rep(tree_attributes[, 3], each = ncells), na.rm = TRUE) -
+          rowSums(tree_area_scen[, ] *
+                    rep(tree_attributes[, 3], each = ncells), na.rm = TRUE)
       ) * tree_weights[3] +
       # borealness
       abs(
-        rowSums(tree_area_ref[, ] * rep(tree_attributes[, 4], each = ncells), na.rm = TRUE) - # nolint
-          rowSums(tree_area_scen[, ] * rep(tree_attributes[, 4], each = ncells), na.rm = TRUE) # nolint
+        rowSums(tree_area_ref[, ] *
+                  rep(tree_attributes[, 4], each = ncells), na.rm = TRUE) -
+          rowSums(tree_area_scen[, ] *
+                    rep(tree_attributes[, 4], each = ncells), na.rm = TRUE)
       ) * tree_weights[4] +
       # naturalness
       abs(
-        rowSums(tree_area_ref[, ] * rep(tree_attributes[, 5], each = ncells), na.rm = TRUE) - # nolint
-          rowSums(tree_area_scen[, ] * rep(tree_attributes[, 5], each = ncells), na.rm = TRUE) # nolint
+        rowSums(tree_area_ref[, ] *
+                  rep(tree_attributes[, 5], each = ncells), na.rm = TRUE) -
+          rowSums(tree_area_scen[, ] *
+                    rep(tree_attributes[, 5], each = ncells), na.rm = TRUE)
       ) * tree_weights[5]
   )
 
@@ -1812,7 +1826,7 @@ balance_shift <- function(ref, scen, epsilon = 10^-4) {
   abs_scen <- sqrt(rowSums(s_scen * s_scen))
 
   # =1-angle_ts
-  b1 <- 1 - (rowSums(s_ref * s_scen) / abs_ref / abs_scen) # todo: hier wird alles 0
+  b1 <- 1 - (rowSums(s_ref * s_scen) / abs_ref / abs_scen) # todo: all -> 0
 
   # restrain to the maximum range for the acos function
   b1[b1 < 0] <- 0
@@ -2110,7 +2124,8 @@ ecorisk_cross_table <- function(data_file_in,
     year = dimnames(cft_sav)$year
   )
   dimnames(cft_scen) <- dimnames(cft_ref)
-  dimnames(c2vr) <- list(component = c("vs", "lc", "gi", "eb"), biome = biome_classes_in$biome_names)
+  dimnames(c2vr) <- list(component = c("vs", "lc", "gi", "eb"),
+                         biome = biome_classes_in$biome_names)
 
 
   lat <- rep(0, nbiomes * nbiomes)
@@ -2270,16 +2285,18 @@ disaggregate_into_biomes <- function(data, # nolint
     } # end for
 
     biome_names <- c("tropics", "temperate", "boreal", "arctic")
-    dimnames(data_biomes) <- list(biome_names, comp_names, type_names, seq_len(slices))
+    dimnames(data_biomes) <- list(biome_names, comp_names,
+                                  type_names, seq_len(slices))
   } else if (classes == "allbiomes") { # calculate all biomes separately
     for (s in seq_len(slices)) {
       for (b in seq_len(nclasses)) {
         for (cc in seq_len(data_dims)) {
           if (type == "minmeanmax") {
-            data_biomes[b, cc, , s] <- c(
-              min(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE),
-              mean(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE), # nolint
-              max(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE)
+            data_biomes[b, cc, , s] <-
+            c(
+            min(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE),
+            mean(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE),
+            max(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE)
             )
           } else if (type == "quantile") {
             data_biomes[b, cc, , s] <- c(
@@ -2425,7 +2442,8 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
 
       plot_ecorisk_map(
         file = paste0(
-          plot_folder, "/compare_vegetation_structure_change_to_", biomes_abbrv[b], ".png" # nolint
+          plot_folder, "/compare_vegetation_structure_change_to_",
+          biomes_abbrv[b], ".png" # nolint
         ),
         focus_biome = b, biome_classes = biome_classes$biome_id,
         data = ecorisk$vegetation_structure_change,
@@ -2481,7 +2499,8 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
   }
   ecorisk_dimensions <- names(ecorisk)
 
-  dim(intra_biome_distrib) <- c(biome = length(biome_classes$biome_names), variable = ecorisk_components, bin = 1 / res)
+  dim(intra_biome_distrib) <- c(biome = length(biome_classes$biome_names),
+                                variable = ecorisk_components, bin = 1 / res)
   dimnames(intra_biome_distrib) <- list(
     biome = biomes_abbrv, variable = ecorisk_dimensions, bin = seq(res, 1, res)
   )

@@ -110,7 +110,7 @@ get_filenames <- function(path, # nolint
 
       # If nothing specified try to read required files from provided path
     } else {
-      # Iterate over different used file name options (e.g. runoff, mrunoff, ...) # nolint
+      # Iterate over file name options (e.g. runoff, mrunoff, ...)
       for (cfile in seq_along(output_files[[ofile]]$file_name)) {
         file_name <- paste0(
           path, "/",
@@ -147,25 +147,25 @@ get_filenames <- function(path, # nolint
 }
 
 
- 
+
 #' List required output files for given metric
 #'
 #' List required output files for given metric based on parameter file
 #' `inst/extfiles/metric_files.yml`
 #'
 #' @param metric character string/list of strings. metrics to list outputs for
-#'        can be one of: 
+#'        can be one of:
 #'        "all" - list all outputs for all metrics
 #'        "ecorisk" - list outputs for ecorisk metric without nitrogen
 #'        "ecorisk_nitrogen" - list outputs for ecorisk metric with nitrogen
 #'        "biocol" - list outputs for biocol metric
 #'        "biome" - list outputs for the biome classification
-#' @param only_first_filename if several legal output names are listed, only 
+#' @param only_first_filename if several legal output names are listed, only
 #'        output the first of them (default: TRUE)
-#' 
-#' @return list object with required outputs, their required temporal resolution 
+#'
+#' @return list object with required outputs, their required temporal resolution
 #'         and if it is optional
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' list_outputs(metric = "ecorisk_nitrogen")
@@ -284,7 +284,7 @@ higher_res <- function(x, y) {
   }
 }
 
-# split calculation string for variable addition/subtraction into signs & vars 
+# split calculation string for variable addition/subtraction into signs & vars
 split_sign <- function(string) {
   # add spaces around +- signs
   string <- gsub(
@@ -304,7 +304,7 @@ split_sign <- function(string) {
   for (i in seq_along(a)){
     i2 <- floor(i / 2 + 1)
     if (i == 1 && !(grepl(a[1], "+-", fixed = TRUE))) outarray[1, 1] <- "+"
-    
+
     if (grepl(a[i], "+-", fixed = TRUE)) outarray[i2, 1] <- a[i]
     else outarray[i2, 2] <- a[i]
   }

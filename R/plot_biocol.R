@@ -9,15 +9,16 @@
 #' folder
 #'
 #' @param biocol_data biocol data list object (returned from calc_biocol)
-#'        containing biocol_overtime, biocol_overtime_abs, 
-#'        biocol_overtime_abs_frac_piref, biocol_overtime_frac_piref, 
-#'        biocol_overtime_frac, biocol_overtime_abs_frac, npp_harv_overtime, 
-#'        npp_luc_overtime, npp_act_overtime, npp_pot_overtime, npp_eco_overtime, 
-#'        harvest_grasslands_overtime, harvest_bioenergy_overtime, 
-#'        harvest_cft_overtime, rharvest_cft_overtime, fire_overtime, 
-#'        timber_harvest_overtime, wood_harvest_overtime, biocol, biocol_frac, 
-#'        npp, biocol_frac_piref, npp_potential, npp_ref, harvest_cft, 
-#'        rharvest_cft, biocol_harvest, biocol_luc - all in GtC
+#'        containing biocol_overtime, biocol_overtime_abs,
+#'        biocol_overtime_abs_frac_piref, biocol_overtime_frac_piref,
+#'        biocol_overtime_frac, biocol_overtime_abs_frac, npp_harv_overtime,
+#'        npp_luc_overtime, npp_act_overtime, npp_pot_overtime,
+#'        npp_eco_overtime, harvest_grasslands_overtime,
+#'        harvest_bioenergy_overtime, harvest_cft_overtime,
+#'        rharvest_cft_overtime, fire_overtime, timber_harvest_overtime,
+#'        wood_harvest_overtime, biocol, biocol_frac, npp, biocol_frac_piref,
+#'        npp_potential, npp_ref, harvest_cft, rharvest_cft, biocol_harvest,
+#'        biocol_luc, lat, lon, cellarea
 #' @param path_write folder to write outputs into
 #' @param plotyears range of years to plot over time
 #' @param min_val y-axis minimum value for plot over time
@@ -62,13 +63,16 @@ plot_biocol <- function(
     mapyear_buffer = 5,
     highlightyear,
     eps = FALSE) {
+  lon <- biocol_data$lon
+  lat <- biocol_data$lat
+  cellarea <- biocol_data$cellarea
   mapindex <- mapyear - start_year
   message("Plotting BioCol figures")
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
+  pick_years <- (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)
   plot_global(
     data = rowMeans(
-      biocol_data$biocol[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol[,pick_years]
     ),
     file = paste0(path_write, "BioCol_absolute_", mapyear, ".png"),
     type = "exp",
@@ -84,7 +88,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_luc[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_luc[,pick_years]
     ),
     file = paste0(path_write, "BioCol_luc_", mapyear, ".png"),
     type = "exp",
@@ -100,7 +104,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_harvest[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_harvest[,pick_years]
     ),
     file = paste0(path_write, "BioCol_harv_", mapyear, ".png"),
     type = "exp",
@@ -117,7 +121,8 @@ plot_biocol <- function(
   plot_biocol_ts(
     biocol_data = biocol_data,
     file = paste0(
-      path_write, "BioCol_overtime_LPJmL_", plotyears[1], "-", plotyears[2], ".png" # nolint
+      path_write, "BioCol_overtime_LPJmL_", plotyears[1], "-",
+      plotyears[2], ".png"
     ),
     first_year = start_year,
     plot_years = plotyears,
@@ -132,7 +137,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_frac[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_frac[,pick_years]
     ),
     file = paste0(path_write, "BioCol_frac_LPJmL_", mapyear, ".png"),
     legendtitle = "frac of NPPpot",
@@ -148,7 +153,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_frac_piref[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
+      biocol_data$biocol_frac_piref[,pick_years]
     ),
     file = paste0(path_write, "BioCol_frac_piref_LPJmL_", mapyear, ".png"),
     title = "",
@@ -165,7 +170,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$npp[, (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)] # nolint
+      biocol_data$npp[,pick_years]
     ),
     file = paste0(path_write, "NPP_LPJmL_", mapyear, ".png"),
     type = "lin",
@@ -350,7 +355,7 @@ plot_biocol_ts <- function(
   if (!is.null(file)) {
     path_write <- dirname(file)
     dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-    
+
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
       file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
@@ -366,7 +371,7 @@ plot_biocol_ts <- function(
       )
     }
   }
-  
+
   last_year <- first_year + length(biocol_data$npp_act_overtime) - 1
   colz <- c(
     "slateblue", "gold", "green3", "grey60", "red3",
@@ -522,7 +527,8 @@ plot_biocol_ts <- function(
       legendpos,
       legend = c(
         "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
-        "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]", "BioCol sum [frac NPPref]", # nolint:line_length_linter
+        "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]",
+        "BioCol sum [frac NPPref]",
         "rharvest", "firec", "timber_harvest", "wood_harvest"
       ), col = colz, lty = 1, cex = 1
     )
@@ -531,7 +537,8 @@ plot_biocol_ts <- function(
       legendpos,
       legend = c(
         "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
-        "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]", "BioCol sum [frac NPPref]" # nolint:line_length_linter
+        "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]",
+        "BioCol sum [frac NPPref]"
       ), col = colz[seq_len(9)], lty = 1, cex = 1
     )
   }

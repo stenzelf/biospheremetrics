@@ -8,11 +8,12 @@
 #' @param file_name directory for saving the plot (character string)
 #' @param display_area boolean, adding occupied area per biome (default F)
 #' @param to_robinson logical to define if robinson projection should be used
-#' for plotting
+#'        for plotting
+#' @param cellarea array with cellarea in m2 per gridcell (default NULL)
 #' @param order_legend in which order the biomes should be displayed
 #'        default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)
 #'
-#' @param bg_col character, specify background possible (`NA` for transparent)#
+#' @param bg_col character, specify background possible (`NA` for transparent)
 #'
 #' @examples
 #' \dontrun{
@@ -28,8 +29,8 @@ plot_biomes <- function(biome_data,
                         display_area = FALSE,
                         to_robinson = TRUE,
                         cellarea = NULL,
-                        order_legend = c(1, 2, 9, 10, 11, 3, 4, 5, 12, 13, 14, 6, 7, 8, 15, 16,
-                                          17, 18, 19),
+                        order_legend = c(1, 2, 9, 10, 11, 3, 4, 5, 12, 13, 14,
+                                         6, 7, 8, 15, 16, 17, 18, 19),
                         bg_col = "white") {
 
   # load required data: bbox, countries
@@ -37,14 +38,14 @@ plot_biomes <- function(biome_data,
 
   bounding_box <- system.file("extdata", "ne_110m_wgs84_bounding_box.shp",
                               package = "biospheremetrics") %>%
-      rgdal::readOGR(layer = "ne_110m_wgs84_bounding_box", verbose = FALSE) %>%
-      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
+     rgdal::readOGR(layer = "ne_110m_wgs84_bounding_box", verbose = FALSE) %>%
+      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . }
 
   countries <- system.file("extdata", "ne_110m_admin_0_countries.shp",
                               package = "biospheremetrics") %>%
       rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
       raster::crop(., lpjml_extent) %>%
-      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
+      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . }
 
   biome_cols <-  c("#993404", "#D95F0E", "#004529", "#238443",
                    "#D9F0A3", "#4EB3D3", "#2B8CBE", "#c4e2f4",
@@ -90,7 +91,7 @@ plot_biomes <- function(biome_data,
   brk <- seq(min(biome_mapping$id) - 0.5,
              max(biome_mapping$id, na.rm = TRUE) + 0.5, 1)
   par(mar = c(4, 0, 0, 0), xpd = T, bg = bg_col)
-  
+
   image(biomes_lpjml, asp = 1, xaxt = "n", yaxt = "n",
           xlab = "", ylab = "", col = biome_cols, breaks = brk, lwd = 0.1,
           bty = "n")
