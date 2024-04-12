@@ -126,6 +126,7 @@ plot_biome_internal_distribution <- function(
 plot_ecorisk_map <- function(
     ecorisk_object,
     plot_dimension,
+    year = 1,
     file = NULL,
     focus_biome = NULL,
     biome_classes = NULL,
@@ -137,6 +138,12 @@ plot_ecorisk_map <- function(
     palette = NULL
 ) {
   data <- ecorisk_object[[plot_dimension]]
+  di <- DIM(data)
+  if (length(di) == 2){
+    data <- data[,year]
+  } else if (length(di) == 1) {
+    data <- data
+  } else { stop(paste0("Unknown dimensions in ecorisk dimension ",plot_dimension," :",di)) }
   lat <- ecorisk_object$lat
   lon <- ecorisk_object$lon
   if (!is.null(file)) {
@@ -566,6 +573,40 @@ plot_ecorisk_radial <- function(data,
   grDevices::dev.off()
 }
 
+#' Plot EcoRisk maps
+#'
+#' Function to plot with one command maps of all components of EcoRisk to files
+#'
+#' @param ecorisk EcoRisk object e.g. returned from calc_ecorisk
+#' @param out_folder folder to plot the data into
+#' @param year which year to plot, supply either as index, or character string
+#'             of year (default = 1)
+#'
+#' @examples
+#' \dontrun{
+#' plot_ecorisk_maps(
+#'   ecorisk = ecorisk,
+#'   out_folder = "./plots/ecorisk/"
+#' )
+#' }
+#'
+#' @md
+#' @export
+plot_ecorisk_maps <- function(ecorisk, out_folder, year = 1){
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "ecorisk_total", year = year, file = paste0(out_folder,"/ecorisk_total.png"), title="ecorisk")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "vegetation_structure_change", year = year, file = paste0(out_folder,"/ecorisk_vs.png"), title="vegetation structure change")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "local_change", year = year, file = paste0(out_folder,"/ecorisk_lc.png"), title="local change")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "global_importance", year = year, file = paste0(out_folder,"/ecorisk_gi.png"), title="global importance")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "ecosystem_balance", year = year, file = paste0(out_folder,"/ecorisk_eb.png"), title="ecosystem balance")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "carbon_stocks", year = year,file = paste0(out_folder,"/ecorisk_cs.png"), title="carbon_stocks")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "carbon_fluxes", year = year, file = paste0(out_folder,"/ecorisk_cf.png"), title="carbon_fluxes")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "carbon_total", year = year, file = paste0(out_folder,"/ecorisk_ct.png"), title="carbon_total")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "water_total", year = year, file = paste0(out_folder,"/ecorisk_wt.png"), title=" water_total")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "water_fluxes", year = year, file = paste0(out_folder,"/ecorisk_wf.png"), title=" water_fluxes")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "nitrogen_stocks", year = year, file = paste0(out_folder,"/ecorisk_ns.png"), title=" nitrogen_stocks")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "nitrogen_fluxes", year = year, file = paste0(out_folder,"/ecorisk_nf.png"), title=" nitrogen_fluxes")
+    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "nitrogen_total", year = year, file = paste0(out_folder,"/ecorisk_nt.png"), title=" nitrogen_total")
+}
 
 #' Plot timeline of EcoRisk variables to screen
 #'

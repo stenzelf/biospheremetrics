@@ -312,5 +312,12 @@ split_sign <- function(string) {
   return(outarray)
 }
 
+DIM <- function( ... ){
+  args <- list(...)
+  lapply( args , function(x) { if( is.null( dim(x) ) )
+    return( length(x) )
+    dim(x) } )[[1]]
+}
+
 # Avoid note for "."...
 utils::globalVariables(".") # nolint:undesirable_function_linter

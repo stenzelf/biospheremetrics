@@ -411,17 +411,17 @@ plot_biocol_ts <- function(
     type = "l",
     col = colz[4]
   )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$biocol_overtime_abs,
-    type = "l",
-    col = colz[6]
+  graphics::polygon(
+    x = c(seq(first_year, last_year, 1), seq(last_year,first_year, -1)),
+    y = c(biocol_data$biocol_overtime_abs, rev(biocol_data$biocol_overtime)),
+    border = NA,
+    col = colz[7]
   )
   graphics::lines(
     x = seq(first_year, last_year, 1),
-    y = biocol_data$biocol_overtime,
+    y = biocol_data$biocol_overtime_pos,
     type = "l",
-    col = colz[7]
+    col = colz[6]
   )
   graphics::lines(
     x = seq(first_year, last_year, 1),
@@ -456,58 +456,38 @@ plot_biocol_ts <- function(
   }
   graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(4, 5, 1, 3), new = TRUE)
   if (ref == "pi") {
-    graphics::plot(
-      x = seq(first_year, last_year, 1),
-      y = biocol_data$biocol_overtime_abs_frac_piref,
-      ylab = "",
-      xlab = "",
-      xlim = plot_years,
-      ylim = c(0, max_val_right),
-      type = "l",
-      col = colz[8],
-      xaxs = "i",
-      yaxs = "i",
-      axes = FALSE
-    )
-    graphics::lines(
-      x = seq(first_year, last_year, 1),
-      y = biocol_data$biocol_overtime_frac_piref,
-      ylab = "",
-      xlab = "",
-      xlim = plot_years,
-      ylim = c(0, 0.4),
-      col = colz[9],
-      xaxs = "i",
-      yaxs = "i"
-    )
+    biocol_max <- biocol_data$biocol_overtime_abs_frac_piref
+    biocol_min <- biocol_data$biocol_overtime_frac_piref
+    biocol_mean <- biocol_data$biocol_overtime_pos_frac_piref
   } else if (ref == "act") {
-    graphics::plot(
-      x = seq(first_year, last_year, 1),
-      y = biocol_data$biocol_overtime_abs_frac,
-      ylab = "",
-      xlab = "",
-      xlim = plot_years,
-      ylim = c(0, max_val_right),
-      type = "l",
-      col = colz[8],
-      xaxs = "i",
-      yaxs = "i",
-      axes = FALSE
-    )
-    graphics::lines(
-      x = seq(first_year, last_year, 1),
-      y = biocol_data$biocol_overtime_frac,
-      ylab = "",
-      xlab = "",
-      xlim = plot_years,
-      ylim = c(0, 0.4),
-      col = colz[9],
-      xaxs = "i",
-      yaxs = "i"
-    )
+    biocol_max <- biocol_data$biocol_overtime_abs_frac
+    biocol_min <- biocol_data$biocol_overtime_frac
+    biocol_mean <- biocol_data$biocol_overtime_pos_frac
   } else {
     stop(paste0("Unknown value for parameter ref: ", ref, " - Aborting."))
   }
+  graphics::plot(
+    NA,
+    xlim = plot_years,
+    ylab = "",
+    xlab = "",
+    ylim = c(0, max_val_right),
+    xaxs = "i",
+    yaxs = "i",
+    axes = FALSE
+  )
+  graphics::polygon(
+    x = c(seq(first_year, last_year, 1), seq(last_year,first_year, -1)),
+    y = c(biocol_max, rev(biocol_min)),
+    border = NA,
+    col = colz[9],
+  )
+  graphics::lines(
+    x = seq(first_year, last_year, 1),
+    y = biocol_mean,
+    type = "l",
+    col = colz[8],
+  )
 
   graphics::axis(side = 4, col = colz[8], col.axis = colz[8])
   graphics::mtext(
@@ -527,19 +507,17 @@ plot_biocol_ts <- function(
       legendpos,
       legend = c(
         "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
-        "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]",
-        "BioCol sum [frac NPPref]",
+        "HANPP sum", "BioCol sum [frac NPPref]",
         "rharvest", "firec", "timber_harvest", "wood_harvest"
-      ), col = colz, lty = 1, cex = 1
+      ), col = colz[c(1:6,8,10:13)], lty = 1, cex = 1
     )
   } else {
     graphics::legend(
       legendpos,
       legend = c(
         "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
-        "HANPP abs sum", "HANPP sum", "BioCol abs sum [frac NPPref]",
-        "BioCol sum [frac NPPref]"
-      ), col = colz[seq_len(9)], lty = 1, cex = 1
+        "HANPP sum", "BioCol sum [frac NPPref]"
+      ), col = colz[c(1:6,8)], lty = 1, cex = 1
     )
   }
   if (!is.null(file)) grDevices::dev.off()

@@ -841,6 +841,7 @@ read_ecorisk_data <- function(
     lon <- grid$data[, , 1]
     ncells <- length(lat)
     nyears <- length(time_span_scenario)
+    nyears_ref <- length(time_span_reference)
 
     ### read in lpjml output
     # for vegetation_structure_change (fpc,fpc_bft,cftfrac)
@@ -915,7 +916,7 @@ read_ecorisk_data <- function(
       nstate_dimensions <- nstate_dimensions +
         length(metric_files$metric$ecorisk_nitrogen$metric_class[[i]])
     }
-    state_ref <- array(0, dim = c(ncells, nyears, nstate_dimensions))
+    state_ref <- array(0, dim = c(ncells, nyears_ref, nstate_dimensions))
     state_scen <- array(0, dim = c(ncells, nyears, nstate_dimensions))
     class_names <- seq_len(nstate_dimensions)
     index <- 1
@@ -2151,6 +2152,91 @@ ecorisk_cross_table <- function(data_file_in,
   return(c2vr)
 }
 
+#' Create modified EcoRisk data combining two time series
+#'
+#' Function to combine two EcoRisk data files (e.g. historic and futures) into
+#' one file.
+#'
+#' @param hist_file path to input file with historic data
+#' @param scen_file path to input file with scenario data
+#' @param combined_file path to save modified data to
+#'
+#'
+#' @export
+ecorisk_combine_hist_and_scen_data <- function(hist_file, scen_file, combined_file) {
+  hist_file = ecorisk_data_files[20]
+  scen_file = ecorisk_data_files[1]
+  load(hist_file)
+  state_scen_hist <- state_scen
+  fpc_scen_hist <- fpc_scen
+  bft_scen_hist <- bft_scen
+  cft_scen_hist <- cft_scen
+  load(scen_file)
+  state_scen_scen <- state_scen
+  fpc_scen_scen <- fpc_scen
+  bft_scen_scen <- bft_scen
+  cft_scen_scen <- cft_scen
+
+  dimnames_state_hist <- dimnames(state_scen_hist)
+  dimnames_state_scen <- dimnames(state_scen_scen)
+  dimnames_state_comb <- dimnames_state_hist
+  dimnames_state_comb$year <- c(dimnames_state_hist$year,dimnames_state_scen$year)
+  di_state_hist <- dim(state_scen_hist)
+  di_state_scen <- dim(state_scen_scen)
+  di_state_comb <- di_state_hist
+  di_state_comb[2] <- di_state_hist[2] + di_state_scen[2]
+  state_scen <- array(0, dim = di_state_comb)
+  dimnames(state_scen) <- dimnames_state_comb
+  state_scen[,dimnames_state_hist$year,] <- state_scen_hist
+  state_scen[,dimnames_state_scen$year,] <- state_scen_scen
+
+  dimnames_cft_hist <- dimnames(cft_scen_hist)
+  dimnames_cft_scen <- dimnames(cft_scen_scen)
+  dimnames_cft_comb <- dimnames_cft_hist
+  dimnames_cft_comb$year <- c(dimnames_cft_hist$year,dimnames_cft_scen$year)
+  di_cft_hist <- dim(cft_scen_hist)
+  di_cft_scen <- dim(cft_scen_scen)
+  di_cft_comb <- di_cft_hist
+  di_cft_comb[3] <- di_cft_hist[3] + di_cft_scen[3]
+  cft_scen <- array(0, dim = di_cft_comb)
+  dimnames(cft_scen) <- dimnames_cft_comb
+  cft_scen[,,dimnames_cft_hist$year] <- cft_scen_hist
+  cft_scen[,,dimnames_cft_scen$year] <- cft_scen_scen
+
+  dimnames_fpc_hist <- dimnames(fpc_scen_hist)
+  dimnames_fpc_scen <- dimnames(fpc_scen_scen)
+  dimnames_fpc_comb <- dimnames_fpc_hist
+  dimnames_fpc_comb$year <- c(dimnames_fpc_hist$year,dimnames_fpc_scen$year)
+  di_fpc_hist <- dim(fpc_scen_hist)
+  di_fpc_scen <- dim(fpc_scen_scen)
+  di_fpc_comb <- di_fpc_hist
+  di_fpc_comb[3] <- di_fpc_hist[3] + di_fpc_scen[3]
+  fpc_scen <- array(0, dim = di_fpc_comb)
+  dimnames(fpc_scen) <- dimnames_fpc_comb
+  fpc_scen[,,dimnames_fpc_hist$year] <- fpc_scen_hist
+  fpc_scen[,,dimnames_fpc_scen$year] <- fpc_scen_scen
+
+  dimnames_bft_hist <- dimnames(bft_scen_hist)
+  dimnames_bft_scen <- dimnames(bft_scen_scen)
+  dimnames_bft_comb <- dimnames_bft_hist
+  dimnames_bft_comb$year <- c(dimnames_bft_hist$year,dimnames_bft_scen$year)
+  di_bft_hist <- dim(bft_scen_hist)
+  di_bft_scen <- dim(bft_scen_scen)
+  di_bft_comb <- di_bft_hist
+  di_bft_comb[3] <- di_bft_hist[3] + di_bft_scen[3]
+  bft_scen <- array(0, dim = di_bft_comb)
+  dimnames(bft_scen) <- dimnames_bft_comb
+  bft_scen[,,dimnames_bft_hist$year] <- bft_scen_hist
+  bft_scen[,,dimnames_bft_scen$year] <- bft_scen_scen
+
+  if (file.exists(combined_file)) {
+    message("Output file ",combined_file," already exists. Aborting.")
+  } else {
+    message("Saving data to: ", combined_file)
+    save(state_ref, state_scen, fpc_ref, fpc_scen, bft_ref, bft_scen,
+         cft_ref, cft_scen, lat, lon, cell_area, file = combined_file)
+  }
+}
 
 ################# biome (dis-)aggregation functions ##################
 
