@@ -85,6 +85,7 @@ ecorisk_wrapper <- function(path_ref,
     )
   }
 
+if (!read_saved_data) {  
   # translate output names (from metric_files.yml) and
   # folders to files_scenarios/reference lists
   metric_files <- system.file(
@@ -131,7 +132,7 @@ ecorisk_wrapper <- function(path_ref,
                         replace_input_file_names[[output]], ".", file_extension)
     }
   }
-
+}# end if !read_saved_data
   if (overtime && (window != nyears)) stop("Overtime is enabled, but window \
                   length (", window, ") does not match the reference nyears.")
 
@@ -174,6 +175,7 @@ ecorisk_wrapper <- function(path_ref,
 
   ncells <- length(cell_area)
   slices <- (nyears_scen - window + 1)
+  # todo: add dimnames already here and then get rid of the idexing
   ecorisk <- list(
     ecorisk_total = array(0, dim = c(ncells, slices)),
     vegetation_structure_change = array(0, dim = c(ncells, slices)),
@@ -2164,8 +2166,6 @@ ecorisk_cross_table <- function(data_file_in,
 #'
 #' @export
 ecorisk_combine_hist_and_scen_data <- function(hist_file, scen_file, combined_file) {
-  hist_file = ecorisk_data_files[20]
-  scen_file = ecorisk_data_files[1]
   load(hist_file)
   state_scen_hist <- state_scen
   fpc_scen_hist <- fpc_scen

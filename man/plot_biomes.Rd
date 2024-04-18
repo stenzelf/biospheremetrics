@@ -29,7 +29,7 @@ for plotting}
 \item{order_legend}{in which order the biomes should be displayed
 default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)}
 
-\item{bg_col}{character, specify background possible (\code{NA} for transparent)#}
+\item{bg_col}{character, specify background possible (\code{NA} for transparent)}
 }
 \description{
 Plots a map with the biome distribution as derived from a lpjml run based

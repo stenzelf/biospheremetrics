@@ -7,6 +7,7 @@
 plot_ecorisk_map(
   ecorisk_object,
   plot_dimension,
+  year = 1,
   file = NULL,
   focus_biome = NULL,
   biome_classes = NULL,
