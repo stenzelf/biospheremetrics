@@ -85,54 +85,54 @@ ecorisk_wrapper <- function(path_ref,
     )
   }
 
-if (!read_saved_data) {  
-  # translate output names (from metric_files.yml) and
-  # folders to files_scenarios/reference lists
-  metric_files <- system.file(
-    "extdata",
-    "metric_files.yml",
-    package = "biospheremetrics"
-  ) %>%
-    yaml::read_yaml()
+  if (!read_saved_data) {
+    # translate output names (from metric_files.yml) and
+    # folders to files_scenarios/reference lists
+    metric_files <- system.file(
+      "extdata",
+      "metric_files.yml",
+      package = "biospheremetrics"
+    ) %>%
+      yaml::read_yaml()
 
-  file_extension <- get_major_file_ext(paste0(path_scen))
-  files_names <- metric_files$file_name
-  files_scenario <- list()
-  files_reference <- list()
+    file_extension <- get_major_file_ext(paste0(path_scen))
+    files_names <- metric_files$file_name
+    files_scenario <- list()
+    files_reference <- list()
 
-  for (output in names(metric_files$metric$ecorisk_nitrogen$output)) {
-    # Iterate over all outputs
-    if (is.null(replace_input_file_names[[output]])){
-      for (file in metric_files$file_name[[output]]){
-        full_file_path_lu <- paste0(path_scen, file, ".", file_extension)
-        if (file.exists(full_file_path_lu)) {
-          files_scenario[[output]] <- full_file_path_lu
+    for (output in names(metric_files$metric$ecorisk_nitrogen$output)) {
+      # Iterate over all outputs
+      if (is.null(replace_input_file_names[[output]])){
+        for (file in metric_files$file_name[[output]]){
+          full_file_path_lu <- paste0(path_scen, file, ".", file_extension)
+          if (file.exists(full_file_path_lu)) {
+            files_scenario[[output]] <- full_file_path_lu
+          }
+          full_file_path_pnv <- paste0(path_ref, file, ".", file_extension)
+          if (file.exists(full_file_path_pnv)) {
+            files_reference[[output]] <- full_file_path_pnv
+          }
         }
-        full_file_path_pnv <- paste0(path_ref, file, ".", file_extension)
-        if (file.exists(full_file_path_pnv)) {
-          files_reference[[output]] <- full_file_path_pnv
+        if (is.null(files_scenario[[output]])) {
+          stop("None of the default file names for ",output,
+               " were found in ",path_scen,"please check or define manually",
+               " using argument 'replace_input_file_names'. Stopping.")
         }
-      }
-      if (is.null(files_scenario[[output]])) {
-        stop("None of the default file names for ",output,
-             " were found in ",path_scen,"please check or define manually",
-             " using argument 'replace_input_file_names'. Stopping.")
-      }
-      if (is.null(files_reference[[output]])) {
-        stop("None of the default file names for ",output,
-             " were found in ",path_ref,"please check or define manually",
-             " using argument 'replace_input_file_names'. Stopping.")
-      }
+        if (is.null(files_reference[[output]])) {
+          stop("None of the default file names for ",output,
+               " were found in ",path_ref,"please check or define manually",
+               " using argument 'replace_input_file_names'. Stopping.")
+        }
 
 
-    } else {
-      files_scenario[[output]] <- paste0(path_scen,
-                        replace_input_file_names[[output]], ".", file_extension)
-      files_reference[[output]] <- paste0(path_ref,
-                        replace_input_file_names[[output]], ".", file_extension)
+      } else {
+        files_scenario[[output]] <- paste0(path_scen,
+                          replace_input_file_names[[output]], ".", file_extension)
+        files_reference[[output]] <- paste0(path_ref,
+                          replace_input_file_names[[output]], ".", file_extension)
+      }
     }
-  }
-}# end if !read_saved_data
+  }# end if !read_saved_data
   if (overtime && (window != nyears)) stop("Overtime is enabled, but window \
                   length (", window, ") does not match the reference nyears.")
 
@@ -174,37 +174,57 @@ if (!read_saved_data) {
   }
 
   ncells <- length(cell_area)
+  cell_ids <- 0:(ncells - 1)
   slices <- (nyears_scen - window + 1)
-  # todo: add dimnames already here and then get rid of the idexing
+  window_half <- round(window/2.0)
+  slice_years <- time_span_scenario[
+                            (window_half + 1):(nyears_scen - window_half + 1)]
+  # todo: add dimnames already here and then get rid of the indexing
   ecorisk <- list(
-    ecorisk_total = array(0, dim = c(ncells, slices)),
-    vegetation_structure_change = array(0, dim = c(ncells, slices)),
-    local_change = array(0, dim = c(ncells, slices)),
-    global_importance = array(0, dim = c(ncells, slices)),
-    ecosystem_balance = array(0, dim = c(ncells, slices)),
-    c2vr = array(0, dim = c(4, ncells, slices)),
-    carbon_stocks = array(0, dim = c(ncells, slices)),
-    carbon_fluxes = array(0, dim = c(ncells, slices)),
-    carbon_total = array(0, dim = c(ncells, slices)),
-    water_total = array(0, dim = c(ncells, slices)),
-    water_fluxes = array(0, dim = c(ncells, slices)),
-    nitrogen_stocks = array(0, dim = c(ncells, slices)),
-    nitrogen_fluxes = array(0, dim = c(ncells, slices)),
-    nitrogen_total = array(0, dim = c(ncells, slices)),
+    ecorisk_total = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    vegetation_structure_change = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    local_change = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    global_importance = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    ecosystem_balance = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    c2vr = array(0, dim = c(4, ncells, slices),
+              dimnames = list(part = 1:4, cell = cell_ids, year = slice_years)),
+    carbon_stocks = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    carbon_fluxes = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    carbon_total = array(0, dim = c(ncells, slices),
+                         dimnames = list(cell = cell_ids, year = slice_years)),
+    water_total = array(0, dim = c(ncells, slices),
+                        dimnames = list(cell = cell_ids, year = slice_years)),
+    water_fluxes = array(0, dim = c(ncells, slices),
+                         dimnames = list(cell = cell_ids, year = slice_years)),
+    nitrogen_stocks = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    nitrogen_fluxes = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
+    nitrogen_total = array(0, dim = c(ncells, slices),
+                          dimnames = list(cell = cell_ids, year = slice_years)),
     lat = lat,
-    lon = lon
+    lon = lon,
+    cell_area = cell_area
   )
-  for (y in seq_len(slices)) {
+  for (y in slice_years) {
+    year_range <- as.character((y - window_half):(y + window_half - 1))
     message("Calculating time slice ", y, " of ", slices)
     returned <- calc_ecorisk(
       fpc_ref = fpc_ref,
-      fpc_scen = fpc_scen[, , y:(y + window - 1)],
+      fpc_scen = fpc_scen[, , year_range],
       bft_ref = bft_ref,
-      bft_scen = bft_scen[, , y:(y + window - 1)],
+      bft_scen = bft_scen[, , year_range],
       cft_ref = cft_ref,
-      cft_scen = cft_scen[, , y:(y + window - 1)],
+      cft_scen = cft_scen[, , year_range],
       state_ref = state_ref,
-      state_scen = state_scen[, y:(y + window - 1), ],
+      state_scen = state_scen[, year_range, ],
       weighting = weighting,
       lat = lat,
       lon = lon,
@@ -214,23 +234,23 @@ if (!read_saved_data) {
       external_variability = external_variability,
       c2vr = c2vr
     )
-    ecorisk$ecorisk_total[, y] <- returned$ecorisk_total
-    ecorisk$vegetation_structure_change[, y] <- (
+    ecorisk$ecorisk_total[, as.character(y)] <- returned$ecorisk_total
+    ecorisk$vegetation_structure_change[, as.character(y)] <- (
       returned$vegetation_structure_change
     )
-    ecorisk$local_change[, y] <- returned$local_change
-    ecorisk$global_importance[, y] <- returned$global_importance
-    ecorisk$ecosystem_balance[, y] <- returned$ecosystem_balance
-    ecorisk$c2vr[, , y] <- returned$c2vr
-    ecorisk$carbon_stocks[, y] <- returned$carbon_stocks
-    ecorisk$carbon_fluxes[, y] <- returned$carbon_fluxes
-    ecorisk$carbon_total[, y] <- returned$carbon_total
-    ecorisk$water_total[, y] <- returned$water_total
-    ecorisk$water_fluxes[, y] <- returned$water_fluxes
+    ecorisk$local_change[, as.character(y)] <- returned$local_change
+    ecorisk$global_importance[, as.character(y)] <- returned$global_importance
+    ecorisk$ecosystem_balance[, as.character(y)] <- returned$ecosystem_balance
+    ecorisk$c2vr[, , as.character(y)] <- returned$c2vr
+    ecorisk$carbon_stocks[, as.character(y)] <- returned$carbon_stocks
+    ecorisk$carbon_fluxes[, as.character(y)] <- returned$carbon_fluxes
+    ecorisk$carbon_total[, as.character(y)] <- returned$carbon_total
+    ecorisk$water_total[, as.character(y)] <- returned$water_total
+    ecorisk$water_fluxes[, as.character(y)] <- returned$water_fluxes
     if (nitrogen) {
-      ecorisk$nitrogen_stocks[, y] <- returned$nitrogen_stocks
-      ecorisk$nitrogen_fluxes[, y] <- returned$nitrogen_fluxes
-      ecorisk$nitrogen_total[, y] <- returned$nitrogen_total
+      ecorisk$nitrogen_stocks[, as.character(y)] <- returned$nitrogen_stocks
+      ecorisk$nitrogen_fluxes[, as.character(y)] <- returned$nitrogen_fluxes
+      ecorisk$nitrogen_total[, as.character(y)] <- returned$nitrogen_total
     }
   }
 
