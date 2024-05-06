@@ -55,7 +55,7 @@
 #'        fraction c(cell,month,year) since 1500
 #' @param external_wood_harvest_file path to R-file containing processed
 #'        timeline of maps for LUH2_v2h woodharvest
-#' @param suppressWarnings suppress warnings when reading files (default: TRUE)
+#' @param suppress_warnings suppress warnings when reading files (default: TRUE)
 #'
 #' @return list data object containing BioCol and components as arrays:
 #'         biocol_overtime, biocol_overtime_abs, biocol_overtime_abs_frac_piref,
@@ -91,7 +91,7 @@ read_calc_biocol <- function(
     grass_harvest_file = NULL,
     external_fire_file = NULL,
     external_wood_harvest_file = NULL,
-    suppressWarnings = TRUE) {
+    suppress_warnings = TRUE) {
   if (is.null(files_reference)) {
     files_reference <- list(npp = baseline_npp_file)
   }
@@ -535,7 +535,7 @@ read_calc_biocol <- function(
 
   # take the abs of biocol and sum that up for overtime
   biocol_pos <- biocol
-  biocol_pos[biocol_pos<0] <- 0
+  biocol_pos[biocol_pos < 0] <- 0
   biocol_overtime_pos <- colSums(biocol_pos * cellarea) / 10^15
   biocol_overtime_pos_frac_piref <- biocol_overtime_pos * 10^15 /
     mean(colSums(npp_ref * cellarea))
@@ -623,7 +623,7 @@ read_calc_biocol <- function(
 #'        identifiers to replace the ones in inst/ext_files/metric_files.yml.
 #'        e.g. list(npp="mnpp") would replace the expected output for npp with
 #'        mnpp followed by the automatically detected file extension (.bin.json)
-#' @param suppressWarnings suppress warnings when reading files (default: TRUE)
+#' @param suppress_warnings suppress warnings when reading files (default: TRUE)
 #'
 #' @return list data object containing BioCol and components as arrays: biocol,
 #'         biocol_overtime, biocol_overtime_piref, biocol_frac, npp_potential,
@@ -670,7 +670,7 @@ calc_biocol <- function(
     external_fire_file = NULL,
     external_wood_harvest_file = NULL,
     replace_input_file_names = NULL,
-    suppressWarnings = TRUE) {
+    suppress_warnings = TRUE) {
 
   metric_files <- system.file(
     "extdata",
@@ -682,14 +682,13 @@ calc_biocol <- function(
   # translate output names (from metric_files.yml)
   # and folders to files_scenarios/reference lists
   file_extension <- get_major_file_ext(paste0(path_lu))
-  files_names <- metric_files$file_name
   files_scenario <- list()
   files_baseline <- list()
 
   for (output in names(metric_files$metric$biocol$output)) {
     # Iterate over all outputs
-    if (is.null(replace_input_file_names[[output]])){
-      for (file in metric_files$file_name[[output]]){
+    if (is.null(replace_input_file_names[[output]])) {
+      for (file in metric_files$file_name[[output]]) {
         full_file_path_lu <- paste0(path_lu, file, ".", file_extension)
         if (file.exists(full_file_path_lu)) {
           files_scenario[[output]] <- full_file_path_lu
@@ -700,13 +699,13 @@ calc_biocol <- function(
         }
       }
       if (is.null(files_scenario[[output]])) {
-        stop("None of the default file names for ",output,
-             " were found in ",path_lu,"please check or define manually",
+        stop("None of the default file names for ", output,
+             " were found in ", path_lu, "please check or define manually",
              " using argument 'replace_input_file_names'. Stopping.")
       }
       if (is.null(files_baseline[[output]])) {
-        stop("None of the default file names for ",output,
-             " were found in ",path_pnv,"please check or define manually",
+        stop("None of the default file names for ", output,
+             " were found in ", path_pnv, "please check or define manually",
              " using argument 'replace_input_file_names'. Stopping.")
       }
     } else {
@@ -740,7 +739,7 @@ calc_biocol <- function(
       grass_harvest_file = grass_harvest_file,
       external_fire_file = external_fire_file,
       external_wood_harvest_file = external_wood_harvest_file,
-      suppressWarnings = suppressWarnings
+      suppress_warnings = suppress_warnings
     )
   )
 }

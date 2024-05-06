@@ -88,8 +88,8 @@ only pos values.
 \examples{
 \dontrun{
 plot_global(
-  data = biocol_data$biocol[,"2015"]),
-  file = "BioCol_absolute_2015.png",
+  data = biocol_data$biocol[,"2015"],
+  file = "BioCol_absolute.png",
   type = "exp",
   pow2min = 0,
   pow2max = 12,

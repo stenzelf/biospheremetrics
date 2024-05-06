@@ -64,7 +64,7 @@ folder
 plot_biocol(
    biocol_data = biocol,
    path_write = "~/BioCol_plots/",
-   plotyears = c(1980,2014),
+   plotyears = c(1980, 2014),
    min_val = 0,
    max_val = 90,
    legendpos = "left",

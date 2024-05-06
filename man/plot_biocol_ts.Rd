@@ -59,16 +59,16 @@ and NPPact, with legend similar to Krausmann et al. 2013
 \dontrun{
 plot_biocol_ts(
   biocol_data = biocol_data,
-  file = "./BioCol_overtime_LPJmL_1550-2015.png"),
+  file = "./BioCol_overtime_LPJmL_1550-2015.png",
   first_year = 1550,
-  plot_years = c(1550,2015),
+  plot_years = c(1550, 2015),
   min_val = 0,
   max_val = 80,
   ref = "pi",
   legendpos = "topleft",
   details = TRUE,
   max_val = max_val,
-  highlight_years = c(1900,2000)
+  highlight_years = c(1900, 2000)
   )
 }
 

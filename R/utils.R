@@ -255,7 +255,6 @@ get_outputs <- function(x, metric_name, only_first_filename) { # nolint
 
 # Get arguments of functions used in metrics
 get_function_args <- function(x, metric_name) {
-
   # List functions of metrics (metric_name)
   funs <- list()
 
@@ -299,9 +298,9 @@ split_sign <- function(string) {
   if (length(a) == 1) {
     outarray <- array("", dim = c(1, 2))
   } else {
-    outarray <- array("", dim = c(round( (length(a)+1) / 2), 2))
+    outarray <- array("", dim = c(round((length(a) + 1) / 2), 2))
   }
-  for (i in seq_along(a)){
+  for (i in seq_along(a)) {
     i2 <- floor(i / 2 + 1)
     if (i == 1 && !(grepl(a[1], "+-", fixed = TRUE))) outarray[1, 1] <- "+"
 
@@ -312,11 +311,13 @@ split_sign <- function(string) {
   return(outarray)
 }
 
-DIM <- function( ... ){
+DIM <- function(...) {
   args <- list(...)
-  lapply( args , function(x) { if( is.null( dim(x) ) )
-    return( length(x) )
-    dim(x) } )[[1]]
+  lapply(args, function(x) {
+ if (is.null(dim(x)))
+    return(length(x))
+    dim(x)
+ })[[1]]
 }
 
 # Avoid note for "."...

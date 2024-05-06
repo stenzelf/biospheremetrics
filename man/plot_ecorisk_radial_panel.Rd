@@ -31,7 +31,7 @@ for the different sub-categories to file
 \examples{
 \dontrun{
 plot_ecorisk_radial_panel(
-  data = ecorisk_disaggregated_full[-c(3,18,19),c(1:5,8,9,13),],
+  data = ecorisk_disaggregated_full[-c(3, 18, 19), c(1:5, 8, 9, 13), ],
   biome_names = biomes,
   file = "./biomes.png"
 )

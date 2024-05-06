@@ -51,7 +51,7 @@ test_that("test calc_ecorisk", {
   # test for expected variables
   expect_setequal(
     names(ecorisk),
-    c(vars_ecorisk, "lat", "lon")
+    c(vars_ecorisk, "lat", "lon", "cell_area")
   )
 
   # test for expected array dimensions

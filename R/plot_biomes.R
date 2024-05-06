@@ -17,8 +17,8 @@
 #'
 #' @examples
 #' \dontrun{
-#'  plot_biomes(biome_data = biomes,
-#'              file_name ="/p/projects/open/Johanna/R/biomes.pfd")
+#' plot_biomes(biome_data = biomes,
+#'              file_name = "/p/projects/open/Johanna/R/biomes.pfd")
 #' }
 #'
 #' @md
@@ -32,20 +32,23 @@ plot_biomes <- function(biome_data,
                         order_legend = c(1, 2, 9, 10, 11, 3, 4, 5, 12, 13, 14,
                                          6, 7, 8, 15, 16, 17, 18, 19),
                         bg_col = "white") {
-
   # load required data: bbox, countries
   lpjml_extent <- c(-180, 180, -60, 85)
 
   bounding_box <- system.file("extdata", "ne_110m_wgs84_bounding_box.shp",
                               package = "biospheremetrics") %>%
      rgdal::readOGR(layer = "ne_110m_wgs84_bounding_box", verbose = FALSE) %>%
-      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . }
+      {
+ if (to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else .
+ }
 
   countries <- system.file("extdata", "ne_110m_admin_0_countries.shp",
                               package = "biospheremetrics") %>%
       rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
       raster::crop(., lpjml_extent) %>%
-      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . }
+      {
+ if (to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else .
+ }
 
   biome_cols <-  c("#993404", "#D95F0E", "#004529", "#238443",
                    "#D9F0A3", "#4EB3D3", "#2B8CBE", "#c4e2f4",
@@ -90,7 +93,7 @@ plot_biomes <- function(biome_data,
   }
   brk <- seq(min(biome_mapping$id) - 0.5,
              max(biome_mapping$id, na.rm = TRUE) + 0.5, 1)
-  par(mar = c(4, 0, 0, 0), xpd = T, bg = bg_col)
+  par(mar = c(4, 0, 0, 0), xpd = TRUE, bg = bg_col)
 
   image(biomes_lpjml, asp = 1, xaxt = "n", yaxt = "n",
           xlab = "", ylab = "", col = biome_cols, breaks = brk, lwd = 0.1,
@@ -103,20 +106,20 @@ plot_biomes <- function(biome_data,
    ypoint <- (-67)
   }
   legend_text <- biome_names_legend[1:19]
-  if (display_area){
+  if (display_area) {
     if (is.null(cellarea)) stop("Cellarea needs to be supplied for displaying.")
-    biome_area <- rep(0,length(order_legend))
+    biome_area <- rep(0, length(order_legend))
     names(biome_area) <- biome_mapping$short_name
-    for (i in 1:length(order_legend)){
+    for (i in 1:length(order_legend)) {
       biome_area[i] <- sum(cellarea[which(biome_data$biome_id == i)])
     }
-    biome_area <- round(biome_area/sum(cellarea)*100,3)
-    legend_text <- paste(legend_text,paste0("(",biome_area," %)"))
+    biome_area <- round(biome_area / sum(cellarea) * 100, 3)
+    legend_text <- paste(legend_text, paste0("(", biome_area, " %)"))
   }
   legend(0, y = ypoint, xjust = 0.45, yjust = 1, cex = 0.8,
     legend_text,
     fill = biome_cols_legend[1:19],
-    horiz = F, border = NULL, bty = "o", box.col = "white",
+    horiz = FALSE, border = NULL, bty = "o", box.col = "white",
     bg = bg_col, ncol = 4)
   if (!is.null(file_name)) dev.off()
 }
@@ -126,7 +129,7 @@ to_raster <- function(lpjml_array, boundary_box, ext, to_robinson) {
 
   crs_init <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
   lpj_ras <- raster::raster(res = 0.5, crs = crs_init)
-  #TODO replace lpjmliotools
+  # TODO replace lpjmliotools
   lpj_ras[raster::cellFromXY(lpj_ras, cbind(lon, lat))] <-
         lpjml_array
   if (to_robinson) {

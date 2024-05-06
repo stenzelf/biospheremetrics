@@ -38,8 +38,7 @@ plot_biome_internal_distribution <- function(
     title = "",
     legendtitle = "",
     eps = FALSE,
-    palette = NULL)
-  {
+    palette = NULL) {
 
   if (!is.null(file)) {
     if (eps) {
@@ -64,35 +63,37 @@ plot_biome_internal_distribution <- function(
   if (is.null(biomes_abbrv)) biomes_abbrv <- names(data)$biome
 
   if (is.null(palette)) {
-    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+    palette <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
   }
   col_index <- floor(seq(res / 2, 1 - res / 2, res) * 10) + 1
 
-  graphics::par(mar = c(2, 4, 0, 0), oma = c(0, 0, 0, 0)) # bltr
-  graphics::plot(NA,
-                 xlim = c(0, 1), ylim = c(0, 20), xlab = "EcoRisk",
-                 main = title, axes = FALSE, ylab = ""
-  )
-  graphics::axis(side = 2, labels = FALSE, at = seq_len(biomes))
-  brks <- seq(0, 1, 0.1)
-  fields::image.plot(
-    legend.only = TRUE, col = palette,
-    useRaster = FALSE, breaks = brks, horizontal = TRUE,
-    lab.breaks = brks, legend.shrink = 0.925,
-    legend.args = list("", side = 3, font = 2, line = 1.5)
-  )
-  graphics::mtext(biomes_abbrv, side = 2, line = 1,
-                  at = seq_len(biomes), las = 2)
-  for (b in seq_len(biomes)) {
-    graphics::rect(
-      xleft = seq(0, 1 - res, res),
-      xright = seq(res, 1, res),
-      ybottom = b,
-      ytop = b + data[b, ] * scale,
-      col = palette[col_index]
+  withr::with_par(new = list(mar = c(2, 4, 0, 0), oma = c(0, 0, 0, 0)), # bltr
+    {graphics::plot(NA,
+                   xlim = c(0, 1), ylim = c(0, 20), xlab = "EcoRisk",
+                   main = title, axes = FALSE, ylab = ""
     )
-  }
-  if (!is.null(file)) grDevices::dev.off()
+    graphics::axis(side = 2, labels = FALSE, at = seq_len(biomes))
+    brks <- seq(0, 1, 0.1)
+    fields::image.plot(
+      legend.only = TRUE, col = palette,
+      useRaster = FALSE, breaks = brks, horizontal = TRUE,
+      lab.breaks = brks, legend.shrink = 0.925,
+      legend.args = list("", side = 3, font = 2, line = 1.5)
+    )
+    graphics::mtext(biomes_abbrv, side = 2, line = 1,
+                    at = seq_len(biomes), las = 2)
+    for (b in seq_len(biomes)) {
+      graphics::rect(
+        xleft = seq(0, 1 - res, res),
+        xright = seq(res, 1, res),
+        ybottom = b,
+        ytop = b + data[b, ] * scale,
+        col = palette[col_index]
+      )
+    }
+    if (!is.null(file)) grDevices::dev.off()
+    }
+  )
 }
 
 #' Plot EcoRisk map to file
@@ -139,11 +140,13 @@ plot_ecorisk_map <- function(
 ) {
   data <- ecorisk_object[[plot_dimension]]
   di <- DIM(data)
-  if (length(di) == 2){
-    data <- data[,year]
+  if (length(di) == 2) {
+    data <- data[, year]
   } else if (length(di) == 1) {
     data <- data
-  } else { stop(paste0("Unknown dimensions in ecorisk dimension ",plot_dimension," :",di)) }
+  } else {
+ stop(paste0("Unknown dimensions in ecorisk dimension ", plot_dimension, " :", di))
+ }
   lat <- ecorisk_object$lat
   lon <- ecorisk_object$lon
   if (!is.null(file)) {
@@ -169,7 +172,7 @@ plot_ecorisk_map <- function(
   data[data > brks[length(brks)]] <- brks[length(brks)]
 
   if (is.null(palette)) {
-    palette = c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+    palette <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
   }
 
   if (!is.null(focus_biome)) {
@@ -184,35 +187,37 @@ plot_ecorisk_map <- function(
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
   range <- range(data)
   extent <- terra::ext(c(-180, 180, -60, 90))
-  graphics::par(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n")
+  withr::with_par(new = list(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n"),
 
-  if (is.null(focus_biome)) {
-    terra::plot(ra,
-                ext = extent, breaks = brks, col = palette, main = "",
-                legend = FALSE, axes = FALSE
-    )
-  } else {
-    terra::plot(ra,
-                ext = extent, breaks = brks, col = palette_low_sat,
-                main = "", legend = FALSE, axes = FALSE
-    )
-    terra::plot(ra_f,
-                ext = extent, breaks = brks, col = palette, main = "",
-                legend = FALSE, axes = FALSE, add = TRUE
-    )
-  }
+    {if (is.null(focus_biome)) {
+      terra::plot(ra,
+                  ext = extent, breaks = brks, col = palette, main = "",
+                  legend = FALSE, axes = FALSE
+      )
+    } else {
+      terra::plot(ra,
+                  ext = extent, breaks = brks, col = palette_low_sat,
+                  main = "", legend = FALSE, axes = FALSE
+      )
+      terra::plot(ra_f,
+                  ext = extent, breaks = brks, col = palette, main = "",
+                  legend = FALSE, axes = FALSE, add = TRUE
+      )
+    }
 
-  title(main = title, line = -2, cex.main = title_size)
-  maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
+    title(main = title, line = -2, cex.main = title_size)
+    maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
 
-  if (leg_yes) {
-    fields::image.plot(
-      legend.only = TRUE, col = palette, breaks = brks, zlim = range,
-      lab.breaks = brks, legend.shrink = 0.7,
-      legend.args = list(legendtitle, side = 3, font = 2, line = 1)
-    ) # removed zlim
-  }
-  if (!is.null(file)) grDevices::dev.off()
+    if (leg_yes) {
+      fields::image.plot(
+        legend.only = TRUE, col = palette, breaks = brks, zlim = range,
+        lab.breaks = brks, legend.shrink = 0.7,
+        legend.args = list(legendtitle, side = 3, font = 2, line = 1)
+      ) # removed zlim
+    }
+    if (!is.null(file)) grDevices::dev.off()
+    }
+  )
 }
 
 
@@ -276,223 +281,225 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
     stop("Unknown number of dimensions for ecorisk data:", ecorisk_dims)
   }
 
-  graphics::par(oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0))
-  graphics::plot(c(-zoom, zoom), c(-zoom, zoom),
-    type = "n", axes = FALSE,
-    ann = FALSE, asp = 1, main = ""
-  )
-  graphics::title(main = title, line = titleline, cex.main = title_size)
+  withr::with_par(new = list(oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0)),
+    {graphics::plot(c(-zoom, zoom), c(-zoom, zoom),
+      type = "n", axes = FALSE,
+      ann = FALSE, asp = 1, main = ""
+    )
+    graphics::title(main = title, line = titleline, cex.main = title_size)
 
-  if (type == "legend1") {
-    circlize::draw.sector(0, 360, rou1 = 1)
-    ro <- c(1, 1.1, 0.8, 1.1, 0.8, 1, 1, 1, 1, 1, 1)
+    if (type == "legend1") {
+      circlize::draw.sector(0, 360, rou1 = 1)
+      ro <- c(1, 1.1, 0.8, 1.1, 0.8, 1, 1, 1, 1, 1, 1)
 
-    for (i in seq_along(angles[, 1])) {
+      for (i in seq_along(angles[, 1])) {
+        circlize::draw.sector(
+          start.degree = angles[i, 1] + 90,
+          end.degree = angles[i, 2] + 90,
+          col = colz[i],
+          clock.wise = FALSE,
+          rou1 = 0,
+          rou2 = ro[i],
+          border = "black"
+        )
+      }
+
+      if (ecorisk_dims == 8) {
+        graphics::text(names,
+          x = c(1.1, 1.0, 0.2, -0.8, -1.6, -0.25, 0.7, -1.3),
+          y = c(-0.15, -0.9, -1.3, -1.3, -0.9, 1.2, 1, 1),
+          adj = 0
+        )
+      } else {
+        stop("Unknown number of dimensions for ecorisk data:", ecorisk_dims)
+      }
+
+      # line lc
       circlize::draw.sector(
-        start.degree = angles[i, 1] + 90,
-        end.degree = angles[i, 2] + 90,
-        col = colz[i],
-        clock.wise = FALSE,
-        rou1 = 0,
-        rou2 = ro[i],
-        border = "black"
+        start.degree = (angles[3, 1] + angles[3, 2]) / 2 + 90,
+        end.degree = (angles[3, 1] + angles[3, 2]) / 2 + 90,
+        rou1 = 0.7,
+        rou2 = 1.1
       )
-    }
-
-    if (ecorisk_dims == 8) {
-      graphics::text(names,
-        x = c(1.1, 1.0, 0.2, -0.8, -1.6, -0.25, 0.7, -1.3),
-        y = c(-0.15, -0.9, -1.3, -1.3, -0.9, 1.2, 1, 1),
-        adj = 0
-      )
-    } else {
-      stop("Unknown number of dimensions for ecorisk data:", ecorisk_dims)
-    }
-
-    # line lc
-    circlize::draw.sector(
-      start.degree = (angles[3, 1] + angles[3, 2]) / 2 + 90,
-      end.degree = (angles[3, 1] + angles[3, 2]) / 2 + 90,
-      rou1 = 0.7,
-      rou2 = 1.1
-    )
-    # line ecorisk
-    circlize::draw.sector(
-      start.degree = -9,
-      end.degree = -9,
-      rou1 = 0.9,
-      rou2 = 1.05
-    )
-    # line eb
-    circlize::draw.sector(
-      start.degree = (angles[5, 1] + angles[5, 2]) / 2 + 90,
-      end.degree = (angles[5, 1] + angles[5, 2]) / 2 + 90, rou1 = 0.7,
-      rou2 = 1.1
-    )
-    circlize::draw.sector(
-      start.degree = 180,
-      end.degree = 180,
-      clock.wise = FALSE,
-      rou1 = -1.2,
-      rou2 = 1.2,
-      border = "black",
-      lwd = 2
-    )
-  } else if (type == "legend2") {
-    graphics::text("+", x = 0, y = 0)
-    circlize::draw.sector(0, 360, rou1 = 1)
-    circlize::draw.sector(0, 360, rou1 = 0.65)
-    circlize::draw.sector(0, 360, rou1 = 0.3)
-    # sector
-    circlize::draw.sector(
-      start.degree = -18 + 90,
-      end.degree = 18 + 90,
-      clock.wise = FALSE,
-      rou1 = 0.55,
-      border = "black"
-    )
-    # uncertainty arrow
-    circlize::draw.sector(
-      start.degree = 90,
-      end.degree = 90,
-      clock.wise = FALSE,
-      rou1 = 0.4,
-      rou2 = 0.8,
-      border = "black"
-    )
-    # uncertainty lower
-    circlize::draw.sector(
-      start.degree = -9 + 90,
-      end.degree = 9 + 90,
-      clock.wise = FALSE,
-      rou1 = 0.8,
-      rou2 = 0.8,
-      border = "black"
-    )
-    # uncertainty upper
-    circlize::draw.sector(
-      start.degree = -9 + 90,
-      end.degree = 9 + 90,
-      clock.wise = FALSE,
-      rou1 = 0.4,
-      rou2 = 0.4,
-      border = "black"
-    )
-    # 0.3
-    circlize::draw.sector(
-      start.degree = 270 - 270,
-      end.degree = 270 - 270,
-      clock.wise = FALSE,
-      rou1 = 0.3,
-      rou2 = 1.3,
-      border = "black",
-      lty = "dashed"
-    )
-    # 0.65
-    circlize::draw.sector(
-      start.degree = 280 - 270,
-      end.degree = 280 - 270,
-      clock.wise = FALSE,
-      rou1 = 0.65,
-      rou2 = 1.3,
-      border = "black",
-      lty = "dashed"
-    )
-    # 1.0
-    circlize::draw.sector(
-      start.degree = 290 - 270,
-      end.degree = 290 - 270,
-      clock.wise = FALSE,
-      rou1 = 1,
-      rou2 = 1.3,
-      border = "black",
-      lty = "dashed"
-    )
-    graphics::text(c("0.3", "0.65", "1"),
-      x = c(1.4, 1.45, 1.25),
-      y = c(0, 0.25, 0.45)
-    )
-
-    # plot how the whiskers are calculated
-    #   quantile case
-    if (use_quantile) {
-      graphics::text(c("Q90", "Q50", "Q10"),
-        x = c(-0.3, -0.29, -0.26),
-        y = c(0.8, 0.48, 0.35),
-        cex = 0.7
-      )
-
-      # minmeanmax case
-    } else {
-      graphics::text(c("max", "mean", "min"),
-        x = c(-0.3, -0.29, -0.26),
-        y = c(0.8, 0.48, 0.35),
-        cex = 0.7
-      )
-    }
-  } else if (type == "regular") {
-    circlize::draw.sector(180, 360, rou1 = 1, col = "gray80")
-
-    for (i in seq_along(angles[, 1])) {
-      mangle <- mean(angles[i, ])
-      if (i == 1) mangle <- -98
-      dmin <- data[i, 1]
-      dmedian <- data[i, 2]
-      dmax <- data[i, 3]
+      # line ecorisk
       circlize::draw.sector(
-        start.degree = angles[i, 1] + 90,
-        end.degree = angles[i, 2] + 90, col = colz[i],
-        rou1 = dmedian,
+        start.degree = -9,
+        end.degree = -9,
+        rou1 = 0.9,
+        rou2 = 1.05
+      )
+      # line eb
+      circlize::draw.sector(
+        start.degree = (angles[5, 1] + angles[5, 2]) / 2 + 90,
+        end.degree = (angles[5, 1] + angles[5, 2]) / 2 + 90, rou1 = 0.7,
+        rou2 = 1.1
+      )
+      circlize::draw.sector(
+        start.degree = 180,
+        end.degree = 180,
         clock.wise = FALSE,
+        rou1 = -1.2,
+        rou2 = 1.2,
+        border = "black",
+        lwd = 2
+      )
+    } else if (type == "legend2") {
+      graphics::text("+", x = 0, y = 0)
+      circlize::draw.sector(0, 360, rou1 = 1)
+      circlize::draw.sector(0, 360, rou1 = 0.65)
+      circlize::draw.sector(0, 360, rou1 = 0.3)
+      # sector
+      circlize::draw.sector(
+        start.degree = -18 + 90,
+        end.degree = 18 + 90,
+        clock.wise = FALSE,
+        rou1 = 0.55,
         border = "black"
       )
       # uncertainty arrow
       circlize::draw.sector(
-        start.degree = mangle + 90,
-        end.degree = mangle + 90,
+        start.degree = 90,
+        end.degree = 90,
         clock.wise = FALSE,
-        rou1 = dmin,
-        rou2 = dmax,
+        rou1 = 0.4,
+        rou2 = 0.8,
         border = "black"
       )
+      # uncertainty lower
       circlize::draw.sector(
-        start.degree = mangle - 9 + 90,
-        end.degree = mangle + 9 + 90,
+        start.degree = -9 + 90,
+        end.degree = 9 + 90,
         clock.wise = FALSE,
-        rou1 = dmin,
-        rou2 = dmin,
+        rou1 = 0.8,
+        rou2 = 0.8,
         border = "black"
       )
       # uncertainty upper
       circlize::draw.sector(
-        start.degree = mangle - 9 + 90,
-        end.degree = mangle + 9 + 90,
+        start.degree = -9 + 90,
+        end.degree = 9 + 90,
         clock.wise = FALSE,
-        rou1 = dmax,
-        rou2 = dmax,
+        rou1 = 0.4,
+        rou2 = 0.4,
         border = "black"
       )
+      # 0.3
+      circlize::draw.sector(
+        start.degree = 270 - 270,
+        end.degree = 270 - 270,
+        clock.wise = FALSE,
+        rou1 = 0.3,
+        rou2 = 1.3,
+        border = "black",
+        lty = "dashed"
+      )
+      # 0.65
+      circlize::draw.sector(
+        start.degree = 280 - 270,
+        end.degree = 280 - 270,
+        clock.wise = FALSE,
+        rou1 = 0.65,
+        rou2 = 1.3,
+        border = "black",
+        lty = "dashed"
+      )
+      # 1.0
+      circlize::draw.sector(
+        start.degree = 290 - 270,
+        end.degree = 290 - 270,
+        clock.wise = FALSE,
+        rou1 = 1,
+        rou2 = 1.3,
+        border = "black",
+        lty = "dashed"
+      )
+      graphics::text(c("0.3", "0.65", "1"),
+        x = c(1.4, 1.45, 1.25),
+        y = c(0, 0.25, 0.45)
+      )
+
+      # plot how the whiskers are calculated
+      #   quantile case
+      if (use_quantile) {
+        graphics::text(c("Q90", "Q50", "Q10"),
+          x = c(-0.3, -0.29, -0.26),
+          y = c(0.8, 0.48, 0.35),
+          cex = 0.7
+        )
+
+        # minmeanmax case
+      } else {
+        graphics::text(c("max", "mean", "min"),
+          x = c(-0.3, -0.29, -0.26),
+          y = c(0.8, 0.48, 0.35),
+          cex = 0.7
+        )
+      }
+    } else if (type == "regular") {
+      circlize::draw.sector(180, 360, rou1 = 1, col = "gray80")
+
+      for (i in seq_along(angles[, 1])) {
+        mangle <- mean(angles[i, ])
+        if (i == 1) mangle <- -98
+        dmin <- data[i, 1]
+        dmedian <- data[i, 2]
+        dmax <- data[i, 3]
+        circlize::draw.sector(
+          start.degree = angles[i, 1] + 90,
+          end.degree = angles[i, 2] + 90, col = colz[i],
+          rou1 = dmedian,
+          clock.wise = FALSE,
+          border = "black"
+        )
+        # uncertainty arrow
+        circlize::draw.sector(
+          start.degree = mangle + 90,
+          end.degree = mangle + 90,
+          clock.wise = FALSE,
+          rou1 = dmin,
+          rou2 = dmax,
+          border = "black"
+        )
+        circlize::draw.sector(
+          start.degree = mangle - 9 + 90,
+          end.degree = mangle + 9 + 90,
+          clock.wise = FALSE,
+          rou1 = dmin,
+          rou2 = dmin,
+          border = "black"
+        )
+        # uncertainty upper
+        circlize::draw.sector(
+          start.degree = mangle - 9 + 90,
+          end.degree = mangle + 9 + 90,
+          clock.wise = FALSE,
+          rou1 = dmax,
+          rou2 = dmax,
+          border = "black"
+        )
+      }
+      circlize::draw.sector(0, 360, rou1 = 1)
+      circlize::draw.sector(0, 360, rou1 = 0.6)
+      circlize::draw.sector(0, 360, rou1 = 0.3)
+      circlize::draw.sector(
+        start.degree = 180,
+        end.degree = 180,
+        clock.wise = FALSE,
+        rou1 = -1.2,
+        rou2 = 1.2,
+        border = "black",
+        lwd = 2
+      )
+    } else {
+      stop(
+        "Unknown type ", type,
+        ". Please use 'legend1' for variable and color legend,
+           'legend2' for value legend, or 'regular' (default setting) ",
+        "for the regular ecorisk plot."
+      )
     }
-    circlize::draw.sector(0, 360, rou1 = 1)
-    circlize::draw.sector(0, 360, rou1 = 0.6)
-    circlize::draw.sector(0, 360, rou1 = 0.3)
-    circlize::draw.sector(
-      start.degree = 180,
-      end.degree = 180,
-      clock.wise = FALSE,
-      rou1 = -1.2,
-      rou2 = 1.2,
-      border = "black",
-      lwd = 2
-    )
-  } else {
-    stop(
-      "Unknown type ", type,
-      ". Please use 'legend1' for variable and color legend,
-         'legend2' for value legend, or 'regular' (default setting) ",
-      "for the regular ecorisk plot."
-    )
-  }
+    }
+  )
 }
 
 
@@ -550,27 +557,28 @@ plot_ecorisk_radial <- function(data,
   }
 
   # adjust the margins, dependent on whether a legend should be plotted or not
-  graphics::par(fig = c(0, 0.7, 0, 1)) # , oma=c(0,0,0,0),mar=c(0,0,0,0))
-
-  # plot main EcoRisk radial
-  plot_ecorisk_radial_to_screen(
-    data = data, title = title, zoom = 1.0,
-    type = "regular"
+  withr::with_par(new = list(fig = c(0, 0.7, 0, 1)), # , oma=c(0,0,0,0),mar=c(0,0,0,0))
+    # plot main EcoRisk radial
+    plot_ecorisk_radial_to_screen(
+      data = data, title = title, zoom = 1.0,
+      type = "regular"
+    )
   )
-
-  if (leg_yes) {
-    graphics::par(fig = c(0.7, 1, 0, 0.5), new = TRUE)
-    plot_ecorisk_radial_to_screen(
-      data = data, title = "", zoom = 1.5,
-      type = "legend1"
-    )
-    graphics::par(fig = c(0.7, 1, 0.5, 1), new = TRUE)
-    plot_ecorisk_radial_to_screen(
-      data = data, title = "", zoom = 1.5,
-      type = "legend2", use_quantile = use_quantile
-    )
-  }
-  grDevices::dev.off()
+    if (leg_yes) {
+      withr::with_par(new = list(fig = c(0.7, 1, 0, 0.5), new = TRUE),
+        plot_ecorisk_radial_to_screen(
+          data = data, title = "", zoom = 1.5,
+          type = "legend1"
+        )
+      )
+      withr::with_par(new = list(fig = c(0.7, 1, 0.5, 1), new = TRUE),
+        plot_ecorisk_radial_to_screen(
+          data = data, title = "", zoom = 1.5,
+          type = "legend2", use_quantile = use_quantile
+        )
+      )
+    }
+    grDevices::dev.off()
 }
 
 #' Plot EcoRisk maps
@@ -592,20 +600,20 @@ plot_ecorisk_radial <- function(data,
 #'
 #' @md
 #' @export
-plot_ecorisk_maps <- function(ecorisk, out_folder, year = 1){
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "ecorisk_total", year = year, file = paste0(out_folder,"/ecorisk_total.png"), title="ecorisk")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "vegetation_structure_change", year = year, file = paste0(out_folder,"/ecorisk_vs.png"), title="vegetation structure change")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "local_change", year = year, file = paste0(out_folder,"/ecorisk_lc.png"), title="local change")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "global_importance", year = year, file = paste0(out_folder,"/ecorisk_gi.png"), title="global importance")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "ecosystem_balance", year = year, file = paste0(out_folder,"/ecorisk_eb.png"), title="ecosystem balance")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "carbon_stocks", year = year,file = paste0(out_folder,"/ecorisk_cs.png"), title="carbon_stocks")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "carbon_fluxes", year = year, file = paste0(out_folder,"/ecorisk_cf.png"), title="carbon_fluxes")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "carbon_total", year = year, file = paste0(out_folder,"/ecorisk_ct.png"), title="carbon_total")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "water_total", year = year, file = paste0(out_folder,"/ecorisk_wt.png"), title=" water_total")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "water_fluxes", year = year, file = paste0(out_folder,"/ecorisk_wf.png"), title=" water_fluxes")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "nitrogen_stocks", year = year, file = paste0(out_folder,"/ecorisk_ns.png"), title=" nitrogen_stocks")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "nitrogen_fluxes", year = year, file = paste0(out_folder,"/ecorisk_nf.png"), title=" nitrogen_fluxes")
-    biospheremetrics::plot_ecorisk_map(ecorisk,plot_dimension = "nitrogen_total", year = year, file = paste0(out_folder,"/ecorisk_nt.png"), title=" nitrogen_total")
+plot_ecorisk_maps <- function(ecorisk, out_folder, year = 1) {
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "ecorisk_total", year = year, file = paste0(out_folder, "/ecorisk_total.png"), title = "ecorisk")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "vegetation_structure_change", year = year, file = paste0(out_folder, "/ecorisk_vs.png"), title = "vegetation structure change")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "local_change", year = year, file = paste0(out_folder, "/ecorisk_lc.png"), title = "local change")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "global_importance", year = year, file = paste0(out_folder, "/ecorisk_gi.png"), title = "global importance")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "ecosystem_balance", year = year, file = paste0(out_folder, "/ecorisk_eb.png"), title = "ecosystem balance")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_stocks", year = year, file = paste0(out_folder, "/ecorisk_cs.png"), title = "carbon_stocks")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_fluxes", year = year, file = paste0(out_folder, "/ecorisk_cf.png"), title = "carbon_fluxes")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_total", year = year, file = paste0(out_folder, "/ecorisk_ct.png"), title = "carbon_total")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "water_total", year = year, file = paste0(out_folder, "/ecorisk_wt.png"), title = " water_total")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "water_fluxes", year = year, file = paste0(out_folder, "/ecorisk_wf.png"), title = " water_fluxes")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_stocks", year = year, file = paste0(out_folder, "/ecorisk_ns.png"), title = " nitrogen_stocks")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_fluxes", year = year, file = paste0(out_folder, "/ecorisk_nf.png"), title = " nitrogen_fluxes")
+    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_total", year = year, file = paste0(out_folder, "/ecorisk_nt.png"), title = " nitrogen_total")
 }
 
 #' Plot timeline of EcoRisk variables to screen
@@ -751,46 +759,48 @@ plot_ecorisk_over_time_panel <- function(data,
     }
   }
   d <- length(data[, 1, 1, 1])
-  graphics::par(oma = c(0, 0, 0, 0), mar = c(3, 2, 0.5, 0))
-  if (d == 16 | d == 4) {
-    k <- sqrt(d)
-    xs <- seq(0, 0.8, length.out = k + 1)
-    ys <- seq(0.98, 0, length.out = k + 1)
+  withr::with_par(new = list(oma = c(0, 0, 0, 0), mar = c(3, 2, 0.5, 0)),
+    {if (d == 16 | d == 4) {
+      k <- sqrt(d)
+      xs <- seq(0, 0.8, length.out = k + 1)
+      ys <- seq(0.98, 0, length.out = k + 1)
 
-    for (x in seq_len(k)) {
-      for (y in seq_len(k)) {
-        if (x == 1 & y == 1) {
-          graphics::par(
-            fig = c(xs[x], xs[x + 1], ys[y + 1], ys[y]),
-            xpd = TRUE
+      for (x in seq_len(k)) {
+        for (y in seq_len(k)) {
+          if (x == 1 & y == 1) {
+            graphics::par(
+              fig = c(xs[x], xs[x + 1], ys[y + 1], ys[y]),
+              xpd = TRUE
+            )
+          } else {
+            graphics::par(
+              fig = c(xs[x], xs[x + 1], ys[y + 1], ys[y]), xpd = TRUE,
+              new = TRUE
+            )
+          }
+          plot_overtime_to_screen(
+            data = data[(x - 1) * k + y, , , ],
+            timerange = timerange, yrange = yrange,
+            leg_yes = FALSE, varnames = varnames
           )
-        } else {
-          graphics::par(
-            fig = c(xs[x], xs[x + 1], ys[y + 1], ys[y]), xpd = TRUE,
-            new = TRUE
+          graphics::mtext(
+            text = biome_names[(x - 1) * k + y], side = 3,
+            line = 0, cex = 1, font = 2
           )
         }
-        plot_overtime_to_screen(
-          data = data[(x - 1) * k + y, , , ],
-          timerange = timerange, yrange = yrange,
-          leg_yes = FALSE, varnames = varnames
-        )
-        graphics::mtext(
-          text = biome_names[(x - 1) * k + y], side = 3,
-          line = 0, cex = 1, font = 2
-        )
       }
-    }
   } else {
     stop(paste("Unknown number of biomes: ", length(data[, 1, 1, 1])))
   }
+}
+)
   # legend
 
-  graphics::par(
+  withr::with_par(new = list(
     fig = c(0.8, 1, 0.5, 1.0), new = TRUE, oma = c(0, 0, 0, 0),
     mar = c(0, 0, 0, 0)
-  )
-  graphics::plot(NA, axes = FALSE, ylim = c(0, 1), xlim = c(0, 1))
+  ),
+  {graphics::plot(NA, axes = FALSE, ylim = c(0, 1), xlim = c(0, 1))
   if (d == 16) {
     graphics::text(
       x = 0.1,
@@ -799,22 +809,24 @@ plot_ecorisk_over_time_panel <- function(data,
       cex = 0.7, adj = 0
     )
   }
-  graphics::par(
-    fig = c(0.8, 1, 0.0, 0.5), new = TRUE, oma = c(0, 0, 0, 0),
-    mar = c(0, 0, 0, 0)
-  )
-
-  if (is.null(varnames)) {
-    plot_overtime_to_screen(
-      data = data[1, , , ], timerange = timerange,
-      leg_yes = FALSE, leg_only = TRUE
-    )
-  } else {
-    graphics::plot(NA, axes = FALSE, ylim = c(0, 1), xlim = c(0, 1))
-    colz <- RColorBrewer::brewer.pal(length(varnames), "Set2")
-    graphics::legend("center", legend = varnames, fill = colz, cex = 1)
   }
-  if (!is.null(file)) grDevices::dev.off()
+  )
+  withr::with_par(new = list( fig = c(0.8, 1, 0.0, 0.5),
+    new = TRUE, oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0) ),
+
+    {if (is.null(varnames)) {
+      plot_overtime_to_screen(
+        data = data[1, , , ], timerange = timerange,
+        leg_yes = FALSE, leg_only = TRUE
+      )
+    } else {
+      graphics::plot(NA, axes = FALSE, ylim = c(0, 1), xlim = c(0, 1))
+      colz <- RColorBrewer::brewer.pal(length(varnames), "Set2")
+      graphics::legend("center", legend = varnames, fill = colz, cex = 1)
+    }
+    if (!is.null(file)) grDevices::dev.off()
+    }
+  )
 }
 
 
@@ -833,7 +845,7 @@ plot_ecorisk_over_time_panel <- function(data,
 #' @examples
 #' \dontrun{
 #' plot_ecorisk_radial_panel(
-#'   data = ecorisk_disaggregated_full[-c(3,18,19),c(1:5,8,9,13),],
+#'   data = ecorisk_disaggregated_full[-c(3, 18, 19), c(1:5, 8, 9, 13), ],
 #'   biome_names = biomes,
 #'   file = "./biomes.png"
 #' )
@@ -902,18 +914,18 @@ plot_ecorisk_radial_panel <- function(data,
   }
 
   # legend
-  graphics::par(fig = c(0.6, 1, 0.1, 0.6), new = TRUE)
-  plot_ecorisk_radial_to_screen(
-    data = data[1, , ], title = "",
-    zoom = 1.5, type = "legend1"
+  withr::with_par(new = list(fig = c(0.6, 1, 0.1, 0.6), new = TRUE),
+    plot_ecorisk_radial_to_screen(
+      data = data[1, , ], title = "",
+      zoom = 1.5, type = "legend1"
+    )
   )
-
-  graphics::par(fig = c(0.6, 1, 0.5, 1.0), new = TRUE)
-  plot_ecorisk_radial_to_screen(
-    data = data[1, , ], title = "legend", zoom = 1.5,
-    type = "legend2", title_size = 1, use_quantile = use_quantile
+  withr::with_par(new = list(fig = c(0.6, 1, 0.5, 1.0), new = TRUE),
+    plot_ecorisk_radial_to_screen(
+      data = data[1, , ], title = "legend", zoom = 1.5,
+      type = "legend2", title_size = 1, use_quantile = use_quantile
+    )
   )
-
   if (!is.null(file)) grDevices::dev.off()
 }
 
@@ -1019,22 +1031,25 @@ plot_biomes_mercator <- function(biome_ids,
   range <- range(biome_ids)
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- biome_ids
   extent <- terra::ext(c(-180, 180, -60, 90))
-  graphics::par(mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0), bty = "n")
-  terra::plot(ra,
-              ext = extent, breaks = brks, col = biome_class_cols,
-              main = "", legend = FALSE, axes = FALSE
-  )
-  graphics::title(main = title, line = -2, cex.main = title_size)
-  if (leg_yes) {
-    graphics::legend(
-      x = -180, y = 27, legend = biome_class_names[order_legend],
-      fill = biome_class_cols[order_legend],
-      col = biome_class_cols[order_legend],
-      cex = leg_scale, bg = "white", bty = "o"
+  withr::with_par(new = list(
+    mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0), bty = "n"),
+    {terra::plot(ra,
+                ext = extent, breaks = brks, col = biome_class_cols,
+                main = "", legend = FALSE, axes = FALSE
     )
-  }
-  maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
-  if (!is.null(file)) grDevices::dev.off()
+    graphics::title(main = title, line = -2, cex.main = title_size)
+    if (leg_yes) {
+      graphics::legend(
+        x = -180, y = 27, legend = biome_class_names[order_legend],
+        fill = biome_class_cols[order_legend],
+        col = biome_class_cols[order_legend],
+        cex = leg_scale, bg = "white", bty = "o"
+      )
+    }
+    maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
+    if (!is.null(file)) grDevices::dev.off()
+    }
+  )
 }
 
 
@@ -1097,7 +1112,7 @@ plot_biome_averages <- function(data,
   data[data > brks[length(brks)]] <- brks[length(brks)]
 
   if (is.null(palette)) {
-    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+    palette <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
   }
   col_index <- floor(data[, 2] * 10) + 1
 
@@ -1173,40 +1188,42 @@ plot_ecorisk_cross_table <- function(data,
   centers <- expand.grid(y, x)
   # coloring
   if (is.null(palette)) {
-    palette <- c("white",RColorBrewer::brewer.pal(9,"YlOrRd"))
+    palette <- c("white", RColorBrewer::brewer.pal(9, "YlOrRd"))
   }
   brks <- seq(0, 1, 0.1)
 
   # plot margins
-  graphics::par(mar = c(0, lmar, 2, 0)) # bltr
+  withr::with_par(new = list(mar = c(0, lmar, 2, 0)), # bltr
 
-  graphics::image(x, y, t(data),
-                  col = palette,
-                  breaks = brks,
-                  xaxt = "n",
-                  yaxt = "n",
-                  xlab = "",
-                  ylab = "",
-                  ylim = c(max(y) + 0.5, min(y) - 0.5)
+    {graphics::image(x, y, t(data),
+                    col = palette,
+                    breaks = brks,
+                    xaxt = "n",
+                    yaxt = "n",
+                    xlab = "",
+                    ylab = "",
+                    ylim = c(max(y) + 0.5, min(y) - 0.5)
+    )
+    graphics::text(centers[, 2], centers[, 1], c(data), col = "black")
+
+    # add margin text
+    graphics::mtext(attributes(data)$dimnames[[2]],
+                    at = seq_len(ncol(data)),
+                    padj = -1
+    )
+    graphics::mtext(attributes(data)$dimnames[[1]],
+                    at = seq_len(nrow(data)),
+                    side = 2,
+                    las = 1,
+                    adj = 1,
+                    line = 1
+    )
+
+    # add black lines
+    graphics::abline(h = y + 0.5)
+    graphics::abline(v = x + 0.5)
+
+    if (!is.null(file)) grDevices::dev.off()
+    }
   )
-  graphics::text(centers[, 2], centers[, 1], c(data), col = "black")
-
-  # add margin text
-  graphics::mtext(attributes(data)$dimnames[[2]],
-                  at = seq_len(ncol(data)),
-                  padj = -1
-  )
-  graphics::mtext(attributes(data)$dimnames[[1]],
-                  at = seq_len(nrow(data)),
-                  side = 2,
-                  las = 1,
-                  adj = 1,
-                  line = 1
-  )
-
-  # add black lines
-  graphics::abline(h = y + 0.5)
-  graphics::abline(v = x + 0.5)
-
-  if (!is.null(file)) grDevices::dev.off()
 }

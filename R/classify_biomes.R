@@ -117,11 +117,11 @@ classify_biomes <- function(path_reference = NULL,
 
   # test if forest threshold is always > woodland threshold > savanna threshold
   if (min_tree_cover[["temperate forest"]] <=
-    min_tree_cover[["temperate woodland"]] |
+    min_tree_cover[["temperate woodland"]] ||
     min_tree_cover[["temperate woodland"]] <=
-      min_tree_cover[["temperate savanna"]] |
+      min_tree_cover[["temperate savanna"]] ||
     min_tree_cover[["tropical woodland"]] <=
-      min_tree_cover[["tropical savanna"]] |
+      min_tree_cover[["tropical savanna"]] ||
     min_tree_cover[["tropical forest"]] <=
       min_tree_cover[["tropical woodland"]]) {
     stop(paste0(
@@ -506,7 +506,7 @@ classify_biomes <- function(path_reference = NULL,
     lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
     lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
     avg_temp >= 0 #-2 &
-    #lat < 55
+    # lat < 55
   }
   # Warm Woody Savanna, Woodland & Shrubland
   is_tropical_woody_savanna <- {
@@ -525,7 +525,7 @@ classify_biomes <- function(path_reference = NULL,
     lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
     lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
     avg_temp >= 0 #-2 &
-    #lat < 55
+    # lat < 55
   }
   # Warm Savanna & Open Shrubland
   is_tropical_shrubland <- {
@@ -545,7 +545,7 @@ classify_biomes <- function(path_reference = NULL,
     lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
     lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
     avg_temp >= 0 #-2 &
-    #lat < 55
+    # lat < 55
   }
   # Warm grassland
   is_tropical_grassland <- {

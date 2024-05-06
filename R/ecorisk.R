@@ -26,12 +26,12 @@
 #'        local change, global change and ecosystem balance (default FALSE)
 #' @param overtime logical: calculate ecorisk as time-series? (default: FALSE)
 #' @param window integer, number of years for window length (default: 30)
-#' @param debug write out all nitrogen state variables (default FALSE)
+#' @param debug_mode write out all nitrogen state variables (default FALSE)
 #' @param replace_input_file_names list with alternative names for output
 #'        identifiers to replace the ones in inst/ext_files/metric_files.yml.
 #'        e.g. list(npp="mnpp") would replace the expected output for npp with
 #'        mnpp followed by the automatically detected file extension (.bin.json)
-#' @param suppressWarnings suppress warnings - default: TRUE
+#' @param suppress_warnings suppress warnings - default: TRUE
 #' @param external_variability use externally supplied variability for the
 #'        reference period? experimental! (default: FALSE)
 #' @param c2vr external variability array
@@ -69,11 +69,11 @@ ecorisk_wrapper <- function(path_ref,
                             dimensions_only_local = FALSE,
                             overtime = FALSE,
                             window = 30,
-                            debug = FALSE,
+                            debug_mode = FALSE,
                             replace_input_file_names = NULL,
                             external_variability = FALSE,
                             c2vr = NULL,
-                            suppressWarnings = TRUE) {
+                            suppress_warnings = TRUE) {
   # check timespan consistency
   nyears <- length(time_span_reference)
   nyears_scen <- length(time_span_scenario)
@@ -96,14 +96,13 @@ ecorisk_wrapper <- function(path_ref,
       yaml::read_yaml()
 
     file_extension <- get_major_file_ext(paste0(path_scen))
-    files_names <- metric_files$file_name
     files_scenario <- list()
     files_reference <- list()
 
     for (output in names(metric_files$metric$ecorisk_nitrogen$output)) {
       # Iterate over all outputs
-      if (is.null(replace_input_file_names[[output]])){
-        for (file in metric_files$file_name[[output]]){
+      if (is.null(replace_input_file_names[[output]])) {
+        for (file in metric_files$file_name[[output]]) {
           full_file_path_lu <- paste0(path_scen, file, ".", file_extension)
           if (file.exists(full_file_path_lu)) {
             files_scenario[[output]] <- full_file_path_lu
@@ -114,13 +113,13 @@ ecorisk_wrapper <- function(path_ref,
           }
         }
         if (is.null(files_scenario[[output]])) {
-          stop("None of the default file names for ",output,
-               " were found in ",path_scen,"please check or define manually",
+          stop("None of the default file names for ", output,
+               " were found in ", path_scen, "please check or define manually",
                " using argument 'replace_input_file_names'. Stopping.")
         }
         if (is.null(files_reference[[output]])) {
-          stop("None of the default file names for ",output,
-               " were found in ",path_ref,"please check or define manually",
+          stop("None of the default file names for ", output,
+               " were found in ", path_ref, "please check or define manually",
                " using argument 'replace_input_file_names'. Stopping.")
         }
 
@@ -132,7 +131,7 @@ ecorisk_wrapper <- function(path_ref,
                           replace_input_file_names[[output]], ".", file_extension)
       }
     }
-  }# end if !read_saved_data
+  } # end if !read_saved_data
   if (overtime && (window != nyears)) stop("Overtime is enabled, but window \
                   length (", window, ") does not match the reference nyears.")
 
@@ -155,8 +154,8 @@ ecorisk_wrapper <- function(path_ref,
       nitrogen = nitrogen,
       time_span_reference = time_span_reference,
       time_span_scenario = time_span_scenario,
-      debug = debug,
-      suppressWarnings = suppressWarnings
+      debug_mode = debug_mode,
+      suppress_warnings = suppress_warnings
     )
     # extract variables from return list object and give them proper names
     state_ref <- returned_vars$state_ref
@@ -176,7 +175,7 @@ ecorisk_wrapper <- function(path_ref,
   ncells <- length(cell_area)
   cell_ids <- 0:(ncells - 1)
   slices <- (nyears_scen - window + 1)
-  window_half <- round(window/2.0)
+  window_half <- round(window / 2.0)
   slice_years <- time_span_scenario[
                             (window_half + 1):(nyears_scen - window_half + 1)]
   # todo: add dimnames already here and then get rid of the indexing
@@ -215,7 +214,7 @@ ecorisk_wrapper <- function(path_ref,
   )
   for (y in slice_years) {
     year_range <- as.character((y - window_half):(y + window_half - 1))
-    message("Calculating time slice ", y, " of ", slices)
+    message("Calculating time slice ", y, " of ", slice_years[1], "-", slice_years[length(slice_years)])
     returned <- calc_ecorisk(
       fpc_ref = fpc_ref,
       fpc_scen = fpc_scen[, , year_range],
@@ -831,8 +830,8 @@ calc_ecorisk <- function(fpc_ref,
 #' @param time_span_scenario vector of years to use as scenario period
 #' @param nitrogen include nitrogen outputs for pools and fluxes into EcoRisk
 #'                 calculation (default FALSE)
-#' @param debug write out all nitrogen state variables (default FALSE)
-#' @param suppressWarnings suppress writing of Warnings, default: TRUE
+#' @param debug_mode write out all nitrogen state variables (default FALSE)
+#' @param suppress_warnings suppress writing of Warnings, default: TRUE
 #'
 #' @return list data object containing arrays of state_ref, mean_state_ref,
 #'         state_scen, mean_state_scen, fpc_ref, fpc_scen, bft_ref, bft_scen,
@@ -846,8 +845,8 @@ read_ecorisk_data <- function(
     time_span_reference,
     time_span_scenario,
     nitrogen,
-    debug = FALSE,
-    suppressWarnings = TRUE) {
+    debug_mode = FALSE,
+    suppress_warnings = TRUE) {
   file_type <- tools::file_ext(files_reference$grid)
 
   if (file_type %in% c("json", "clm")) {
@@ -964,7 +963,7 @@ read_ecorisk_data <- function(
               subset = list(year = as.character(time_span_scenario))
             ) %>%
               lpjmlkit::transform(to = c("year_month_day")) %>%
-              lpjmlkit::as_array(aggregate = list(month = sum, band = sum), )%>%
+              lpjmlkit::as_array(aggregate = list(month = sum, band = sum), ) %>%
               drop() %>%
               suppressWarnings()
           } else {
@@ -2200,57 +2199,57 @@ ecorisk_combine_hist_and_scen_data <- function(hist_file, scen_file, combined_fi
   dimnames_state_hist <- dimnames(state_scen_hist)
   dimnames_state_scen <- dimnames(state_scen_scen)
   dimnames_state_comb <- dimnames_state_hist
-  dimnames_state_comb$year <- c(dimnames_state_hist$year,dimnames_state_scen$year)
+  dimnames_state_comb$year <- c(dimnames_state_hist$year, dimnames_state_scen$year)
   di_state_hist <- dim(state_scen_hist)
   di_state_scen <- dim(state_scen_scen)
   di_state_comb <- di_state_hist
   di_state_comb[2] <- di_state_hist[2] + di_state_scen[2]
   state_scen <- array(0, dim = di_state_comb)
   dimnames(state_scen) <- dimnames_state_comb
-  state_scen[,dimnames_state_hist$year,] <- state_scen_hist
-  state_scen[,dimnames_state_scen$year,] <- state_scen_scen
+  state_scen[, dimnames_state_hist$year, ] <- state_scen_hist
+  state_scen[, dimnames_state_scen$year, ] <- state_scen_scen
 
   dimnames_cft_hist <- dimnames(cft_scen_hist)
   dimnames_cft_scen <- dimnames(cft_scen_scen)
   dimnames_cft_comb <- dimnames_cft_hist
-  dimnames_cft_comb$year <- c(dimnames_cft_hist$year,dimnames_cft_scen$year)
+  dimnames_cft_comb$year <- c(dimnames_cft_hist$year, dimnames_cft_scen$year)
   di_cft_hist <- dim(cft_scen_hist)
   di_cft_scen <- dim(cft_scen_scen)
   di_cft_comb <- di_cft_hist
   di_cft_comb[3] <- di_cft_hist[3] + di_cft_scen[3]
   cft_scen <- array(0, dim = di_cft_comb)
   dimnames(cft_scen) <- dimnames_cft_comb
-  cft_scen[,,dimnames_cft_hist$year] <- cft_scen_hist
-  cft_scen[,,dimnames_cft_scen$year] <- cft_scen_scen
+  cft_scen[, , dimnames_cft_hist$year] <- cft_scen_hist
+  cft_scen[, , dimnames_cft_scen$year] <- cft_scen_scen
 
   dimnames_fpc_hist <- dimnames(fpc_scen_hist)
   dimnames_fpc_scen <- dimnames(fpc_scen_scen)
   dimnames_fpc_comb <- dimnames_fpc_hist
-  dimnames_fpc_comb$year <- c(dimnames_fpc_hist$year,dimnames_fpc_scen$year)
+  dimnames_fpc_comb$year <- c(dimnames_fpc_hist$year, dimnames_fpc_scen$year)
   di_fpc_hist <- dim(fpc_scen_hist)
   di_fpc_scen <- dim(fpc_scen_scen)
   di_fpc_comb <- di_fpc_hist
   di_fpc_comb[3] <- di_fpc_hist[3] + di_fpc_scen[3]
   fpc_scen <- array(0, dim = di_fpc_comb)
   dimnames(fpc_scen) <- dimnames_fpc_comb
-  fpc_scen[,,dimnames_fpc_hist$year] <- fpc_scen_hist
-  fpc_scen[,,dimnames_fpc_scen$year] <- fpc_scen_scen
+  fpc_scen[, , dimnames_fpc_hist$year] <- fpc_scen_hist
+  fpc_scen[, , dimnames_fpc_scen$year] <- fpc_scen_scen
 
   dimnames_bft_hist <- dimnames(bft_scen_hist)
   dimnames_bft_scen <- dimnames(bft_scen_scen)
   dimnames_bft_comb <- dimnames_bft_hist
-  dimnames_bft_comb$year <- c(dimnames_bft_hist$year,dimnames_bft_scen$year)
+  dimnames_bft_comb$year <- c(dimnames_bft_hist$year, dimnames_bft_scen$year)
   di_bft_hist <- dim(bft_scen_hist)
   di_bft_scen <- dim(bft_scen_scen)
   di_bft_comb <- di_bft_hist
   di_bft_comb[3] <- di_bft_hist[3] + di_bft_scen[3]
   bft_scen <- array(0, dim = di_bft_comb)
   dimnames(bft_scen) <- dimnames_bft_comb
-  bft_scen[,,dimnames_bft_hist$year] <- bft_scen_hist
-  bft_scen[,,dimnames_bft_scen$year] <- bft_scen_scen
+  bft_scen[, , dimnames_bft_hist$year] <- bft_scen_hist
+  bft_scen[, , dimnames_bft_scen$year] <- bft_scen_scen
 
   if (file.exists(combined_file)) {
-    message("Output file ",combined_file," already exists. Aborting.")
+    message("Output file ", combined_file, " already exists. Aborting.")
   } else {
     message("Saving data to: ", combined_file)
     save(state_ref, state_scen, fpc_ref, fpc_scen, bft_ref, bft_scen,
@@ -2539,7 +2538,9 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
           plot_folder, "/compare_ecorisk_to_", biomes_abbrv[b], ".png"
         ),
         focus_biome = b, biome_classes = biome_classes$biome_id,
-        data = ecorisk$ecorisk_total, title = biome_classes$biome_names[b],
+        ecorisk_object = ecorisk,
+        plot_dimension = "ecorisk_total",
+        title = biome_classes$biome_names[b],
         legendtitle = "",
         eps = FALSE,
         title_size = 2,
@@ -2552,7 +2553,8 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
           biomes_abbrv[b], ".png" # nolint
         ),
         focus_biome = b, biome_classes = biome_classes$biome_id,
-        data = ecorisk$vegetation_structure_change,
+        ecorisk_object = ecorisk,
+        plot_dimension = "vegetation_structure_change",
         title = biome_classes$biome_names[b],
         legendtitle = "",
         eps = FALSE,
@@ -2566,7 +2568,8 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
         ),
         focus_biome = b,
         biome_classes = biome_classes$biome_id,
-        data = ecorisk$global_importance,
+        ecorisk_object = ecorisk,
+        plot_dimension = "global_importance",
         title = biome_classes$biome_names[b],
         legendtitle = "",
         eps = FALSE,
@@ -2580,7 +2583,8 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
         ),
         focus_biome = b,
         biome_classes = biome_classes$biome_id,
-        data = ecorisk$local_change,
+        ecorisk_object = ecorisk,
+        plot_dimension = "local_change",
         title = biome_classes$biome_names[b],
         legendtitle = "",
         eps = FALSE,
@@ -2594,7 +2598,8 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
         ),
         focus_biome = b,
         biome_classes = biome_classes$biome_id,
-        data = ecorisk$ecosystem_balance,
+        ecorisk_object = ecorisk,
+        plot_dimension = "ecosystem_balance",
         title = biome_classes$biome_names[b],
         legendtitle = "",
         eps = FALSE,
@@ -2614,4 +2619,3 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
 
   return(intra_biome_distrib)
 }
-

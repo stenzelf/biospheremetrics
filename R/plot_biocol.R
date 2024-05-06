@@ -37,7 +37,7 @@
 #' plot_biocol(
 #'    biocol_data = biocol,
 #'    path_write = "~/BioCol_plots/",
-#'    plotyears = c(1980,2014),
+#'    plotyears = c(1980, 2014),
 #'    min_val = 0,
 #'    max_val = 90,
 #'    legendpos = "left",
@@ -72,7 +72,7 @@ plot_biocol <- function(
   pick_years <- (mapindex - mapyear_buffer):(mapindex + mapyear_buffer)
   plot_global(
     data = rowMeans(
-      biocol_data$biocol[,pick_years]
+      biocol_data$biocol[, pick_years]
     ),
     file = paste0(path_write, "BioCol_absolute_", mapyear, ".png"),
     type = "exp",
@@ -88,7 +88,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_luc[,pick_years]
+      biocol_data$biocol_luc[, pick_years]
     ),
     file = paste0(path_write, "BioCol_luc_", mapyear, ".png"),
     type = "exp",
@@ -104,7 +104,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_harvest[,pick_years]
+      biocol_data$biocol_harvest[, pick_years]
     ),
     file = paste0(path_write, "BioCol_harv_", mapyear, ".png"),
     type = "exp",
@@ -137,7 +137,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_frac[,pick_years]
+      biocol_data$biocol_frac[, pick_years]
     ),
     file = paste0(path_write, "BioCol_frac_LPJmL_", mapyear, ".png"),
     legendtitle = "frac of NPPpot",
@@ -153,7 +153,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$biocol_frac_piref[,pick_years]
+      biocol_data$biocol_frac_piref[, pick_years]
     ),
     file = paste0(path_write, "BioCol_frac_piref_LPJmL_", mapyear, ".png"),
     title = "",
@@ -170,7 +170,7 @@ plot_biocol <- function(
 
   plot_global(
     data = rowMeans(
-      biocol_data$npp[,pick_years]
+      biocol_data$npp[, pick_years]
     ),
     file = paste0(path_write, "NPP_LPJmL_", mapyear, ".png"),
     type = "lin",
@@ -201,7 +201,7 @@ plot_biocol <- function(
 #' @examples
 #' \dontrun{
 #' plot_biocol_map(
-#'    data = biocol$biocol_frac[,"2000"]*100,
+#'    data = biocol$biocol_frac[, "2000"] * 100,
 #'    file = "./BioCol_map_yr2000.png",
 #' )
 #' }
@@ -324,16 +324,16 @@ plot_biocol_map <- function(
 #' \dontrun{
 #' plot_biocol_ts(
 #'   biocol_data = biocol_data,
-#'   file = "./BioCol_overtime_LPJmL_1550-2015.png"),
+#'   file = "./BioCol_overtime_LPJmL_1550-2015.png",
 #'   first_year = 1550,
-#'   plot_years = c(1550,2015),
+#'   plot_years = c(1550, 2015),
 #'   min_val = 0,
 #'   max_val = 80,
 #'   ref = "pi",
 #'   legendpos = "topleft",
 #'   details = TRUE,
 #'   max_val = max_val,
-#'   highlight_years = c(1900,2000)
+#'   highlight_years = c(1900, 2000)
 #'   )
 #' }
 #'
@@ -381,144 +381,151 @@ plot_biocol_ts <- function(
 
 
 
-  graphics::par(bty = "o", oma = c(0, 0, 0, 0), mar = c(4, 5, 1, 3))
-  graphics::plot(NA,
-    ylab = "GtC/yr", xlab = "Year", xlim = plot_years,
-    ylim = c(min_val, max_val), xaxs = "i", yaxs = "i"
-  )
-  graphics::grid()
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$npp_pot_overtime,
-    type = "l",
-    col = colz[1]
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$npp_act_overtime,
-    type = "l",
-    col = colz[2]
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$npp_eco_overtime,
-    type = "l",
-    col = colz[3]
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$npp_luc_overtime,
-    type = "l",
-    col = colz[4]
-  )
-  graphics::polygon(
-    x = c(seq(first_year, last_year, 1), seq(last_year,first_year, -1)),
-    y = c(biocol_data$biocol_overtime_abs, rev(biocol_data$biocol_overtime)),
-    border = NA,
-    col = colz[7]
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$biocol_overtime_pos,
-    type = "l",
-    col = colz[6]
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_data$npp_harv_overtime,
-    type = "l",
-    col = colz[5]
-  )
-  if (details) {
+  withr::with_par(new = list(bty = "o", oma = c(0, 0, 0, 0),
+                             mar = c(4, 5, 1, 3)),
+    {graphics::plot(NA,
+      ylab = "GtC/yr", xlab = "Year", xlim = plot_years,
+      ylim = c(min_val, max_val), xaxs = "i", yaxs = "i"
+    )
+    graphics::grid()
     graphics::lines(
       x = seq(first_year, last_year, 1),
-      y = biocol_data$rharvest_cft_overtime,
+      y = biocol_data$npp_pot_overtime,
       type = "l",
-      col = colz[10]
+      col = colz[1]
     )
     graphics::lines(
       x = seq(first_year, last_year, 1),
-      y = biocol_data$fire_overtime,
-      type = "l", col = colz[11]
-    )
-    graphics::lines(
-      x = seq(first_year, last_year, 1),
-      y = biocol_data$timber_harvest_overtime,
+      y = biocol_data$npp_act_overtime,
       type = "l",
-      col = colz[12]
+      col = colz[2]
     )
     graphics::lines(
       x = seq(first_year, last_year, 1),
-      y = biocol_data$wood_harvest_overtime,
+      y = biocol_data$npp_eco_overtime,
       type = "l",
-      col = colz[13]
+      col = colz[3]
     )
-  }
-  graphics::par(bty = "n", oma = c(0, 0, 0, 0), mar = c(4, 5, 1, 3), new = TRUE)
-  if (ref == "pi") {
-    biocol_max <- biocol_data$biocol_overtime_abs_frac_piref
-    biocol_min <- biocol_data$biocol_overtime_frac_piref
-    biocol_mean <- biocol_data$biocol_overtime_pos_frac_piref
-  } else if (ref == "act") {
-    biocol_max <- biocol_data$biocol_overtime_abs_frac
-    biocol_min <- biocol_data$biocol_overtime_frac
-    biocol_mean <- biocol_data$biocol_overtime_pos_frac
-  } else {
-    stop(paste0("Unknown value for parameter ref: ", ref, " - Aborting."))
-  }
-  graphics::plot(
-    NA,
-    xlim = plot_years,
-    ylab = "",
-    xlab = "",
-    ylim = c(0, max_val_right),
-    xaxs = "i",
-    yaxs = "i",
-    axes = FALSE
-  )
-  graphics::polygon(
-    x = c(seq(first_year, last_year, 1), seq(last_year,first_year, -1)),
-    y = c(biocol_max, rev(biocol_min)),
-    border = NA,
-    col = colz[9],
-  )
-  graphics::lines(
-    x = seq(first_year, last_year, 1),
-    y = biocol_mean,
-    type = "l",
-    col = colz[8],
-  )
-
-  graphics::axis(side = 4, col = colz[8], col.axis = colz[8])
-  graphics::mtext(
-    text = "fraction of NPPref",
-    col = colz[8],
-    side = 4,
-    line = 2
-  )
-
-  if (!is.null(highlight_years)) {
-    for (y in highlight_years) {
-      graphics::lines(x = c(y, y), y = c(min_val, max_val), col = "grey40")
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$npp_luc_overtime,
+      type = "l",
+      col = colz[4]
+    )
+    graphics::polygon(
+      x = c(seq(first_year, last_year, 1), seq(last_year, first_year, -1)),
+      y = c(biocol_data$biocol_overtime_abs, rev(biocol_data$biocol_overtime)),
+      border = NA,
+      col = colz[7]
+    )
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$biocol_overtime_pos,
+      type = "l",
+      col = colz[6]
+    )
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_data$npp_harv_overtime,
+      type = "l",
+      col = colz[5]
+    )
+    if (details) {
+      graphics::lines(
+        x = seq(first_year, last_year, 1),
+        y = biocol_data$rharvest_cft_overtime,
+        type = "l",
+        col = colz[10]
+      )
+      graphics::lines(
+        x = seq(first_year, last_year, 1),
+        y = biocol_data$fire_overtime,
+        type = "l", col = colz[11]
+      )
+      graphics::lines(
+        x = seq(first_year, last_year, 1),
+        y = biocol_data$timber_harvest_overtime,
+        type = "l",
+        col = colz[12]
+      )
+      graphics::lines(
+        x = seq(first_year, last_year, 1),
+        y = biocol_data$wood_harvest_overtime,
+        type = "l",
+        col = colz[13]
+      )
     }
-  }
-  if (details) {
-    graphics::legend(
-      legendpos,
-      legend = c(
-        "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
-        "HANPP sum", "BioCol sum [frac NPPref]",
-        "rharvest", "firec", "timber_harvest", "wood_harvest"
-      ), col = colz[c(1:6,8,10:13)], lty = 1, cex = 1
+    }
+  )
+  withr::with_par(new = list(bty = "n", oma = c(0, 0, 0, 0),
+                             mar = c(4, 5, 1, 3), new = TRUE),
+    {
+    if (ref == "pi") {
+      biocol_max <- biocol_data$biocol_overtime_abs_frac_piref
+      biocol_min <- biocol_data$biocol_overtime_frac_piref
+      biocol_mean <- biocol_data$biocol_overtime_pos_frac_piref
+    } else if (ref == "act") {
+      biocol_max <- biocol_data$biocol_overtime_abs_frac
+      biocol_min <- biocol_data$biocol_overtime_frac
+      biocol_mean <- biocol_data$biocol_overtime_pos_frac
+    } else {
+      stop(paste0("Unknown value for parameter ref: ", ref, " - Aborting."))
+    }
+    graphics::plot(
+      NA,
+      xlim = plot_years,
+      ylab = "",
+      xlab = "",
+      ylim = c(0, max_val_right),
+      xaxs = "i",
+      yaxs = "i",
+      axes = FALSE
     )
-  } else {
-    graphics::legend(
-      legendpos,
-      legend = c(
-        "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
-        "HANPP sum", "BioCol sum [frac NPPref]"
-      ), col = colz[c(1:6,8)], lty = 1, cex = 1
+    graphics::polygon(
+      x = c(seq(first_year, last_year, 1), seq(last_year, first_year, -1)),
+      y = c(biocol_max, rev(biocol_min)),
+      border = NA,
+      col = colz[9],
     )
+    graphics::lines(
+      x = seq(first_year, last_year, 1),
+      y = biocol_mean,
+      type = "l",
+      col = colz[8],
+    )
+
+    graphics::axis(side = 4, col = colz[8], col.axis = colz[8])
+    graphics::mtext(
+      text = "fraction of NPPref",
+      col = colz[8],
+      side = 4,
+      line = 2
+    )
+
+    if (!is.null(highlight_years)) {
+      for (y in highlight_years) {
+        graphics::lines(x = c(y, y), y = c(min_val, max_val), col = "grey40")
+      }
+    }
+    if (details) {
+      graphics::legend(
+        legendpos,
+        legend = c(
+          "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
+          "HANPP sum", "BioCol sum [frac NPPref]",
+          "rharvest", "firec", "timber_harvest", "wood_harvest"
+        ), col = colz[c(1:6, 8, 10:13)], lty = 1, cex = 1
+      )
+    } else {
+      graphics::legend(
+        legendpos,
+        legend = c(
+          "NPPpot (PNV)", "NPPact (landuse)", "NPPeco", "NPPluc", "NPPharv",
+          "HANPP sum", "BioCol sum [frac NPPref]"
+        ), col = colz[c(1:6, 8)], lty = 1, cex = 1
+      )
+    }
+    if (!is.null(file)) grDevices::dev.off()
   }
-  if (!is.null(file)) grDevices::dev.off()
+  )
 }

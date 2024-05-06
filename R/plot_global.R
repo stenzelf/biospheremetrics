@@ -44,8 +44,8 @@
 #' @examples
 #' \dontrun{
 #' plot_global(
-#'   data = biocol_data$biocol[,"2015"]),
-#'   file = "BioCol_absolute_2015.png",
+#'   data = biocol_data$biocol[,"2015"],
+#'   file = "BioCol_absolute.png",
 #'   type = "exp",
 #'   pow2min = 0,
 #'   pow2max = 12,
@@ -172,43 +172,40 @@ plot_global <- function(data,
   extent <- terra::ext(c(-180, 180, -60, 90))
 
   if (leg_yes) {
-    graphics::par(
-      bty = "n", oma = c(0, 0, 0, 3), mar = c(0, 0, 0, 0),
-      xpd = TRUE
-    )
+    oma_p = c(0, 0, 0, 3)
   } else {
-    graphics::par(
-      bty = "n", oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0),
-      xpd = TRUE
+    oma_p = c(0, 0, 0, 0)
+  }
+  withr::with_par(new = list(
+    bty = "n", oma = oma_p, mar = c(0, 0, 0, 0), xpd = TRUE),
+    {terra::plot(ra,
+      ext = extent, breaks = legendticks, col = palette, main = title,
+      legend = FALSE, axes = FALSE
     )
-  }
-
-  terra::plot(ra,
-    ext = extent, breaks = legendticks, col = palette, main = title,
-    legend = FALSE, axes = FALSE
-  )
-  maps::map("world", add = TRUE, res = 0, lwd = 0.1, ylim = c(-60, 90))
-  title(title, line = -1)
-  if (leg_yes) {
-    if (type == "exp") {
-      fields::image.plot(
-        legend.only = TRUE, zlim = c(-pow2max, pow2max), col = palette,
-        useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
-        legend.shrink = 0.7,
-        legend.args = list(legendtitle, side = 3, font = 2, line = 1),
-        smallplot = c(0.975, 0.99, 0.1, 0.9)
-      )
-    } else { # manual plotting
-      fields::image.plot(
-        legend.only = TRUE, zlim = range(brks), col = palette,
-        useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
-        legend.shrink = 0.7,
-        legend.args = list(legendtitle, side = 3, font = 2, line = 1)
-      )
+    maps::map("world", add = TRUE, res = 0, lwd = 0.1, ylim = c(-60, 90))
+    title(title, line = -1)
+    if (leg_yes) {
+      if (type == "exp") {
+        fields::image.plot(
+          legend.only = TRUE, zlim = c(-pow2max, pow2max), col = palette,
+          useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
+          legend.shrink = 0.7,
+          legend.args = list(legendtitle, side = 3, font = 2, line = 1),
+          smallplot = c(0.975, 0.99, 0.1, 0.9)
+        )
+      } else { # manual plotting
+        fields::image.plot(
+          legend.only = TRUE, zlim = range(brks), col = palette,
+          useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
+          legend.shrink = 0.7,
+          legend.args = list(legendtitle, side = 3, font = 2, line = 1)
+        )
+      }
     }
-  }
 
-  if (!is.null(file)) {
-    grDevices::dev.off()
-  }
+    if (!is.null(file)) {
+      grDevices::dev.off()
+    }
+    }
+  )
 }
