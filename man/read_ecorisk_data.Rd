@@ -13,8 +13,8 @@ read_ecorisk_data(
   time_span_reference,
   time_span_scenario,
   nitrogen,
-  debug = FALSE,
-  suppressWarnings = TRUE
+  debug_mode = FALSE,
+  suppress_warnings = TRUE
 )
 }
 \arguments{
@@ -31,9 +31,9 @@ read_ecorisk_data(
 \item{nitrogen}{include nitrogen outputs for pools and fluxes into EcoRisk
 calculation (default FALSE)}
 
-\item{debug}{write out all nitrogen state variables (default FALSE)}
+\item{debug_mode}{write out all nitrogen state variables (default FALSE)}
 
-\item{suppressWarnings}{suppress writing of Warnings, default: TRUE}
+\item{suppress_warnings}{suppress writing of Warnings, default: TRUE}
 }
 \value{
 list data object containing arrays of state_ref, mean_state_ref,

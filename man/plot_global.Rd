@@ -22,6 +22,8 @@ plot_global(
   only_pos = FALSE,
   n_legend_ticks = 20,
   min_0 = 0.01,
+  extent = NULL,
+  country_borders = TRUE,
   eps = FALSE
 )
 }
@@ -88,7 +90,7 @@ only pos values.
 \examples{
 \dontrun{
 plot_global(
-  data = biocol_data$biocol[,"2015"],
+  data = biocol_data$biocol[, "2015"],
   file = "BioCol_absolute.png",
   type = "exp",
   pow2min = 0,

@@ -52,7 +52,7 @@
 #'   save_ecorisk = NULL,
 #'   time_span_reference = c(1550:1579),
 #'   time_span_scenario = c(1987:2016)
-#'   )
+#' )
 #' }
 #'
 #' @md
@@ -77,6 +77,14 @@ ecorisk_wrapper <- function(path_ref,
   # check timespan consistency
   nyears <- length(time_span_reference)
   nyears_scen <- length(time_span_scenario)
+
+  # prepare slices for overtime calculation
+  slices <- (nyears_scen - window + 1)
+  window_half <- round(window / 2.0)
+  slice_years <- time_span_scenario[
+    (window_half + 1):(nyears_scen - window_half + 1)
+  ]
+
   if ((!nyears == window) || nyears_scen < window) {
     stop(
       "Timespan in reference is not equal to window size (",
@@ -113,22 +121,28 @@ ecorisk_wrapper <- function(path_ref,
           }
         }
         if (is.null(files_scenario[[output]])) {
-          stop("None of the default file names for ", output,
-               " were found in ", path_scen, "please check or define manually",
-               " using argument 'replace_input_file_names'. Stopping.")
+          stop(
+            "None of the default file names for ", output,
+            " were found in ", path_scen, " - please check or define manually",
+            " using argument 'replace_input_file_names'. Stopping."
+          )
         }
         if (is.null(files_reference[[output]])) {
-          stop("None of the default file names for ", output,
-               " were found in ", path_ref, "please check or define manually",
-               " using argument 'replace_input_file_names'. Stopping.")
+          stop(
+            "None of the default file names for ", output,
+            " were found in ", path_ref, " - please check or define manually",
+            " using argument 'replace_input_file_names'. Stopping."
+          )
         }
-
-
       } else {
-        files_scenario[[output]] <- paste0(path_scen,
-                          replace_input_file_names[[output]], ".", file_extension)
-        files_reference[[output]] <- paste0(path_ref,
-                          replace_input_file_names[[output]], ".", file_extension)
+        files_scenario[[output]] <- paste0(
+          path_scen,
+          replace_input_file_names[[output]], ".", file_extension
+        )
+        files_reference[[output]] <- paste0(
+          path_ref,
+          replace_input_file_names[[output]], ".", file_extension
+        )
       }
     }
   } # end if !read_saved_data
@@ -157,6 +171,12 @@ ecorisk_wrapper <- function(path_ref,
       debug_mode = debug_mode,
       suppress_warnings = suppress_warnings
     )
+    if (overtime == FALSE && slices > 1) {
+      print("Overtime == FALSE, but too many time slices.
+            I assume this is just a read all data operation. Exiting.")
+      return(NULL)
+    }
+
     # extract variables from return list object and give them proper names
     state_ref <- returned_vars$state_ref
     state_scen <- returned_vars$state_scen
@@ -174,46 +194,71 @@ ecorisk_wrapper <- function(path_ref,
 
   ncells <- length(cell_area)
   cell_ids <- 0:(ncells - 1)
-  slices <- (nyears_scen - window + 1)
-  window_half <- round(window / 2.0)
-  slice_years <- time_span_scenario[
-                            (window_half + 1):(nyears_scen - window_half + 1)]
-  # todo: add dimnames already here and then get rid of the indexing
+
   ecorisk <- list(
-    ecorisk_total = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    vegetation_structure_change = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    local_change = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    global_importance = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    ecosystem_balance = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    c2vr = array(0, dim = c(4, ncells, slices),
-              dimnames = list(part = 1:4, cell = cell_ids, year = slice_years)),
-    carbon_stocks = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    carbon_fluxes = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    carbon_total = array(0, dim = c(ncells, slices),
-                         dimnames = list(cell = cell_ids, year = slice_years)),
-    water_total = array(0, dim = c(ncells, slices),
-                        dimnames = list(cell = cell_ids, year = slice_years)),
-    water_fluxes = array(0, dim = c(ncells, slices),
-                         dimnames = list(cell = cell_ids, year = slice_years)),
-    nitrogen_stocks = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    nitrogen_fluxes = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
-    nitrogen_total = array(0, dim = c(ncells, slices),
-                          dimnames = list(cell = cell_ids, year = slice_years)),
+    ecorisk_total = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    vegetation_structure_change = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    local_change = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    global_importance = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    ecosystem_balance = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    c2vr = array(0,
+      dim = c(4, ncells, slices),
+      dimnames = list(part = 1:4, cell = cell_ids, year = slice_years)
+    ),
+    carbon_stocks = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    carbon_fluxes = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    carbon_total = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    water_total = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    water_fluxes = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    nitrogen_stocks = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    nitrogen_fluxes = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
+    nitrogen_total = array(0,
+      dim = c(ncells, slices),
+      dimnames = list(cell = cell_ids, year = slice_years)
+    ),
     lat = lat,
     lon = lon,
     cell_area = cell_area
   )
   for (y in slice_years) {
-    year_range <- as.character((y - window_half):(y + window_half - 1))
+    year_range <- as.character((as.numeric(y) - window_half):
+                                 (as.numeric(y) + window_half - 1))
     message("Calculating time slice ", y, " of ", slice_years[1], "-", slice_years[length(slice_years)])
     returned <- calc_ecorisk(
       fpc_ref = fpc_ref,
@@ -396,10 +441,12 @@ calc_ecorisk <- function(fpc_ref,
     vegetation_structure_change,
     vegetation_structure_changesd
   )
-  nitrogen_dimensions <- c("vegetation_nitrogen_pool",
-                           "soil_mineral_nitrogen_pool",
-                           "nitrogen_influx",
-                           "nitrogen_outflux")
+  nitrogen_dimensions <- c(
+    "vegetation_nitrogen_pool",
+    "soil_mineral_nitrogen_pool",
+    "nitrogen_influx",
+    "nitrogen_outflux"
+  )
   all_dimensions <- dimnames(state_scen)$class
   non_nitrogen_dimensions <- setdiff(all_dimensions, nitrogen_dimensions)
   if (nitrogen) {
@@ -458,34 +505,46 @@ calc_ecorisk <- function(fpc_ref,
     )$full
     # total carbon (local change)
     ct <- calc_component(
-      ref = state_ref[, , c("vegetation_carbon_pool",
-                            "soil_carbon_pool",
-                            "carbon_influx",
-                            "carbon_outflux")],
-      scen = state_scen[, , c("vegetation_carbon_pool",
-                              "soil_carbon_pool",
-                              "carbon_influx",
-                              "carbon_outflux")],
+      ref = state_ref[, , c(
+        "vegetation_carbon_pool",
+        "soil_carbon_pool",
+        "carbon_influx",
+        "carbon_outflux"
+      )],
+      scen = state_scen[, , c(
+        "vegetation_carbon_pool",
+        "soil_carbon_pool",
+        "carbon_influx",
+        "carbon_outflux"
+      )],
       local = TRUE,
       cell_area = cell_area
     )$full
     # water fluxes (local change)
     wf <- calc_component(
-      ref = state_ref[, , c("water_influx",
-                            "water_outflux")],
-      scen = state_scen[, , c("water_influx",
-                              "water_outflux")],
+      ref = state_ref[, , c(
+        "water_influx",
+        "water_outflux"
+      )],
+      scen = state_scen[, , c(
+        "water_influx",
+        "water_outflux"
+      )],
       local = TRUE,
       cell_area = cell_area
     )$full
     # total water (local change)
     wt <- calc_component(
-      ref = state_ref[, , c("water_influx",
-                            "water_outflux",
-                            "soil_water_pool")],
-      scen = state_scen[, , c("water_influx",
-                              "water_outflux",
-                              "soil_water_pool")],
+      ref = state_ref[, , c(
+        "water_influx",
+        "water_outflux",
+        "soil_water_pool"
+      )],
+      scen = state_scen[, , c(
+        "water_influx",
+        "water_outflux",
+        "soil_water_pool"
+      )],
       local = TRUE,
       cell_area = cell_area
     )$full
@@ -493,10 +552,14 @@ calc_ecorisk <- function(fpc_ref,
     # nitrogen stocks (local change)
     if (nitrogen) {
       ns <- calc_component(
-        ref = state_ref[, , c("vegetation_nitrogen_pool",
-                              "soil_mineral_nitrogen_pool")],
-        scen = state_scen[, , c("vegetation_nitrogen_pool",
-                                "soil_mineral_nitrogen_pool")],
+        ref = state_ref[, , c(
+          "vegetation_nitrogen_pool",
+          "soil_mineral_nitrogen_pool"
+        )],
+        scen = state_scen[, , c(
+          "vegetation_nitrogen_pool",
+          "soil_mineral_nitrogen_pool"
+        )],
         local = TRUE,
         cell_area = cell_area
       )$full
@@ -509,14 +572,18 @@ calc_ecorisk <- function(fpc_ref,
       )$full
       # total nitrogen (local change)
       nt <- calc_component(
-        ref = state_ref[, , c("vegetation_nitrogen_pool",
-                              "soil_mineral_nitrogen_pool",
-                              "nitrogen_influx",
-                              "nitrogen_outflux")],
-        scen = state_scen[, , c("vegetation_nitrogen_pool",
-                                "soil_mineral_nitrogen_pool",
-                                "nitrogen_influx",
-                                "nitrogen_outflux")],
+        ref = state_ref[, , c(
+          "vegetation_nitrogen_pool",
+          "soil_mineral_nitrogen_pool",
+          "nitrogen_influx",
+          "nitrogen_outflux"
+        )],
+        scen = state_scen[, , c(
+          "vegetation_nitrogen_pool",
+          "soil_mineral_nitrogen_pool",
+          "nitrogen_influx",
+          "nitrogen_outflux"
+        )],
         local = TRUE,
         cell_area = cell_area
       )$full
@@ -524,147 +591,207 @@ calc_ecorisk <- function(fpc_ref,
   } else { # local == FALSE
     cf <- (
       calc_component(
-        ref = state_ref[, , c("carbon_influx",
-                              "carbon_outflux")],
-        scen = state_scen[, , c("carbon_influx",
-                                "carbon_outflux")],
+        ref = state_ref[, , c(
+          "carbon_influx",
+          "carbon_outflux"
+        )],
+        scen = state_scen[, , c(
+          "carbon_influx",
+          "carbon_outflux"
+        )],
         local = TRUE,
         cell_area = cell_area
       )$full + # carbon fluxes
         calc_component(
-          ref = state_ref[, , c("carbon_influx",
-                                "carbon_outflux")],
-          scen = state_scen[, , c("carbon_influx",
-                                  "carbon_outflux")],
+          ref = state_ref[, , c(
+            "carbon_influx",
+            "carbon_outflux"
+          )],
+          scen = state_scen[, , c(
+            "carbon_influx",
+            "carbon_outflux"
+          )],
           local = FALSE,
           cell_area = cell_area
         )$full +
         calc_ecosystem_balance(
-          ref = state_ref[, , c("carbon_influx",
-                                "carbon_outflux")],
-          scen = state_scen[, , c("carbon_influx",
-                                  "carbon_outflux")]
+          ref = state_ref[, , c(
+            "carbon_influx",
+            "carbon_outflux"
+          )],
+          scen = state_scen[, , c(
+            "carbon_influx",
+            "carbon_outflux"
+          )]
         )$full
     ) / 3
 
     # carbon stocks
     cs <- (
       calc_component(
-        ref = state_ref[, , c("vegetation_carbon_pool",
-                              "soil_carbon_pool")],
-        scen = state_scen[, , c("vegetation_carbon_pool",
-                                "soil_carbon_pool")],
+        ref = state_ref[, , c(
+          "vegetation_carbon_pool",
+          "soil_carbon_pool"
+        )],
+        scen = state_scen[, , c(
+          "vegetation_carbon_pool",
+          "soil_carbon_pool"
+        )],
         local = TRUE,
         cell_area = cell_area
       )$full +
         calc_component(
-          ref = state_ref[, , c("vegetation_carbon_pool",
-                                "soil_carbon_pool")],
-          scen = state_scen[, , c("vegetation_carbon_pool",
-                                  "soil_carbon_pool")],
+          ref = state_ref[, , c(
+            "vegetation_carbon_pool",
+            "soil_carbon_pool"
+          )],
+          scen = state_scen[, , c(
+            "vegetation_carbon_pool",
+            "soil_carbon_pool"
+          )],
           local = FALSE,
           cell_area = cell_area
         )$full +
         calc_ecosystem_balance(
-          ref = state_ref[, , c("vegetation_carbon_pool",
-                                "soil_carbon_pool")],
-          scen = state_scen[, , c("vegetation_carbon_pool",
-                                  "soil_carbon_pool")]
+          ref = state_ref[, , c(
+            "vegetation_carbon_pool",
+            "soil_carbon_pool"
+          )],
+          scen = state_scen[, , c(
+            "vegetation_carbon_pool",
+            "soil_carbon_pool"
+          )]
         )$full
     ) / 3
 
     # carbon total
     ct <- (
       calc_component(
-        ref = state_ref[, , c("vegetation_carbon_pool",
-                              "soil_carbon_pool",
-                              "carbon_influx",
-                              "carbon_outflux")],
-        scen = state_scen[, , c("vegetation_carbon_pool",
-                                "soil_carbon_pool",
-                                "carbon_influx",
-                                "carbon_outflux")],
+        ref = state_ref[, , c(
+          "vegetation_carbon_pool",
+          "soil_carbon_pool",
+          "carbon_influx",
+          "carbon_outflux"
+        )],
+        scen = state_scen[, , c(
+          "vegetation_carbon_pool",
+          "soil_carbon_pool",
+          "carbon_influx",
+          "carbon_outflux"
+        )],
         local = TRUE,
         cell_area = cell_area
       )$full +
         calc_component(
-          ref = state_ref[, , c("vegetation_carbon_pool",
-                                "soil_carbon_pool",
-                                "carbon_influx",
-                                "carbon_outflux")],
-          scen = state_scen[, , c("vegetation_carbon_pool",
-                                  "soil_carbon_pool",
-                                  "carbon_influx",
-                                  "carbon_outflux")],
+          ref = state_ref[, , c(
+            "vegetation_carbon_pool",
+            "soil_carbon_pool",
+            "carbon_influx",
+            "carbon_outflux"
+          )],
+          scen = state_scen[, , c(
+            "vegetation_carbon_pool",
+            "soil_carbon_pool",
+            "carbon_influx",
+            "carbon_outflux"
+          )],
           local = FALSE,
           cell_area = cell_area
         )$full +
         calc_ecosystem_balance(
-          ref = state_ref[, , c("vegetation_carbon_pool",
-                                "soil_carbon_pool",
-                                "carbon_influx",
-                                "carbon_outflux")],
-          scen = state_scen[, , c("vegetation_carbon_pool",
-                                  "soil_carbon_pool",
-                                  "carbon_influx",
-                                  "carbon_outflux")]
+          ref = state_ref[, , c(
+            "vegetation_carbon_pool",
+            "soil_carbon_pool",
+            "carbon_influx",
+            "carbon_outflux"
+          )],
+          scen = state_scen[, , c(
+            "vegetation_carbon_pool",
+            "soil_carbon_pool",
+            "carbon_influx",
+            "carbon_outflux"
+          )]
         )$full
     ) / 3
 
     # water fluxes
     wf <- (
       calc_component(
-        ref = state_ref[, , c("water_influx",
-                              "water_outflux")],
-        scen = state_scen[, , c("water_influx",
-                                "water_outflux")],
+        ref = state_ref[, , c(
+          "water_influx",
+          "water_outflux"
+        )],
+        scen = state_scen[, , c(
+          "water_influx",
+          "water_outflux"
+        )],
         local = TRUE,
         cell_area = cell_area
       )$full +
         calc_component(
-          ref = state_ref[, , c("water_influx",
-                                "water_outflux")],
-          scen = state_scen[, , c("water_influx",
-                                  "water_outflux")],
+          ref = state_ref[, , c(
+            "water_influx",
+            "water_outflux"
+          )],
+          scen = state_scen[, , c(
+            "water_influx",
+            "water_outflux"
+          )],
           local = FALSE,
           cell_area = cell_area
         )$full + calc_ecosystem_balance(
-          ref = state_ref[, , c("water_influx",
-                                "water_outflux")],
-          scen = state_scen[, , c("water_influx",
-                                  "water_outflux")]
+          ref = state_ref[, , c(
+            "water_influx",
+            "water_outflux"
+          )],
+          scen = state_scen[, , c(
+            "water_influx",
+            "water_outflux"
+          )]
         )$full
     ) / 3
 
     # water total
     wt <- (
       calc_component(
-        ref = state_ref[, , c("water_influx",
-                              "water_outflux",
-                              "soil_water_pool")],
-        scen = state_scen[, , c("water_influx",
-                                "water_outflux",
-                                "soil_water_pool")],
+        ref = state_ref[, , c(
+          "water_influx",
+          "water_outflux",
+          "soil_water_pool"
+        )],
+        scen = state_scen[, , c(
+          "water_influx",
+          "water_outflux",
+          "soil_water_pool"
+        )],
         local = TRUE,
         cell_area = cell_area
       )$full +
         calc_component(
-          ref = state_ref[, , c("water_influx",
-                                "water_outflux",
-                                "soil_water_pool")],
-          scen = state_scen[, , c("water_influx",
-                                  "water_outflux",
-                                  "soil_water_pool")],
+          ref = state_ref[, , c(
+            "water_influx",
+            "water_outflux",
+            "soil_water_pool"
+          )],
+          scen = state_scen[, , c(
+            "water_influx",
+            "water_outflux",
+            "soil_water_pool"
+          )],
           local = FALSE,
           cell_area = cell_area
         )$full +
         calc_ecosystem_balance(
-          ref = state_ref[, , c("water_influx",
-                                "water_outflux",
-                                "soil_water_pool")],
-          scen = state_scen[, , c("water_influx",
-                                  "water_outflux",
-                                  "soil_water_pool")]
+          ref = state_ref[, , c(
+            "water_influx",
+            "water_outflux",
+            "soil_water_pool"
+          )],
+          scen = state_scen[, , c(
+            "water_influx",
+            "water_outflux",
+            "soil_water_pool"
+          )]
         )$full
     ) / 3
 
@@ -672,88 +799,124 @@ calc_ecorisk <- function(fpc_ref,
       # nitrogen stocks (local change)
       ns <- (
         calc_component(
-          ref = state_ref[, , c("vegetation_nitrogen_pool",
-                                "soil_mineral_nitrogen_pool")],
-          scen = state_scen[, , c("vegetation_nitrogen_pool",
-                                  "soil_mineral_nitrogen_pool")],
+          ref = state_ref[, , c(
+            "vegetation_nitrogen_pool",
+            "soil_mineral_nitrogen_pool"
+          )],
+          scen = state_scen[, , c(
+            "vegetation_nitrogen_pool",
+            "soil_mineral_nitrogen_pool"
+          )],
           local = TRUE,
           cell_area = cell_area
         )$full +
           calc_component(
-            ref = state_ref[, , c("vegetation_nitrogen_pool",
-                                  "soil_mineral_nitrogen_pool")],
-            scen = state_scen[, , c("vegetation_nitrogen_pool",
-                                    "soil_mineral_nitrogen_pool")],
+            ref = state_ref[, , c(
+              "vegetation_nitrogen_pool",
+              "soil_mineral_nitrogen_pool"
+            )],
+            scen = state_scen[, , c(
+              "vegetation_nitrogen_pool",
+              "soil_mineral_nitrogen_pool"
+            )],
             local = FALSE, cell_area = cell_area
           )$full +
           calc_ecosystem_balance(
-            ref = state_ref[, , c("vegetation_nitrogen_pool",
-                                  "soil_mineral_nitrogen_pool")],
-            scen = state_scen[, , c("vegetation_nitrogen_pool",
-                                    "soil_mineral_nitrogen_pool")]
+            ref = state_ref[, , c(
+              "vegetation_nitrogen_pool",
+              "soil_mineral_nitrogen_pool"
+            )],
+            scen = state_scen[, , c(
+              "vegetation_nitrogen_pool",
+              "soil_mineral_nitrogen_pool"
+            )]
           )$full
       ) / 3
 
       # nitrogen fluxes (local change)
       nf <- (
         calc_component(
-          ref = state_ref[, , c("nitrogen_influx",
-                                "nitrogen_outflux")],
-          scen = state_scen[, , c("nitrogen_influx",
-                                  "nitrogen_outflux")],
+          ref = state_ref[, , c(
+            "nitrogen_influx",
+            "nitrogen_outflux"
+          )],
+          scen = state_scen[, , c(
+            "nitrogen_influx",
+            "nitrogen_outflux"
+          )],
           local = TRUE,
           cell_area = cell_area
         )$full +
           calc_component(
-            ref = state_ref[, , c("nitrogen_influx",
-                                  "nitrogen_outflux")],
-            scen = state_scen[, , c("nitrogen_influx",
-                                    "nitrogen_outflux")],
+            ref = state_ref[, , c(
+              "nitrogen_influx",
+              "nitrogen_outflux"
+            )],
+            scen = state_scen[, , c(
+              "nitrogen_influx",
+              "nitrogen_outflux"
+            )],
             local = FALSE,
             cell_area = cell_area
           )$full +
           calc_ecosystem_balance(
-            ref = state_ref[, , c("nitrogen_influx",
-                                  "nitrogen_outflux")],
-            scen = state_scen[, , c("nitrogen_influx",
-                                    "nitrogen_outflux")]
+            ref = state_ref[, , c(
+              "nitrogen_influx",
+              "nitrogen_outflux"
+            )],
+            scen = state_scen[, , c(
+              "nitrogen_influx",
+              "nitrogen_outflux"
+            )]
           )$full
       ) / 3
 
       nt <- (
         calc_component(
-          ref = state_ref[, , c("vegetation_nitrogen_pool",
-                                "soil_mineral_nitrogen_pool",
-                                "nitrogen_influx",
-                                "nitrogen_outflux")],
-          scen = state_scen[, , c("vegetation_nitrogen_pool",
-                                  "soil_mineral_nitrogen_pool",
-                                  "nitrogen_influx",
-                                  "nitrogen_outflux")],
+          ref = state_ref[, , c(
+            "vegetation_nitrogen_pool",
+            "soil_mineral_nitrogen_pool",
+            "nitrogen_influx",
+            "nitrogen_outflux"
+          )],
+          scen = state_scen[, , c(
+            "vegetation_nitrogen_pool",
+            "soil_mineral_nitrogen_pool",
+            "nitrogen_influx",
+            "nitrogen_outflux"
+          )],
           local = TRUE,
           cell_area = cell_area
         )$full +
           calc_component(
-            ref = state_ref[, , c("vegetation_nitrogen_pool",
-                                  "soil_mineral_nitrogen_pool",
-                                  "nitrogen_influx",
-                                  "nitrogen_outflux")],
-            scen = state_scen[, , c("vegetation_nitrogen_pool",
-                                    "soil_mineral_nitrogen_pool",
-                                    "nitrogen_influx",
-                                    "nitrogen_outflux")],
+            ref = state_ref[, , c(
+              "vegetation_nitrogen_pool",
+              "soil_mineral_nitrogen_pool",
+              "nitrogen_influx",
+              "nitrogen_outflux"
+            )],
+            scen = state_scen[, , c(
+              "vegetation_nitrogen_pool",
+              "soil_mineral_nitrogen_pool",
+              "nitrogen_influx",
+              "nitrogen_outflux"
+            )],
             local = FALSE,
             cell_area = cell_area
           )$full +
           calc_ecosystem_balance(
-            ref = state_ref[, , c("vegetation_nitrogen_pool",
-                                  "soil_mineral_nitrogen_pool",
-                                  "nitrogen_influx",
-                                  "nitrogen_outflux")],
-            scen = state_scen[, , c("vegetation_nitrogen_pool",
-                                    "soil_mineral_nitrogen_pool",
-                                    "nitrogen_influx",
-                                    "nitrogen_outflux")]
+            ref = state_ref[, , c(
+              "vegetation_nitrogen_pool",
+              "soil_mineral_nitrogen_pool",
+              "nitrogen_influx",
+              "nitrogen_outflux"
+            )],
+            scen = state_scen[, , c(
+              "vegetation_nitrogen_pool",
+              "soil_mineral_nitrogen_pool",
+              "nitrogen_influx",
+              "nitrogen_outflux"
+            )]
           )$full
       ) / 3
     }
@@ -769,8 +932,10 @@ calc_ecorisk <- function(fpc_ref,
     gi <- gi_raw$value * gi_raw$var
     eb <- eb_raw$value * eb_raw$var
     c2vr <- rbind(delta_var, lc_raw$var, gi_raw$var, eb_raw$var) # dim=(4,ncell)
-    dimnames(c2vr) <- list(component = c("vs", "lc", "gi", "eb"),
-                           cell = 0:(ncells - 1))
+    dimnames(c2vr) <- list(
+      component = c("vs", "lc", "gi", "eb"),
+      cell = 0:(ncells - 1)
+    )
   }
 
   # calc total EcoRisk as the average of the 4 components
@@ -1009,10 +1174,14 @@ read_ecorisk_data <- function(
       }
     }
 
-    dimnames(state_scen) <- list(cell = 0:(ncells - 1),
-                  year = as.character(time_span_scenario), class = class_names)
-    dimnames(state_ref) <- list(cell = 0:(ncells - 1),
-                  year = as.character(time_span_reference), class = class_names)
+    dimnames(state_scen) <- list(
+      cell = 0:(ncells - 1),
+      year = as.character(time_span_scenario), class = class_names
+    )
+    dimnames(state_ref) <- list(
+      cell = 0:(ncells - 1),
+      year = as.character(time_span_reference), class = class_names
+    )
   } else if (file_type == "nc") { # to be added
     stop(
       "nc reading has not been updated to latest functionality. ",
@@ -1367,7 +1536,7 @@ calc_delta_v <- function(fpc_ref, # nolint
       1 - rowSums(cft_scen) -
         rowSums(fpc_scen[, 2:12]) * fpc_scen[, 1] +
         rowSums(cft_scen[, c(16, 32)]) *
-        (1 - rowSums(bft_scen[, c(4:9, 13:18)]))
+          (1 - rowSums(bft_scen[, c(4:9, 13:18)]))
     )
 
     barren_area_scen[barren_area_scen < 0] <- 0
@@ -1477,8 +1646,10 @@ calc_delta_v <- function(fpc_ref, # nolint
 
     # tropicalness
     grass_attributes[, , 1] <- rep(
-      c(1, 0, 0, 0, 1, 1, 1, 0.5, 0, 1, 0.5,
-        1, 1, 0.5, 1, 0.5, NA, NA, 1, NA, NA),
+      c(
+        1, 0, 0, 0, 1, 1, 1, 0.5, 0, 1, 0.5,
+        1, 1, 0.5, 1, 0.5, NA, NA, 1, NA, NA
+      ),
       each = ncells
     )
 
@@ -1558,37 +1729,37 @@ calc_delta_v <- function(fpc_ref, # nolint
     # evergreenness
     abs(
       rowSums(tree_area_ref[, ] *
-                rep(tree_attributes[, 1], each = ncells), na.rm = TRUE) -
+        rep(tree_attributes[, 1], each = ncells), na.rm = TRUE) -
         rowSums(tree_area_scen[, ] *
-                  rep(tree_attributes[, 1], each = ncells), na.rm = TRUE)
+          rep(tree_attributes[, 1], each = ncells), na.rm = TRUE)
     ) * tree_weights[1] +
       # needleleavedness
       abs(
         rowSums(tree_area_ref[, ] *
-                  rep(tree_attributes[, 2], each = ncells), na.rm = TRUE) -
+          rep(tree_attributes[, 2], each = ncells), na.rm = TRUE) -
           rowSums(tree_area_scen[, ] *
-                    rep(tree_attributes[, 2], each = ncells), na.rm = TRUE)
+            rep(tree_attributes[, 2], each = ncells), na.rm = TRUE)
       ) * tree_weights[2] +
       # tropicalness
       abs(
         rowSums(tree_area_ref[, ] *
-                  rep(tree_attributes[, 3], each = ncells), na.rm = TRUE) -
+          rep(tree_attributes[, 3], each = ncells), na.rm = TRUE) -
           rowSums(tree_area_scen[, ] *
-                    rep(tree_attributes[, 3], each = ncells), na.rm = TRUE)
+            rep(tree_attributes[, 3], each = ncells), na.rm = TRUE)
       ) * tree_weights[3] +
       # borealness
       abs(
         rowSums(tree_area_ref[, ] *
-                  rep(tree_attributes[, 4], each = ncells), na.rm = TRUE) -
+          rep(tree_attributes[, 4], each = ncells), na.rm = TRUE) -
           rowSums(tree_area_scen[, ] *
-                    rep(tree_attributes[, 4], each = ncells), na.rm = TRUE)
+            rep(tree_attributes[, 4], each = ncells), na.rm = TRUE)
       ) * tree_weights[4] +
       # naturalness
       abs(
         rowSums(tree_area_ref[, ] *
-                  rep(tree_attributes[, 5], each = ncells), na.rm = TRUE) -
+          rep(tree_attributes[, 5], each = ncells), na.rm = TRUE) -
           rowSums(tree_area_scen[, ] *
-                    rep(tree_attributes[, 5], each = ncells), na.rm = TRUE)
+            rep(tree_attributes[, 5], each = ncells), na.rm = TRUE)
       ) * tree_weights[5]
   )
 
@@ -1681,6 +1852,28 @@ globally_weighted_mean_foreach_var <- function(x, cell_area) { # nolint
 
 s_change_to_var_ratio <- function(x, s) {
   return(1 / (1 + exp(-4 * (x / s - 2))))
+}
+
+aggregate_ecorisk_data_to_lower_resolution <- function(ecorisk_data_file,
+                                                       new_resolution) {
+  ecorisk_data_file <- "/p/projects/open/Fabian/Metrics/data/ecorisk_202311_data.RData"
+  aggregation_factor <- 2 # 2 means from 0.5x0.5 to 1x1
+  load(ecorisk_data_file) # load ecorisk data objects:
+  # scenario data: state_scen,cft_scen,bft_scen,fpc_scen
+  # reference data: state_ref,cft_ref,bft_ref,fpc_ref,
+  # grid data: cell_area,lat,lon
+  str(state_ref)
+
+  state_scen <-
+    state_ref <-
+    fpc_scen <- fpc_ref
+  bft_scen <- bft_ref
+  cft_scen <- cft_ref
+
+  di_state <- dim(state_scen)
+  di_fpc <- dim(fpc_scen)
+  di_bft <- dim(bft_scen)
+  di_cft <- dim(cft_scen)
 }
 
 
@@ -2090,7 +2283,7 @@ ecorisk_cross_table <- function(data_file_in,
         av_cft <- apply(cft_sav[ref_cells, , ], c(2, 3), mean)
         av_c2vr <- apply(ecorisk_c2vr[, ref_cells], c(1), mean)
       }
-    } else {
+    } else { # use pick_cells
       av_state <- state_sav[pick_cells[b], , ]
       av_fpc <- fpc_sav[pick_cells[b], , ]
       av_bft <- bft_sav[pick_cells[b], , ]
@@ -2146,8 +2339,10 @@ ecorisk_cross_table <- function(data_file_in,
     year = dimnames(cft_sav)$year
   )
   dimnames(cft_scen) <- dimnames(cft_ref)
-  dimnames(c2vr) <- list(component = c("vs", "lc", "gi", "eb"),
-                         biome = biome_classes_in$biome_names)
+  dimnames(c2vr) <- list(
+    component = c("vs", "lc", "gi", "eb"),
+    biome = biome_classes_in$biome_names
+  )
 
 
   lat <- rep(0, nbiomes * nbiomes)
@@ -2253,7 +2448,9 @@ ecorisk_combine_hist_and_scen_data <- function(hist_file, scen_file, combined_fi
   } else {
     message("Saving data to: ", combined_file)
     save(state_ref, state_scen, fpc_ref, fpc_scen, bft_ref, bft_scen,
-         cft_ref, cft_scen, lat, lon, cell_area, file = combined_file)
+      cft_ref, cft_scen, lat, lon, cell_area,
+      file = combined_file
+    )
   }
 }
 
@@ -2390,19 +2587,21 @@ disaggregate_into_biomes <- function(data, # nolint
     } # end for
 
     biome_names <- c("tropics", "temperate", "boreal", "arctic")
-    dimnames(data_biomes) <- list(biome_names, comp_names,
-                                  type_names, seq_len(slices))
+    dimnames(data_biomes) <- list(
+      biome_names, comp_names,
+      type_names, seq_len(slices)
+    )
   } else if (classes == "allbiomes") { # calculate all biomes separately
     for (s in seq_len(slices)) {
       for (b in seq_len(nclasses)) {
         for (cc in seq_len(data_dims)) {
           if (type == "minmeanmax") {
             data_biomes[b, cc, , s] <-
-            c(
-            min(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE),
-            mean(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE),
-            max(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE)
-            )
+              c(
+                min(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE),
+                mean(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE),
+                max(data[[cc]][which(biome_class$biome_id == b), s], na.rm = TRUE)
+              )
           } else if (type == "quantile") {
             data_biomes[b, cc, , s] <- c(
               stats::quantile(
@@ -2610,8 +2809,10 @@ calculate_within_biome_diffs <- function(biome_classes, # nolint
   }
   ecorisk_dimensions <- names(ecorisk)
 
-  dim(intra_biome_distrib) <- c(biome = length(biome_classes$biome_names),
-                                variable = ecorisk_components, bin = 1 / res)
+  dim(intra_biome_distrib) <- c(
+    biome = length(biome_classes$biome_names),
+    variable = ecorisk_components, bin = 1 / res
+  )
   dimnames(intra_biome_distrib) <- list(
     biome = biomes_abbrv, variable = ecorisk_dimensions, bin = seq(res, 1, res)
   )

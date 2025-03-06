@@ -165,7 +165,7 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        #drop() %>% suppressWarnings()
+        # drop() %>% suppressWarnings()
         suppressWarnings(), drop = "band") # gC/m2
       npp[npp < epsilon] <- 0
 
@@ -176,7 +176,7 @@ read_calc_biocol <- function(
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-          #drop() %>% suppressWarnings()
+          # drop() %>% suppressWarnings()
           suppressWarnings(), drop = "band")
         npp_ref[npp_ref < epsilon] <- 0
       }
@@ -213,7 +213,7 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        #drop() %>%
+        # drop() %>%
         suppressWarnings(), drop = "band")
 
       if (include_fire) {
@@ -226,7 +226,7 @@ read_calc_biocol <- function(
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(band = sum)) %>%
-          #drop() %>%
+          # drop() %>%
           suppressWarnings()
 
 
@@ -236,13 +236,16 @@ read_calc_biocol <- function(
 
         if ("month" %in% names(dim(fire_raw))) {
           if (external_fire) {
-            fire <- apply(fire_raw *
-                          lpjmlkit::asub(frac, year = time_span_scenario,
-                                         drop = FALSE),
-                          c("cell", "year"),
-                          sum,
-                          na.rm = TRUE
-                          ) # gC/m2
+            fire <- apply(
+              fire_raw *
+                lpjmlkit::asub(frac,
+                  year = time_span_scenario,
+                  drop = FALSE
+                ),
+              c("cell", "year"),
+              sum,
+              na.rm = TRUE
+            ) # gC/m2
             rm(frac)
           } else {
             fire <- apply(
@@ -256,11 +259,13 @@ read_calc_biocol <- function(
         } else {
           if (external_fire) {
             frac_yearly <- apply(
-                            lpjmlkit::asub(frac, year = time_span_scenario,
-                                           drop = FALSE),
-                          c("cell", "year"),
-                          mean,
-                          na.rm = TRUE
+              lpjmlkit::asub(frac,
+                year = time_span_scenario,
+                drop = FALSE
+              ),
+              c("cell", "year"),
+              mean,
+              na.rm = TRUE
             ) # gC/m2
             fire <- fire_raw * frac_yearly
             rm(frac_yearly, frac)
@@ -277,7 +282,7 @@ read_calc_biocol <- function(
         # from kgC to gC/m2
         wood_harvest <- (
           lpjmlkit::asub(wh_lpj, year = time_span_scenario, drop = FALSE) *
-                         10^3 / cellarea
+            10^3 / cellarea
         )
         # the division can lead to NAs
         wood_harvest[is.na(wood_harvest)] <- 0
@@ -301,8 +306,8 @@ read_calc_biocol <- function(
       ) %>%
         lpjmlkit::transform(to = c("year_month_day")) %>%
         lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        #drop() %>% suppressWarnings()
-        suppressWarnings(), drop = "band")  # gC/m2
+        # drop() %>% suppressWarnings()
+        suppressWarnings(), drop = "band") # gC/m2
       npp_potential[npp_potential < epsilon] <- 0
 
       fpc <- lpjmlkit::read_io(
@@ -332,39 +337,46 @@ read_calc_biocol <- function(
     nat_bands <- seq_len(pftbands)
 
     if (!gridbased) { # needs to be scaled with standfrac
-      pftnpp[, , nat_bands] <- lpjmlkit::asub(pftnpp, band=nat_bands,
-                                              drop = FALSE) *
-                        lpjmlkit::asub(fpc, band = rep("natural stand fraction",
-                                                       pftbands), drop = FALSE)
-      pftnpp[, , -c(nat_bands)] <- lpjmlkit::asub(pftnpp, band = -c(nat_bands),
-                                              drop = FALSE) * cftfrac
+      pftnpp[, , nat_bands] <- lpjmlkit::asub(pftnpp,
+        band = nat_bands,
+        drop = FALSE
+      ) *
+        lpjmlkit::asub(fpc, band = rep(
+          "natural stand fraction",
+          pftbands
+        ), drop = FALSE)
+      pftnpp[, , -c(nat_bands)] <- lpjmlkit::asub(pftnpp,
+        band = -c(nat_bands),
+        drop = FALSE
+      ) * cftfrac
       harvest <- harvest * cftfrac
       rharvest <- rharvest * cftfrac
     }
 
     pftnpp_grasslands <- apply(
-      lpjmlkit::asub(pftnpp, band=(pftbands + grass_bands), drop = FALSE),
-      c("cell","year"),
+      lpjmlkit::asub(pftnpp, band = (pftbands + grass_bands), drop = FALSE),
+      c("cell", "year"),
       sum
     ) # gC/m2 only from grassland bands
 
     pftnpp_cft <- apply(
       lpjmlkit::asub(pftnpp,
-              band = -c(nat_bands, pftbands + grass_bands, pftbands + bp_bands),
-              drop = FALSE),
-      c("cell","year"),
+        band = -c(nat_bands, pftbands + grass_bands, pftbands + bp_bands),
+        drop = FALSE
+      ),
+      c("cell", "year"),
       sum
     ) # gC/m2 not from grassland and bioenergy bands
 
     pftnpp_bioenergy <- apply(
       lpjmlkit::asub(pftnpp, band = pftbands + bp_bands, drop = FALSE),
-      c("cell","year"),
+      c("cell", "year"),
       sum
     ) # gC/m2 only from bioenergy bands
 
     pftnpp_nat <- apply(
       lpjmlkit::asub(pftnpp, band = nat_bands, drop = FALSE),
-      c("cell","year"),
+      c("cell", "year"),
       sum
     ) # gC/m2
 
@@ -376,25 +388,25 @@ read_calc_biocol <- function(
     # lpjmlkit::asub(INARRAY, band = BANDS, drop = FALSE)
     harvest_grasslands <- apply(
       lpjmlkit::asub(harvest, band = grass_bands, drop = FALSE),
-      c("cell","year"),
+      c("cell", "year"),
       sum
     ) # gC/m2 only from grassland bands
 
     harvest_bioenergy <- apply(
       lpjmlkit::asub(harvest, band = bp_bands, drop = FALSE),
-      c("cell","year"),
+      c("cell", "year"),
       sum
     ) # gC/m2 only from bioenergy bands
 
     harvest_cft <- apply(
       lpjmlkit::asub(harvest, band = -c(grass_bands, bp_bands), drop = FALSE),
-      c("cell","year"),
+      c("cell", "year"),
       sum
     ) # gC/m2 not from grassland and bioenergy bands
 
     rharvest_cft <- apply(
       lpjmlkit::asub(rharvest, band = -c(grass_bands, bp_bands), drop = FALSE),
-      c("cell","year"),
+      c("cell", "year"),
       sum
     ) # gC/m2 not from grassland and bioenergy bands
 
@@ -659,7 +671,7 @@ read_calc_biocol <- function(
 #'   read_saved_data = FALSE,
 #'   save_data = FALSE,
 #'   npp_threshold = 20,
-#'   )
+#' )
 #' }
 #'
 #' @md
@@ -685,7 +697,6 @@ calc_biocol <- function(
     external_wood_harvest_file = NULL,
     replace_input_file_names = NULL,
     suppress_warnings = TRUE) {
-
   metric_files <- system.file(
     "extdata",
     "metric_files.yml",
@@ -713,20 +724,28 @@ calc_biocol <- function(
         }
       }
       if (is.null(files_scenario[[output]])) {
-        stop("None of the default file names for ", output,
-             " were found in ", path_lu, "please check or define manually",
-             " using argument 'replace_input_file_names'. Stopping.")
+        stop(
+          "None of the default file names for ", output,
+          " were found in ", path_lu, "please check or define manually",
+          " using argument 'replace_input_file_names'. Stopping."
+        )
       }
       if (is.null(files_baseline[[output]])) {
-        stop("None of the default file names for ", output,
-             " were found in ", path_pnv, "please check or define manually",
-             " using argument 'replace_input_file_names'. Stopping.")
+        stop(
+          "None of the default file names for ", output,
+          " were found in ", path_pnv, "please check or define manually",
+          " using argument 'replace_input_file_names'. Stopping."
+        )
       }
     } else {
-      files_scenario[[output]] <- paste0(path_lu,
-                        replace_input_file_names[[output]], ".", file_extension)
-      files_baseline[[output]] <- paste0(path_pnv,
-                        replace_input_file_names[[output]], ".", file_extension)
+      files_scenario[[output]] <- paste0(
+        path_lu,
+        replace_input_file_names[[output]], ".", file_extension
+      )
+      files_baseline[[output]] <- paste0(
+        path_pnv,
+        replace_input_file_names[[output]], ".", file_extension
+      )
     }
   }
   if (is.null(reference_npp_file)) reference_npp_file <- files_baseline$npp

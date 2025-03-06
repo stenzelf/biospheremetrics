@@ -475,26 +475,26 @@ classify_biomes <- function(path_reference = NULL,
   # Tropical Seasonal & Deciduous Forest
   is_tropical_raingreen <- {
     is_tropical_forest &
-    (lpjmlkit::asub(
-      avg_fpc,
-      band = "tropical broadleaved raingreen tree"
-    ) == max_share_trees) &
-    is_tropical_proxy
+      (lpjmlkit::asub(
+        avg_fpc,
+        band = "tropical broadleaved raingreen tree"
+      ) == max_share_trees) &
+      is_tropical_proxy
   }
   # Warm Woody Savanna, Woodland & Shrubland
   is_tropical_forest_savanna <- {
     is_tropical_forest &
-    (
-      lpjmlkit::asub(
-        avg_fpc,
-        band = "tropical broadleaved evergreen tree"
-      ) == max_share_trees |
-      lpjmlkit::asub(
-        avg_fpc,
-        band = "tropical broadleaved raingreen tree"
-      ) == max_share_trees
-    ) &
-    is_savanna_proxy
+      (
+        lpjmlkit::asub(
+          avg_fpc,
+          band = "tropical broadleaved evergreen tree"
+        ) == max_share_trees |
+          lpjmlkit::asub(
+            avg_fpc,
+            band = "tropical broadleaved raingreen tree"
+          ) == max_share_trees
+      ) &
+      is_savanna_proxy
   }
 
   # WOODY savanna ----------------------------------------------------------- #
@@ -502,18 +502,18 @@ classify_biomes <- function(path_reference = NULL,
   # Temperate Woody Savanna, Woodland & Shrubland
   is_temperate_woody_savanna <- {
     fpc_tree_total <= min_tree_cover[["temperate forest"]] &
-    fpc_tree_total >= min_tree_cover[["temperate woodland"]] &
-    lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
-    lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
-    avg_temp >= 0 #-2 &
+      fpc_tree_total >= min_tree_cover[["temperate woodland"]] &
+      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
+        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
+      avg_temp >= 0 #-2 &
     # lat < 55
   }
   # Warm Woody Savanna, Woodland & Shrubland
   is_tropical_woody_savanna <- {
     fpc_tree_total <= min_tree_cover[["tropical forest"]] &
-    fpc_tree_total >= min_tree_cover[["tropical woodland"]] &
-    lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") <
-    lpjmlkit::asub(avg_fpc, band = "tropical c4 grass")
+      fpc_tree_total >= min_tree_cover[["tropical woodland"]] &
+      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") <
+        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass")
   }
 
   # OPEN SHRUBLAND / SAVANNAS ----------------------------------------------- #
@@ -521,19 +521,19 @@ classify_biomes <- function(path_reference = NULL,
   # Temperate Savanna & Open Shrubland
   is_temperate_shrubland <- {
     fpc_tree_total <= min_tree_cover[["temperate woodland"]] &
-    fpc_tree_total >= min_tree_cover[["temperate savanna"]] &
-    lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
-    lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
-    avg_temp >= 0 #-2 &
+      fpc_tree_total >= min_tree_cover[["temperate savanna"]] &
+      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
+        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
+      avg_temp >= 0 #-2 &
     # lat < 55
   }
   # Warm Savanna & Open Shrubland
   is_tropical_shrubland <- {
     fpc_tree_total <= min_tree_cover[["tropical woodland"]] &
-    fpc_tree_total >= min_tree_cover[["tropical savanna"]] &
-    lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") <
-    lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
-    avg_temp >= 0 #-2
+      fpc_tree_total >= min_tree_cover[["tropical savanna"]] &
+      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") <
+        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
+      avg_temp >= 0 #-2
   }
 
   # GRASSLAND ---------------------------------------------------------------- #
@@ -541,32 +541,32 @@ classify_biomes <- function(path_reference = NULL,
   # Temperate grassland
   is_temperate_grassland <- {
     fpc_total > 0.05 &
-    fpc_tree_total <= min_tree_cover[["temperate savanna"]] &
-    lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
-    lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
-    avg_temp >= 0 #-2 &
+      fpc_tree_total <= min_tree_cover[["temperate savanna"]] &
+      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") >
+        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
+      avg_temp >= 0 #-2 &
     # lat < 55
   }
   # Warm grassland
   is_tropical_grassland <- {
     fpc_total > 0.05 &
-    fpc_tree_total <= min_tree_cover[["tropical savanna"]] &
-    lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") <
-    lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
-    avg_temp >= 0 #-2
+      fpc_tree_total <= min_tree_cover[["tropical savanna"]] &
+      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") <
+        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass") &
+      avg_temp >= 0 #-2
   }
 
   # Arctic Tundra ------------------------------------------------------------ #
   is_arctic_tundra <- {
     (!is_boreal_forest &
-     !is_temperate_forest &
-    (
-      avg_temp < 0 |
-      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") ==
-      lpjmlkit::asub(avg_fpc, band = "tropical c4 grass")) &
+      !is_temperate_forest &
+      (
+        avg_temp < 0 |
+          lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") ==
+            lpjmlkit::asub(avg_fpc, band = "tropical c4 grass")) &
       fpc_total > 0.05
     ) |
-    (avg_temp < 0 & fpc_total < 0.05)
+      (avg_temp < 0 & fpc_total < 0.05)
   }
 
   # Rocks and Ice
@@ -583,41 +583,54 @@ classify_biomes <- function(path_reference = NULL,
 
   # initiate biome_class array
   biome_class <- array(NA,
-                       dim = c(grid$meta$ncell),
-                       dimnames = dimnames(fpc_total))
+    dim = c(grid$meta$ncell),
+    dimnames = dimnames(fpc_total)
+  )
 
   biome_class[is_desert] <- biome_names["Desert"]
 
   # forests
   biome_class[is_boreal_evergreen] <- biome_names[
-    "Boreal Needleleaved Evergreen Forest"]
+    "Boreal Needleleaved Evergreen Forest"
+  ]
   biome_class[is_boreal_broad_deciduous] <- biome_names[
-    "Boreal Broadleaved Deciduous Forest"]
+    "Boreal Broadleaved Deciduous Forest"
+  ]
   biome_class[is_boreal_needle_deciduous] <- biome_names[
-    "Boreal Needleleaved Deciduous Forest"]
+    "Boreal Needleleaved Deciduous Forest"
+  ]
   biome_class[is_temperate_coniferous] <- biome_names[
-    "Temperate Needleleaved Evergreen Forest"]
+    "Temperate Needleleaved Evergreen Forest"
+  ]
   biome_class[is_temperate_broadleaved_evergreen] <- biome_names[
-    "Temperate Broadleaved Evergreen Forest"]
+    "Temperate Broadleaved Evergreen Forest"
+  ]
   biome_class[is_temperate_broadleaved_deciduous] <- biome_names[
-    "Temperate Broadleaved Deciduous Forest"]
+    "Temperate Broadleaved Deciduous Forest"
+  ]
   biome_class[is_tropical_evergreen] <- biome_names["Tropical Rainforest"]
   biome_class[is_tropical_raingreen] <- biome_names[
-    "Tropical Seasonal & Deciduous Forest"]
+    "Tropical Seasonal & Deciduous Forest"
+  ]
   biome_class[is_tropical_forest_savanna] <- biome_names[
-    "Warm Woody Savanna, Woodland & Shrubland"]
+    "Warm Woody Savanna, Woodland & Shrubland"
+  ]
 
   # woody savanna
   biome_class[is_temperate_woody_savanna] <- biome_names[
-    "Temperate Woody Savanna, Woodland & Shrubland"]
+    "Temperate Woody Savanna, Woodland & Shrubland"
+  ]
   biome_class[is_tropical_woody_savanna] <- biome_names[
-    "Warm Woody Savanna, Woodland & Shrubland"]
+    "Warm Woody Savanna, Woodland & Shrubland"
+  ]
 
   # open shrubland / savanna
   biome_class[is_temperate_shrubland] <- biome_names[
-    "Temperate Savanna & Open Shrubland"]
+    "Temperate Savanna & Open Shrubland"
+  ]
   biome_class[is_tropical_shrubland] <- biome_names[
-    "Warm Savanna & Open Shrubland"]
+    "Warm Savanna & Open Shrubland"
+  ]
 
   # grassland
   biome_class[is_temperate_grassland] <- biome_names["Temperate Grassland"]
@@ -642,32 +655,42 @@ read_pft_categories <- function(file_path) {
   # read_delim, col_types = readr::cols(), delim = ";")to suppress messages
   readr::read_delim(file_path, col_types = readr::cols(), delim = ";") %>%
     # change 1, 0.5, 0 values to TRUE and NAs (NA's can be dropped)
-    dplyr::mutate_at(dplyr::vars(dplyr::starts_with(c("category_", "zone_"))),
-                     function(x) ifelse(as.logical(x), TRUE, NA)) %>%
+    dplyr::mutate_at(
+      dplyr::vars(dplyr::starts_with(c("category_", "zone_"))),
+      function(x) ifelse(as.logical(x), TRUE, NA)
+    ) %>%
     # filter natural pfts
     dplyr::filter(category_natural) %>%
     # all binary zone columns (tropical, temperate, boreal) in one categorical
     #   zone column
-    tidyr::pivot_longer(cols = starts_with("zone_"),
-                 names_to = "zone",
-                 names_prefix = "zone_",
-                 values_to = "zone_value",
-                 values_drop_na = TRUE) %>%
+    tidyr::pivot_longer(
+      cols = starts_with("zone_"),
+      names_to = "zone",
+      names_prefix = "zone_",
+      values_to = "zone_value",
+      values_drop_na = TRUE
+    ) %>%
     # all binary category columns (natural, needle, evergreen) in one
     # category column
-    tidyr::pivot_longer(cols = starts_with("category_"),
-                 names_to = "category",
-                 names_prefix = "category_",
-                 values_to = "category_value",
-                 values_drop_na = TRUE) %>%
+    tidyr::pivot_longer(
+      cols = starts_with("category_"),
+      names_to = "category",
+      names_prefix = "category_",
+      values_to = "category_value",
+      values_drop_na = TRUE
+    ) %>%
     # delete side product - logical columns
     dplyr::select(-c("category_value", "zone_value")) %>%
     # values to lpjml_index, names to length of npft (convert to numeric)
-    tidyr::pivot_longer(cols = starts_with("lpjml_index_npft_"),
-                 values_to = "lpjml_index",
-                 names_to = "npft_proxy",
-                 names_transform = list(npft_proxy =
-                                function(x) suppressWarnings(as.numeric(x))),
-                 names_prefix = "lpjml_index_npft_") %>%
+    tidyr::pivot_longer(
+      cols = starts_with("lpjml_index_npft_"),
+      values_to = "lpjml_index",
+      names_to = "npft_proxy",
+      names_transform = list(
+        npft_proxy =
+          function(x) suppressWarnings(as.numeric(x))
+      ),
+      names_prefix = "lpjml_index_npft_"
+    ) %>%
     return()
 }

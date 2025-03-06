@@ -44,7 +44,7 @@
 #' @examples
 #' \dontrun{
 #' plot_global(
-#'   data = biocol_data$biocol[,"2015"],
+#'   data = biocol_data$biocol[, "2015"],
 #'   file = "BioCol_absolute.png",
 #'   type = "exp",
 #'   pow2min = 0,
@@ -75,7 +75,10 @@ plot_global <- function(data,
                         only_pos = FALSE,
                         n_legend_ticks = 20,
                         min_0 = 0.01,
-                        eps = FALSE) {
+                        extent = NULL,
+                        country_borders = TRUE,
+                        eps = FALSE,
+                        cex = 1) {
   if (!is.null(file)) {
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
@@ -93,7 +96,7 @@ plot_global <- function(data,
       )
     }
   }
-  if (!is.null(min)){
+  if (!is.null(min)) {
     if (min == 0) only_pos <- TRUE
   }
   if (only_pos) {
@@ -115,7 +118,8 @@ plot_global <- function(data,
     palette <- c(
       "white",
       grDevices::colorRampPalette(
-        RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) - 2)
+        RColorBrewer::brewer.pal(9, col_pos)
+      )(length(legendticks) - 2)
     )
   } else {
     if (type == "exp" || type == "lin") {
@@ -144,17 +148,20 @@ plot_global <- function(data,
       palette <- c(
         rev(
           grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(9, col_neg))(length(legendticks) / 2 - 1)
+            RColorBrewer::brewer.pal(9, col_neg)
+          )(length(legendticks) / 2 - 1)
         ),
         "white",
         grDevices::colorRampPalette(
-          RColorBrewer::brewer.pal(9, col_pos))(length(legendticks) / 2 - 1)
+          RColorBrewer::brewer.pal(9, col_pos)
+        )(length(legendticks) / 2 - 1)
       )
     } else { # type == man
       if (is.null(palette)) {
         message("Manual breaks, but not palette given, using default.")
         palette <- grDevices::colorRampPalette(
-          RColorBrewer::brewer.pal(9, col_pos))(length(brks) - 1)
+          RColorBrewer::brewer.pal(9, col_pos)
+        )(length(brks) - 1)
       }
       if (only_pos) stop("Manual breaks and palette, but conflicting parameter
               only_pos == TRUE defined. Aborting.")
@@ -168,23 +175,34 @@ plot_global <- function(data,
 
   ra <- terra::rast(ncols = 720, nrows = 360)
   range <- range(data)
-  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
-  extent <- terra::ext(c(-180, 180, -60, 90))
+  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- c(data)
+  if (is.null(extent)) extent <- terra::ext(c(-180, 180, -60, 90))
 
   if (leg_yes) {
-    oma_p = c(0, 0, 0, 3)
+    oma_p <- c(0, 0, 0, 3)
   } else {
-    oma_p = c(0, 0, 0, 0)
+    oma_p <- c(0, 0, 0, 0)
   }
-  withr::with_par(new = list(
-    bty = "n", oma = oma_p, mar = c(0, 0, 0, 0), xpd = TRUE),
-    {terra::plot(ra,
+  #withr::with_par(new = list(
+  #  bty = "n", oma = oma_p, mar = c(0, 0, 0, 0), xpd = TRUE
+  #), {
+  if (leg_yes){
+    terra::plot(ra,
       ext = extent, breaks = legendticks, col = palette, main = title,
-      legend = FALSE, axes = FALSE
+      legend = TRUE, axes = FALSE, type = "continuous", cex.main = cex,
+      plg = list(cex = cex)
     )
-    maps::map("world", add = TRUE, res = 0, lwd = 0.1, ylim = c(-60, 90))
-    title(title, line = -1)
-    if (leg_yes) {
+  } else{
+    terra::plot(ra,
+      ext = extent, breaks = legendticks, col = palette, main = title,
+      legend = FALSE, axes = FALSE, type = "continuous", cex.main = cex,
+      plg = list(cex = cex)
+    )
+  }
+
+    if (country_borders) maps::map("world", add = TRUE, res = 0, lwd = 0.1, ylim = c(-60, 90))
+    #title(title, cex = cex) #line = -1)
+    if (F) {
       if (type == "exp") {
         fields::image.plot(
           legend.only = TRUE, zlim = c(-pow2max, pow2max), col = palette,
@@ -206,6 +224,5 @@ plot_global <- function(data,
     if (!is.null(file)) {
       grDevices::dev.off()
     }
-    }
-  )
+  #})
 }

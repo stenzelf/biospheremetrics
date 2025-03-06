@@ -49,7 +49,7 @@ ecorisk <- biospheremetrics::ecorisk_wrapper(
   save_ecorisk = NULL,
   time_span_reference = c(1550:1579),
   time_span_scenario = c(1987:2016)
-  )
+)
 
 ## -----------------------------------------------------------------------------
 ecorisk$ecorisk_total

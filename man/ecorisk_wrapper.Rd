@@ -17,11 +17,11 @@ ecorisk_wrapper(
   dimensions_only_local = FALSE,
   overtime = FALSE,
   window = 30,
-  debug = FALSE,
+  debug_mode = FALSE,
   replace_input_file_names = NULL,
   external_variability = FALSE,
   c2vr = NULL,
-  suppressWarnings = TRUE
+  suppress_warnings = TRUE
 )
 }
 \arguments{
@@ -54,7 +54,7 @@ local change, global change and ecosystem balance (default FALSE)}
 
 \item{window}{integer, number of years for window length (default: 30)}
 
-\item{debug}{write out all nitrogen state variables (default FALSE)}
+\item{debug_mode}{write out all nitrogen state variables (default FALSE)}
 
 \item{replace_input_file_names}{list with alternative names for output
 identifiers to replace the ones in inst/ext_files/metric_files.yml.
@@ -66,7 +66,7 @@ reference period? experimental! (default: FALSE)}
 
 \item{c2vr}{external variability array}
 
-\item{suppressWarnings}{suppress warnings - default: TRUE}
+\item{suppress_warnings}{suppress warnings - default: TRUE}
 }
 \value{
 list data object containing arrays of ecorisk_total,
@@ -90,7 +90,7 @@ ecorisk_wrapper(
   save_ecorisk = NULL,
   time_span_reference = c(1550:1579),
   time_span_scenario = c(1987:2016)
-  )
+)
 }
 
 }

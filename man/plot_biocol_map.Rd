@@ -37,8 +37,8 @@ Haberl et al. 2007
 \examples{
 \dontrun{
 plot_biocol_map(
-   data = biocol$biocol_frac[, "2000"] * 100,
-   file = "./BioCol_map_yr2000.png",
+  data = biocol$biocol_frac[, "2000"] * 100,
+  file = "./BioCol_map_yr2000.png",
 )
 }
 

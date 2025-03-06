@@ -39,7 +39,6 @@ plot_biome_internal_distribution <- function(
     legendtitle = "",
     eps = FALSE,
     palette = NULL) {
-
   if (!is.null(file)) {
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
@@ -67,31 +66,35 @@ plot_biome_internal_distribution <- function(
   }
   col_index <- floor(seq(res / 2, 1 - res / 2, res) * 10) + 1
 
-  withr::with_par(new = list(mar = c(2, 4, 0, 0), oma = c(0, 0, 0, 0)), # bltr
-    {graphics::plot(NA,
-                   xlim = c(0, 1), ylim = c(0, 20), xlab = "EcoRisk",
-                   main = title, axes = FALSE, ylab = ""
-    )
-    graphics::axis(side = 2, labels = FALSE, at = seq_len(biomes))
-    brks <- seq(0, 1, 0.1)
-    fields::image.plot(
-      legend.only = TRUE, col = palette,
-      useRaster = FALSE, breaks = brks, horizontal = TRUE,
-      lab.breaks = brks, legend.shrink = 0.925,
-      legend.args = list("", side = 3, font = 2, line = 1.5)
-    )
-    graphics::mtext(biomes_abbrv, side = 2, line = 1,
-                    at = seq_len(biomes), las = 2)
-    for (b in seq_len(biomes)) {
-      graphics::rect(
-        xleft = seq(0, 1 - res, res),
-        xright = seq(res, 1, res),
-        ybottom = b,
-        ytop = b + data[b, ] * scale,
-        col = palette[col_index]
+  withr::with_par(
+    new = list(mar = c(2, 4, 0, 0), oma = c(0, 0, 0, 0)), # bltr
+    {
+      graphics::plot(NA,
+        xlim = c(0, 1), ylim = c(0, 20), xlab = "EcoRisk",
+        main = title, axes = FALSE, ylab = ""
       )
-    }
-    if (!is.null(file)) grDevices::dev.off()
+      graphics::axis(side = 2, labels = FALSE, at = seq_len(biomes))
+      brks <- seq(0, 1, 0.1)
+      fields::image.plot(
+        legend.only = TRUE, col = palette,
+        useRaster = FALSE, breaks = brks, horizontal = TRUE,
+        lab.breaks = brks, legend.shrink = 0.925,
+        legend.args = list("", side = 3, font = 2, line = 1.5)
+      )
+      graphics::mtext(biomes_abbrv,
+        side = 2, line = 1,
+        at = seq_len(biomes), las = 2
+      )
+      for (b in seq_len(biomes)) {
+        graphics::rect(
+          xleft = seq(0, 1 - res, res),
+          xright = seq(res, 1, res),
+          ybottom = b,
+          ytop = b + data[b, ] * scale,
+          col = palette[col_index]
+        )
+      }
+      if (!is.null(file)) grDevices::dev.off()
     }
   )
 }
@@ -136,8 +139,7 @@ plot_ecorisk_map <- function(
     eps = FALSE,
     title_size = 1,
     leg_yes = TRUE,
-    palette = NULL
-) {
+    palette = NULL) {
   data <- ecorisk_object[[plot_dimension]]
   di <- DIM(data)
   if (length(di) == 2) {
@@ -145,8 +147,8 @@ plot_ecorisk_map <- function(
   } else if (length(di) == 1) {
     data <- data
   } else {
- stop(paste0("Unknown dimensions in ecorisk dimension ", plot_dimension, " :", di))
- }
+    stop(paste0("Unknown dimensions in ecorisk dimension ", plot_dimension, " :", di))
+  }
   lat <- ecorisk_object$lat
   lon <- ecorisk_object$lon
   if (!is.null(file)) {
@@ -187,21 +189,20 @@ plot_ecorisk_map <- function(
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- data
   range <- range(data)
   extent <- terra::ext(c(-180, 180, -60, 90))
-  withr::with_par(new = list(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n"),
-
-    {if (is.null(focus_biome)) {
+  withr::with_par(new = list(mar = c(0, 0, 1, 3), oma = c(0, 0, 0, 0), bty = "n"), {
+    if (is.null(focus_biome)) {
       terra::plot(ra,
-                  ext = extent, breaks = brks, col = palette, main = "",
-                  legend = FALSE, axes = FALSE
+        ext = extent, breaks = brks, col = palette, main = "",
+        legend = FALSE, axes = FALSE
       )
     } else {
       terra::plot(ra,
-                  ext = extent, breaks = brks, col = palette_low_sat,
-                  main = "", legend = FALSE, axes = FALSE
+        ext = extent, breaks = brks, col = palette_low_sat,
+        main = "", legend = FALSE, axes = FALSE
       )
       terra::plot(ra_f,
-                  ext = extent, breaks = brks, col = palette, main = "",
-                  legend = FALSE, axes = FALSE, add = TRUE
+        ext = extent, breaks = brks, col = palette, main = "",
+        legend = FALSE, axes = FALSE, add = TRUE
       )
     }
 
@@ -216,8 +217,7 @@ plot_ecorisk_map <- function(
       ) # removed zlim
     }
     if (!is.null(file)) grDevices::dev.off()
-    }
-  )
+  })
 }
 
 
@@ -272,8 +272,10 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
     colz <- set[c(4, 7, 8, 11, 1, 10, 5, 6)]
     #   ecorisk vs         lc        gi        eb        ct       wt         nt
     angles <- matrix(
-      c(90, 270, 216, 252, 180, 216, 144, 180,
-        108, 144, -18, 18, -54, -18, 18, 54),
+      c(
+        90, 270, 216, 252, 180, 216, 144, 180,
+        108, 144, -18, 18, -54, -18, 18, 54
+      ),
       byrow = TRUE,
       nrow = length(colz)
     )
@@ -281,8 +283,8 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
     stop("Unknown number of dimensions for ecorisk data:", ecorisk_dims)
   }
 
-  withr::with_par(new = list(oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0)),
-    {graphics::plot(c(-zoom, zoom), c(-zoom, zoom),
+  withr::with_par(new = list(oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0)), {
+    graphics::plot(c(-zoom, zoom), c(-zoom, zoom),
       type = "n", axes = FALSE,
       ann = FALSE, asp = 1, main = ""
     )
@@ -498,8 +500,7 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
         "for the regular ecorisk plot."
       )
     }
-    }
-  )
+  })
 }
 
 
@@ -532,7 +533,6 @@ plot_ecorisk_radial <- function(data,
                                 leg_yes = TRUE,
                                 eps = FALSE,
                                 use_quantile = TRUE) {
-
   path_write <- dirname(file)
   dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
   if (length(which(data < 0 | data > 1)) > 0) {
@@ -557,28 +557,31 @@ plot_ecorisk_radial <- function(data,
   }
 
   # adjust the margins, dependent on whether a legend should be plotted or not
-  withr::with_par(new = list(fig = c(0, 0.7, 0, 1)), # , oma=c(0,0,0,0),mar=c(0,0,0,0))
+  withr::with_par(
+    new = list(fig = c(0, 0.7, 0, 1)), # , oma=c(0,0,0,0),mar=c(0,0,0,0))
     # plot main EcoRisk radial
     plot_ecorisk_radial_to_screen(
       data = data, title = title, zoom = 1.0,
       type = "regular"
     )
   )
-    if (leg_yes) {
-      withr::with_par(new = list(fig = c(0.7, 1, 0, 0.5), new = TRUE),
-        plot_ecorisk_radial_to_screen(
-          data = data, title = "", zoom = 1.5,
-          type = "legend1"
-        )
+  if (leg_yes) {
+    withr::with_par(
+      new = list(fig = c(0.7, 1, 0, 0.5), new = TRUE),
+      plot_ecorisk_radial_to_screen(
+        data = data, title = "", zoom = 1.5,
+        type = "legend1"
       )
-      withr::with_par(new = list(fig = c(0.7, 1, 0.5, 1), new = TRUE),
-        plot_ecorisk_radial_to_screen(
-          data = data, title = "", zoom = 1.5,
-          type = "legend2", use_quantile = use_quantile
-        )
+    )
+    withr::with_par(
+      new = list(fig = c(0.7, 1, 0.5, 1), new = TRUE),
+      plot_ecorisk_radial_to_screen(
+        data = data, title = "", zoom = 1.5,
+        type = "legend2", use_quantile = use_quantile
       )
-    }
-    grDevices::dev.off()
+    )
+  }
+  grDevices::dev.off()
 }
 
 #' Plot EcoRisk maps
@@ -601,19 +604,19 @@ plot_ecorisk_radial <- function(data,
 #' @md
 #' @export
 plot_ecorisk_maps <- function(ecorisk, out_folder, year = 1) {
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "ecorisk_total", year = year, file = paste0(out_folder, "/ecorisk_total.png"), title = "ecorisk")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "vegetation_structure_change", year = year, file = paste0(out_folder, "/ecorisk_vs.png"), title = "vegetation structure change")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "local_change", year = year, file = paste0(out_folder, "/ecorisk_lc.png"), title = "local change")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "global_importance", year = year, file = paste0(out_folder, "/ecorisk_gi.png"), title = "global importance")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "ecosystem_balance", year = year, file = paste0(out_folder, "/ecorisk_eb.png"), title = "ecosystem balance")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_stocks", year = year, file = paste0(out_folder, "/ecorisk_cs.png"), title = "carbon_stocks")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_fluxes", year = year, file = paste0(out_folder, "/ecorisk_cf.png"), title = "carbon_fluxes")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_total", year = year, file = paste0(out_folder, "/ecorisk_ct.png"), title = "carbon_total")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "water_total", year = year, file = paste0(out_folder, "/ecorisk_wt.png"), title = " water_total")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "water_fluxes", year = year, file = paste0(out_folder, "/ecorisk_wf.png"), title = " water_fluxes")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_stocks", year = year, file = paste0(out_folder, "/ecorisk_ns.png"), title = " nitrogen_stocks")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_fluxes", year = year, file = paste0(out_folder, "/ecorisk_nf.png"), title = " nitrogen_fluxes")
-    biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_total", year = year, file = paste0(out_folder, "/ecorisk_nt.png"), title = " nitrogen_total")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "ecorisk_total", year = year, file = paste0(out_folder, "/ecorisk_total.png"), title = "ecorisk")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "vegetation_structure_change", year = year, file = paste0(out_folder, "/ecorisk_vs.png"), title = "vegetation structure change")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "local_change", year = year, file = paste0(out_folder, "/ecorisk_lc.png"), title = "local change")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "global_importance", year = year, file = paste0(out_folder, "/ecorisk_gi.png"), title = "global importance")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "ecosystem_balance", year = year, file = paste0(out_folder, "/ecorisk_eb.png"), title = "ecosystem balance")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_stocks", year = year, file = paste0(out_folder, "/ecorisk_cs.png"), title = "carbon_stocks")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_fluxes", year = year, file = paste0(out_folder, "/ecorisk_cf.png"), title = "carbon_fluxes")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "carbon_total", year = year, file = paste0(out_folder, "/ecorisk_ct.png"), title = "carbon_total")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "water_total", year = year, file = paste0(out_folder, "/ecorisk_wt.png"), title = " water_total")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "water_fluxes", year = year, file = paste0(out_folder, "/ecorisk_wf.png"), title = " water_fluxes")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_stocks", year = year, file = paste0(out_folder, "/ecorisk_ns.png"), title = " nitrogen_stocks")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_fluxes", year = year, file = paste0(out_folder, "/ecorisk_nf.png"), title = " nitrogen_fluxes")
+  biospheremetrics::plot_ecorisk_map(ecorisk, plot_dimension = "nitrogen_total", year = year, file = paste0(out_folder, "/ecorisk_nt.png"), title = " nitrogen_total")
 }
 
 #' Plot timeline of EcoRisk variables to screen
@@ -759,8 +762,8 @@ plot_ecorisk_over_time_panel <- function(data,
     }
   }
   d <- length(data[, 1, 1, 1])
-  withr::with_par(new = list(oma = c(0, 0, 0, 0), mar = c(3, 2, 0.5, 0)),
-    {if (d == 16 | d == 4) {
+  withr::with_par(new = list(oma = c(0, 0, 0, 0), mar = c(3, 2, 0.5, 0)), {
+    if (d == 16 | d == 4) {
       k <- sqrt(d)
       xs <- seq(0, 0.8, length.out = k + 1)
       ys <- seq(0.98, 0, length.out = k + 1)
@@ -789,32 +792,31 @@ plot_ecorisk_over_time_panel <- function(data,
           )
         }
       }
-  } else {
-    stop(paste("Unknown number of biomes: ", length(data[, 1, 1, 1])))
-  }
-}
-)
+    } else {
+      stop(paste("Unknown number of biomes: ", length(data[, 1, 1, 1])))
+    }
+  })
   # legend
 
   withr::with_par(new = list(
     fig = c(0.8, 1, 0.5, 1.0), new = TRUE, oma = c(0, 0, 0, 0),
     mar = c(0, 0, 0, 0)
-  ),
-  {graphics::plot(NA, axes = FALSE, ylim = c(0, 1), xlim = c(0, 1))
-  if (d == 16) {
-    graphics::text(
-      x = 0.1,
-      y = seq(0.95, 0.05, length.out = length(get_biome_names(1))),
-      labels = paste0(get_biome_names(1), " : ", get_biome_names(2)),
-      cex = 0.7, adj = 0
-    )
-  }
-  }
-  )
-  withr::with_par(new = list( fig = c(0.8, 1, 0.0, 0.5),
-    new = TRUE, oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0) ),
-
-    {if (is.null(varnames)) {
+  ), {
+    graphics::plot(NA, axes = FALSE, ylim = c(0, 1), xlim = c(0, 1))
+    if (d == 16) {
+      graphics::text(
+        x = 0.1,
+        y = seq(0.95, 0.05, length.out = length(get_biome_names(1))),
+        labels = paste0(get_biome_names(1), " : ", get_biome_names(2)),
+        cex = 0.7, adj = 0
+      )
+    }
+  })
+  withr::with_par(new = list(
+    fig = c(0.8, 1, 0.0, 0.5),
+    new = TRUE, oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0)
+  ), {
+    if (is.null(varnames)) {
       plot_overtime_to_screen(
         data = data[1, , , ], timerange = timerange,
         leg_yes = FALSE, leg_only = TRUE
@@ -825,8 +827,7 @@ plot_ecorisk_over_time_panel <- function(data,
       graphics::legend("center", legend = varnames, fill = colz, cex = 1)
     }
     if (!is.null(file)) grDevices::dev.off()
-    }
-  )
+  })
 }
 
 
@@ -914,13 +915,15 @@ plot_ecorisk_radial_panel <- function(data,
   }
 
   # legend
-  withr::with_par(new = list(fig = c(0.6, 1, 0.1, 0.6), new = TRUE),
+  withr::with_par(
+    new = list(fig = c(0.6, 1, 0.1, 0.6), new = TRUE),
     plot_ecorisk_radial_to_screen(
       data = data[1, , ], title = "",
       zoom = 1.5, type = "legend1"
     )
   )
-  withr::with_par(new = list(fig = c(0.6, 1, 0.5, 1.0), new = TRUE),
+  withr::with_par(
+    new = list(fig = c(0.6, 1, 0.5, 1.0), new = TRUE),
     plot_ecorisk_radial_to_screen(
       data = data[1, , ], title = "legend", zoom = 1.5,
       type = "legend2", title_size = 1, use_quantile = use_quantile
@@ -958,14 +961,14 @@ plot_ecorisk_radial_panel <- function(data,
 #' @md
 #' @export
 plot_biomes_mercator <- function(biome_ids,
-                        biome_name_length = 1,
-                        order_legend = "plants",
-                        file = NULL,
-                        title = "",
-                        title_size = 2,
-                        leg_yes = TRUE,
-                        leg_scale = 1,
-                        eps = FALSE) {
+                                 biome_name_length = 1,
+                                 order_legend = "plants",
+                                 file = NULL,
+                                 title = "",
+                                 title_size = 2,
+                                 leg_yes = TRUE,
+                                 leg_scale = 1,
+                                 eps = FALSE) {
   if (!is.null(file)) {
     path_write <- dirname(file)
     dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
@@ -1032,10 +1035,11 @@ plot_biomes_mercator <- function(biome_ids,
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- biome_ids
   extent <- terra::ext(c(-180, 180, -60, 90))
   withr::with_par(new = list(
-    mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0), bty = "n"),
-    {terra::plot(ra,
-                ext = extent, breaks = brks, col = biome_class_cols,
-                main = "", legend = FALSE, axes = FALSE
+    mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0), bty = "n"
+  ), {
+    terra::plot(ra,
+      ext = extent, breaks = brks, col = biome_class_cols,
+      main = "", legend = FALSE, axes = FALSE
     )
     graphics::title(main = title, line = -2, cex.main = title_size)
     if (leg_yes) {
@@ -1048,8 +1052,7 @@ plot_biomes_mercator <- function(biome_ids,
     }
     maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
     if (!is.null(file)) grDevices::dev.off()
-    }
-  )
+  })
 }
 
 
@@ -1122,8 +1125,8 @@ plot_biome_averages <- function(data,
 
   # plotting
   graphics::plot(NA,
-                 xlim = c(0, 1), ylim = c(0, 1), main = title, axes = FALSE,
-                 cex.main = title_size, xlab = "", ylab = ""
+    xlim = c(0, 1), ylim = c(0, 1), main = title, axes = FALSE,
+    cex.main = title_size, xlab = "", ylab = ""
   )
   graphics::legend(
     x = 0, y = 1, legend = biome_class_names,
@@ -1193,37 +1196,39 @@ plot_ecorisk_cross_table <- function(data,
   brks <- seq(0, 1, 0.1)
 
   # plot margins
-  withr::with_par(new = list(mar = c(0, lmar, 2, 0)), # bltr
+  withr::with_par(
+    new = list(mar = c(0, lmar, 2, 0)), # bltr
 
-    {graphics::image(x, y, t(data),
-                    col = palette,
-                    breaks = brks,
-                    xaxt = "n",
-                    yaxt = "n",
-                    xlab = "",
-                    ylab = "",
-                    ylim = c(max(y) + 0.5, min(y) - 0.5)
-    )
-    graphics::text(centers[, 2], centers[, 1], c(data), col = "black")
+    {
+      graphics::image(x, y, t(data),
+        col = palette,
+        breaks = brks,
+        xaxt = "n",
+        yaxt = "n",
+        xlab = "",
+        ylab = "",
+        ylim = c(max(y) + 0.5, min(y) - 0.5)
+      )
+      graphics::text(centers[, 2], centers[, 1], c(data), col = "black")
 
-    # add margin text
-    graphics::mtext(attributes(data)$dimnames[[2]],
-                    at = seq_len(ncol(data)),
-                    padj = -1
-    )
-    graphics::mtext(attributes(data)$dimnames[[1]],
-                    at = seq_len(nrow(data)),
-                    side = 2,
-                    las = 1,
-                    adj = 1,
-                    line = 1
-    )
+      # add margin text
+      graphics::mtext(attributes(data)$dimnames[[2]],
+        at = seq_len(ncol(data)),
+        padj = -1
+      )
+      graphics::mtext(attributes(data)$dimnames[[1]],
+        at = seq_len(nrow(data)),
+        side = 2,
+        las = 1,
+        adj = 1,
+        line = 1
+      )
 
-    # add black lines
-    graphics::abline(h = y + 0.5)
-    graphics::abline(v = x + 0.5)
+      # add black lines
+      graphics::abline(h = y + 0.5)
+      graphics::abline(v = x + 0.5)
 
-    if (!is.null(file)) grDevices::dev.off()
+      if (!is.null(file)) grDevices::dev.off()
     }
   )
 }

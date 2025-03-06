@@ -26,7 +26,7 @@
 #' @return array with same amount of cells and months as x. 3rd dimension is
 #' defined by nyear_window, basically `dim(x)[3]/nyear_window` or equal to
 #' dim(x)[3] if `moving_average == TRUE` or `interpolate == TRUE`
-#' 
+#'
 #' @importFrom magrittr %>%
 #' @md
 #' @export
@@ -35,24 +35,29 @@ average_nyear_window <- function(x, # nolint
                                  moving_average = FALSE,
                                  interpolate = FALSE,
                                  nyear_reference = NULL) {
-
   third_dim <- names(dim(x))[
     !names(dim(x)) %in% c("cell", "year")
-  ] %>% {
-    if (rlang::is_empty(.)) NULL else .
-  }
+  ] %>%
+    {
+      if (rlang::is_empty(.)) NULL else .
+    }
 
   if (length(third_dim) > 1) {
-    stop(paste0("x has to have dimensions \"cell\", \"year\" and can have ",
-                "one third dimension (e.g. \"month\", \"year\""))
+    stop(paste0(
+      "x has to have dimensions \"cell\", \"year\" and can have ",
+      "one third dimension (e.g. \"month\", \"year\""
+    ))
   }
   # check validity of x dimensions
   if (!all(names(dim(x)) %in% c("cell", third_dim, "year"))) {
-    stop(paste0("x has to have dimensions \"cell\"",
-                ifelse(is.null(third_dim),
-                       "",
-                       paste0(", \"", third_dim, "\"")),
-                " and \"year\"."))
+    stop(paste0(
+      "x has to have dimensions \"cell\"",
+      ifelse(is.null(third_dim),
+        "",
+        paste0(", \"", third_dim, "\"")
+      ),
+      " and \"year\"."
+    ))
   }
 
   # moving average function - spline interpolation to fill NAs at start/end
@@ -65,7 +70,8 @@ average_nyear_window <- function(x, # nolint
   interpolate_spline <- function(x, y, nyear_window) {
     rep(NA, dim(y)["year"]) %>%
       `[<-`(seq(round(nyear_window / 2), dim(y)["year"], nyear_window),
-              value = x) %>%
+        value = x
+      ) %>%
       zoo::na.spline()
   }
 
@@ -76,38 +82,54 @@ average_nyear_window <- function(x, # nolint
       x <- lpjmlkit::asub(x, year = seq_len(nyear_reference))
     }
     # only valid for nyear_window <  years of x (dim(x)[3])
-    if (nyear_window > 1 & nyear_window <= dim(x)["year"]) {
+    if (nyear_window > 1 && nyear_window <= dim(x)["year"]) {
       # check if multiple (can also be left out)
       # if (dim(x)[3] %% nyear_window == 0) {
       if (moving_average) {
-        y <- aperm(apply(x,
-                         c("cell", third_dim),
-                         moving_average_fun,
-                         nyear_window),
-                   c("cell", third_dim, ""))
+        y <- aperm(
+          apply(
+            x,
+            c("cell", third_dim),
+            moving_average_fun,
+            nyear_window
+          ),
+          c("cell", third_dim, "")
+        )
       } else {
         # calculate mean for discret windows/bins with size of nyear_window
         y <- array(x,
-                   # set correct dimensions (with names)
-                   dim = c(dim(x)[c("cell", third_dim)],
-                           year = nyear_window,
-                           window = dim(x)[["year"]] / nyear_window),
-                   # set correct dimensions names with nyear and windows
-                   dimnames = append(dimnames(x)[c("cell", third_dim)],
-                                     list(year = seq_len(nyear_window),
-                                          window = dimnames(x)[["year"]][
-                                            seq(round(nyear_window / 2),
-                                                dim(x)[["year"]],
-                                                nyear_window)
-                                          ]))) %>%
-          apply(c("cell", third_dim, "window"),  mean)
+          # set correct dimensions (with names)
+          dim = c(dim(x)[c("cell", third_dim)],
+            year = nyear_window,
+            window = dim(x)[["year"]] / nyear_window
+          ),
+          # set correct dimensions names with nyear and windows
+          dimnames = append(
+            dimnames(x)[c("cell", third_dim)],
+            list(
+              year = seq_len(nyear_window),
+              window = dimnames(x)[["year"]][
+                seq(
+                  round(nyear_window / 2),
+                  dim(x)[["year"]],
+                  nyear_window
+                )
+              ]
+            )
+          )
+        ) %>%
+          apply(c("cell", third_dim, "window"), mean)
         if (interpolate) {
-          y <- aperm(apply(y,
-                           c("cell", third_dim),
-                           interpolate_spline,
-                           x,
-                           nyear_window),
-                       c("cell", third_dim, ""))
+          y <- aperm(
+            apply(
+              y,
+              c("cell", third_dim),
+              interpolate_spline,
+              x,
+              nyear_window
+            ),
+            c("cell", third_dim, "")
+          )
         }
       }
       # }
@@ -122,13 +144,19 @@ average_nyear_window <- function(x, # nolint
       nmultiple <- round(dim(orig_x)[["year"]] / nyear_reference)
       replace_multiple_id <- nmultiple * dim(y)[[3]]
       # if average window is returned as year dimension
-      if (!moving_average & !interpolate) {
+      if (!moving_average && !interpolate) {
         z <- array(NA,
-                   dim = c(dim(y)[c("cell", third_dim)],
-                           window = replace_multiple_id),
-                   dimnames = append(dimnames(y)[c("cell", third_dim)],
-                                     list(window = rep(dimnames(y)[[3]],
-                                                       nmultiple))))
+          dim = c(dim(y)[c("cell", third_dim)],
+            window = replace_multiple_id
+          ),
+          dimnames = append(
+            dimnames(y)[c("cell", third_dim)],
+            list(window = rep(
+              dimnames(y)[[3]],
+              nmultiple
+            ))
+          )
+        )
         # return as original year dimension
       } else {
         # years vector also for non multiples (subset only partly recycled)
@@ -136,9 +164,12 @@ average_nyear_window <- function(x, # nolint
           `[<-`(, value = dimnames(x)[["year"]]) %>%
           suppressWarnings()
         z <- array(NA,
-                   dim = dim(orig_x),
-                   dimnames = append(dimnames(y)[c("cell", third_dim)],
-                                     list(year = years)))
+          dim = dim(orig_x),
+          dimnames = append(
+            dimnames(y)[c("cell", third_dim)],
+            list(year = years)
+          )
+        )
       }
       # recycle subset y for rest of original (x) years in z
       z[, , seq_len(replace_multiple_id)] <- y

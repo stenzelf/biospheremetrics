@@ -35,16 +35,16 @@
 #' @examples
 #' \dontrun{
 #' plot_biocol(
-#'    biocol_data = biocol,
-#'    path_write = "~/BioCol_plots/",
-#'    plotyears = c(1980, 2014),
-#'    min_val = 0,
-#'    max_val = 90,
-#'    legendpos = "left",
-#'    start_year = 1980,
-#'    mapyear = 2000,
-#'    highlightyear = 2000,
-#'    eps = FALSE
+#'   biocol_data = biocol,
+#'   path_write = "~/BioCol_plots/",
+#'   plotyears = c(1980, 2014),
+#'   min_val = 0,
+#'   max_val = 90,
+#'   legendpos = "left",
+#'   start_year = 1980,
+#'   mapyear = 2000,
+#'   highlightyear = 2000,
+#'   eps = FALSE
 #' )
 #' }
 #'
@@ -201,8 +201,8 @@ plot_biocol <- function(
 #' @examples
 #' \dontrun{
 #' plot_biocol_map(
-#'    data = biocol$biocol_frac[, "2000"] * 100,
-#'    file = "./BioCol_map_yr2000.png",
+#'   data = biocol$biocol_frac[, "2000"] * 100,
+#'   file = "./BioCol_map_yr2000.png",
 #' )
 #' }
 #'
@@ -225,13 +225,13 @@ plot_biocol_map <- function(
       file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
       grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
       grDevices::postscript(file,
-                            horizontal = FALSE, onefile = FALSE, width = 22,
-                            height = 8.5, paper = "special"
+        horizontal = FALSE, onefile = FALSE, width = 22,
+        height = 8.5, paper = "special"
       )
     } else {
       grDevices::png(file,
-                     width = 7.25, height = 3.5, units = "in", res = 300,
-                     pointsize = 6, type = "cairo"
+        width = 7.25, height = 3.5, units = "in", res = 300,
+        pointsize = 6, type = "cairo"
       )
     }
   }
@@ -334,7 +334,7 @@ plot_biocol_map <- function(
 #'   details = TRUE,
 #'   max_val = max_val,
 #'   highlight_years = c(1900, 2000)
-#'   )
+#' )
 #' }
 #'
 #' @md
@@ -361,13 +361,13 @@ plot_biocol_ts <- function(
       file <- paste(c(file[1:(length(file) - 1)], "eps"), collapse = ".")
       grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
       grDevices::postscript(file,
-                            horizontal = FALSE, onefile = FALSE, width = 22,
-                            height = 8.5, paper = "special"
+        horizontal = FALSE, onefile = FALSE, width = 22,
+        height = 8.5, paper = "special"
       )
     } else {
       grDevices::png(file,
-                     width = 3.5, height = 3, units = "in", res = 300,
-                     pointsize = 6, type = "cairo"
+        width = 3.5, height = 3, units = "in", res = 300,
+        pointsize = 6, type = "cairo"
       )
     }
   }
@@ -381,9 +381,11 @@ plot_biocol_ts <- function(
 
 
 
-  withr::with_par(new = list(bty = "o", oma = c(0, 0, 0, 0),
-                             mar = c(4, 5, 1, 3)),
-    {graphics::plot(NA,
+  withr::with_par(new = list(
+    bty = "o", oma = c(0, 0, 0, 0),
+    mar = c(4, 5, 1, 3)
+  ), {
+    graphics::plot(NA,
       ylab = "GtC/yr", xlab = "Year", xlim = plot_years,
       ylim = c(min_val, max_val), xaxs = "i", yaxs = "i"
     )
@@ -455,11 +457,11 @@ plot_biocol_ts <- function(
         col = colz[13]
       )
     }
-    }
-  )
-  withr::with_par(new = list(bty = "n", oma = c(0, 0, 0, 0),
-                             mar = c(4, 5, 1, 3), new = TRUE),
-    {
+  })
+  withr::with_par(new = list(
+    bty = "n", oma = c(0, 0, 0, 0),
+    mar = c(4, 5, 1, 3), new = TRUE
+  ), {
     if (ref == "pi") {
       biocol_max <- biocol_data$biocol_overtime_abs_frac_piref
       biocol_min <- biocol_data$biocol_overtime_frac_piref
@@ -526,6 +528,5 @@ plot_biocol_ts <- function(
       )
     }
     if (!is.null(file)) grDevices::dev.off()
-  }
-  )
+  })
 }

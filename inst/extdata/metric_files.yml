@@ -89,9 +89,9 @@ metric:
             swc_vol:
                 resolution: "annual"
                 optional: false
-            swe:
-                resolution: "annual"
-                optional: false
+            #swe:
+            #    resolution: "annual"
+            #    optional: false
             res_storage:
                 resolution: "annual"
                 optional: false
@@ -278,7 +278,7 @@ file_name:
     soilno3: ["soilno3"]
     swc: ["swc", "mswc"]
     swc_vol: ["swc_vol"]
-    swe: ["swe"]
+    #swe: ["swe"]
     temp: ["temp", "mtemp"]
     terr_area: ["terr_area"]
     timber_harvestc: ["timber_harvestc"]

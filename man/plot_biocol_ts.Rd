@@ -69,7 +69,7 @@ plot_biocol_ts(
   details = TRUE,
   max_val = max_val,
   highlight_years = c(1900, 2000)
-  )
+)
 }
 
 }

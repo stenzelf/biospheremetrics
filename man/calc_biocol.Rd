@@ -24,7 +24,7 @@ calc_biocol(
   external_fire_file = NULL,
   external_wood_harvest_file = NULL,
   replace_input_file_names = NULL,
-  suppressWarnings = TRUE
+  suppress_warnings = TRUE
 )
 }
 \arguments{
@@ -87,7 +87,7 @@ identifiers to replace the ones in inst/ext_files/metric_files.yml.
 e.g. list(npp="mnpp") would replace the expected output for npp with
 mnpp followed by the automatically detected file extension (.bin.json)}
 
-\item{suppressWarnings}{suppress warnings when reading files (default: TRUE)}
+\item{suppress_warnings}{suppress warnings when reading files (default: TRUE)}
 }
 \value{
 list data object containing BioCol and components as arrays: biocol,
@@ -113,7 +113,7 @@ calc_biocol(
   read_saved_data = FALSE,
   save_data = FALSE,
   npp_threshold = 20,
-  )
+)
 }
 
 }

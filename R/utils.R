@@ -188,7 +188,6 @@ list_outputs <- function(metric = "all",
 
 # List arguments of functions used in metrics from metric_files.yml
 list_function_args <- function(metric = "all") {
-
   metric <- process_metric(metric = metric)
 
   system.file(
@@ -198,7 +197,6 @@ list_function_args <- function(metric = "all") {
   ) %>%
     yaml::read_yaml() %>%
     get_function_args(metric)
-
 }
 
 # Translate metric options into internal metric names
@@ -266,7 +264,8 @@ get_function_args <- function(x, metric_name) {
   funs %>%
     lapply(function(x) {
       unlist(
-        lapply(mget(x, inherits = TRUE), methods::formalArgs), use.names = FALSE
+        lapply(mget(x, inherits = TRUE), methods::formalArgs),
+        use.names = FALSE
       )
     })
 }
@@ -304,8 +303,11 @@ split_sign <- function(string) {
     i2 <- floor(i / 2 + 1)
     if (i == 1 && !(grepl(a[1], "+-", fixed = TRUE))) outarray[1, 1] <- "+"
 
-    if (grepl(a[i], "+-", fixed = TRUE)) outarray[i2, 1] <- a[i]
-    else outarray[i2, 2] <- a[i]
+    if (grepl(a[i], "+-", fixed = TRUE)) {
+      outarray[i2, 1] <- a[i]
+    } else {
+      outarray[i2, 2] <- a[i]
+    }
   }
   colnames(outarray) <- c("sign", "variable")
   return(outarray)
@@ -314,10 +316,11 @@ split_sign <- function(string) {
 DIM <- function(...) {
   args <- list(...)
   lapply(args, function(x) {
- if (is.null(dim(x)))
-    return(length(x))
+    if (is.null(dim(x))) {
+      return(length(x))
+    }
     dim(x)
- })[[1]]
+  })[[1]]
 }
 
 # Avoid note for "."...

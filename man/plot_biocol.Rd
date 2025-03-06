@@ -62,16 +62,16 @@ folder
 \examples{
 \dontrun{
 plot_biocol(
-   biocol_data = biocol,
-   path_write = "~/BioCol_plots/",
-   plotyears = c(1980, 2014),
-   min_val = 0,
-   max_val = 90,
-   legendpos = "left",
-   start_year = 1980,
-   mapyear = 2000,
-   highlightyear = 2000,
-   eps = FALSE
+  biocol_data = biocol,
+  path_write = "~/BioCol_plots/",
+  plotyears = c(1980, 2014),
+  min_val = 0,
+  max_val = 90,
+  legendpos = "left",
+  start_year = 1980,
+  mapyear = 2000,
+  highlightyear = 2000,
+  eps = FALSE
 )
 }
 
