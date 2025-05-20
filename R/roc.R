@@ -1,3 +1,17 @@
+#' Calculate ROC curve data
+#'
+#' Calculate data for ROC curve comparison between binary external and
+#'    continuous internal indicator.
+#'
+#' @param external_binary array with binary transgression value: 0 - no, 1 - yes
+#' @param internal_continuous array with continuous values
+#' @param external_name name of external indicator
+#' @param range_internal range of internal data, e.g. c(0,1)
+#' @param sampling_res sampling rate for internal indicator. default: 0.01
+#' @param cellArea array with area for each cell of internal indicator
+#'
+#' @md
+#' @export
 calc_roc_data <- function(external_binary, #binary transgression: 0 - no,1 - yes
                           internal_continuous,
                           external_name,
@@ -88,6 +102,17 @@ calc_roc_data_3d <- function( external_continuous,
 
   return(values)
 }
+#' Plot ROC curve
+#'
+#' Plot ROC curve(s)
+#'
+#' @param filename path to plot roc curve to. default: NULL -> plot to screen
+#' @param values roc data object as obtained from calc_roc_data(), can be an array
+#'               with dimensions = c(thresholds, internal_metric(s),
+#'                    external_indicator(s), 3["TP","FP","slope"])
+#'
+#' @md
+#' @export
 roc_plot <- function(filename = NULL,
                      values # only one metric
 ) {
@@ -141,6 +166,17 @@ roc_plot <- function(filename = NULL,
   ))
 }
 
+#' Plot ROC curve
+#'
+#' Plot ROC curve(s) - paper version
+#'
+#' @param filename path to plot roc curve to. default: NULL -> plot to screen
+#' @param values roc data object as obtained from calc_roc_data(), can be an array
+#'               with dimensions = c(thresholds, internal_metric(s),
+#'                    external_indicator(s), 3["TP","FP","slope"])
+#'
+#' @md
+#' @export
 roc_plot_paper <- function(filename = NULL,
                      values # both metric
 ) {
@@ -173,10 +209,10 @@ roc_plot_paper <- function(filename = NULL,
          xlim = c(0,1), ylim = c(0,1), cex.lab = cex_perc, cex.axis = cex_perc, mgp = c(3, 2, 0))
     if (var == "BioCol") {
       mtext(side = 3, at = -0.2, "A", xpd = NA, cex = 1.5, font = 2)
-      mtext(side = 2, at = 0.5, line = 6, var, xpd = NA, cex = 2, font = 2, srt = 90)
+      mtext(side = 2, at = 0.5, line = 6, expression("HANPP"^Hol), xpd = NA, cex = 2, font = 2, srt = 90)
     }else{ #var = "EcoRisk"
       mtext(side = 3, at = -0.2, "B", xpd = NA, cex = 1.5, font = 2)
-      mtext(side = 2, at = 0.5, line = 6, var, xpd = NA, cex = 2, font = 2, srt = 90)
+      mtext(side = 2, at = 0.5, line = 6, "EcoRisk", xpd = NA, cex = 2, font = 2, srt = 90)
     }
     abline(a = 0, b = 1, lty = "dashed", col = "black")
     for (ind in indizes) {
@@ -235,7 +271,7 @@ roc_plot_paper <- function(filename = NULL,
   if (!is.null(filename)) dev.off()
   return(list(
     auc = auc,
-    biocol_threshold = biocol_threshold,
-    ecorisk_threshold = ecorisk_threshold
+    biocol_threshold = as.numeric(best_fit[indizes,"BioCol",1]),
+    ecorisk_threshold = as.numeric(best_fit[indizes,"EcoRisk",1])
   ))
 }

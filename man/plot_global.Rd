@@ -24,7 +24,8 @@ plot_global(
   min_0 = 0.01,
   extent = NULL,
   country_borders = TRUE,
-  eps = FALSE
+  eps = FALSE,
+  cex = 1
 )
 }
 \arguments{

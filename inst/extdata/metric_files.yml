@@ -71,6 +71,9 @@ metric:
             harvestc:
                 resolution: "annual"
                 optional: false
+            timber_harvestc:
+                resolution: "annual"
+                optional: false
             evap:
                 resolution: "annual"
                 optional: false
@@ -83,15 +86,9 @@ metric:
             litc:
                 resolution: "annual"
                 optional: false
-            swc:
+            soilwater:
                 resolution: "annual"
                 optional: false
-            swc_vol:
-                resolution: "annual"
-                optional: false
-            #swe:
-            #    resolution: "annual"
-            #    optional: false
             res_storage:
                 resolution: "annual"
                 optional: false
@@ -117,10 +114,10 @@ metric:
                 carbon_influx:
                     gpp
                 carbon_outflux:
-                    gpp - npp + firec + harvestc # harvestc contains residues
+                    gpp - npp + firec + harvestc + timber_harvestc # harvestc contains residues
             water_pools:
                 soil_water_pool:
-                    swc # replace by swc_in_mm + swe (mm) and litter.agtop_moist
+                    soilwater #swc + swc_in_mm + swe + litter.agtop_moist
             water_fluxes:
                 water_influx:
                     prec + irrig
@@ -276,9 +273,7 @@ file_name:
     soilc: ["soilc"]
     soilnh4: ["soilnh4"]
     soilno3: ["soilno3"]
-    swc: ["swc", "mswc"]
-    swc_vol: ["swc_vol"]
-    #swe: ["swe"]
+    soilwater: ["soilwater", "msoilwater"]
     temp: ["temp", "mtemp"]
     terr_area: ["terr_area"]
     timber_harvestc: ["timber_harvestc"]

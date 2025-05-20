@@ -183,9 +183,7 @@ plot_global <- function(data,
   } else {
     oma_p <- c(0, 0, 0, 0)
   }
-  #withr::with_par(new = list(
-  #  bty = "n", oma = oma_p, mar = c(0, 0, 0, 0), xpd = TRUE
-  #), {
+
   if (leg_yes){
     terra::plot(ra,
       ext = extent, breaks = legendticks, col = palette, main = title,
@@ -200,10 +198,10 @@ plot_global <- function(data,
     )
   }
 
-    if (country_borders) maps::map("world", add = TRUE, res = 0, lwd = 0.1, ylim = c(-60, 90))
-    #title(title, cex = cex) #line = -1)
-    if (F) {
-      if (type == "exp") {
+  if (country_borders)
+    maps::map("world", add = TRUE, resolution = 0, lwd = 0.1, ylim = c(-60, 90))
+  if (F) {
+    if (type == "exp") {
         fields::image.plot(
           legend.only = TRUE, zlim = c(-pow2max, pow2max), col = palette,
           useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
@@ -211,18 +209,17 @@ plot_global <- function(data,
           legend.args = list(legendtitle, side = 3, font = 2, line = 1),
           smallplot = c(0.975, 0.99, 0.1, 0.9)
         )
-      } else { # manual plotting
+    } else { # manual plotting
         fields::image.plot(
           legend.only = TRUE, zlim = range(brks), col = palette,
           useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
           legend.shrink = 0.7,
           legend.args = list(legendtitle, side = 3, font = 2, line = 1)
         )
-      }
     }
+  }
 
-    if (!is.null(file)) {
-      grDevices::dev.off()
-    }
-  #})
+  if (!is.null(file)) {
+    grDevices::dev.off()
+  }
 }
