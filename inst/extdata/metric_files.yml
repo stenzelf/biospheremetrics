@@ -273,7 +273,7 @@ file_name:
     soilc: ["soilc"]
     soilnh4: ["soilnh4"]
     soilno3: ["soilno3"]
-    soilwater: ["soilwater", "msoilwater"]
+    soilwater: ["soilwater", "msoilwater","swc_test"]
     temp: ["temp", "mtemp"]
     terr_area: ["terr_area"]
     timber_harvestc: ["timber_harvestc"]

@@ -15,8 +15,8 @@ plot_ecorisk_radial_to_screen(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c(\link{nEcoRiskcomponents},
-3\link{min,mean,max})}
+\item{data}{EcoRisk data array c(\verb{[nEcoRiskcomponents]},
+3\verb{[min,mean,max]})}
 
 \item{title}{character string title for plot, default empty}
 
@@ -33,7 +33,7 @@ for the regular EcoRisk plot}
 \item{use_quantile}{use quantiles or min,mean,max. defaults to TRUE}
 }
 \description{
-Function to plot an aggregated radial status of EcoRisk values \link{0-1}
+Function to plot an aggregated radial status of EcoRisk values \verb{[0-1]}
 for the different sub-categories to screen
 }
 \examples{

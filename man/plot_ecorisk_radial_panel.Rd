@@ -13,8 +13,8 @@ plot_ecorisk_radial_panel(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c(4/19\link{biomes},\link{nEcoRiskcomponents},
-3\link{min,mean,max})}
+\item{data}{EcoRisk data array c(4/19\verb{[biomes]},\verb{[nEcoRiskcomponents]},
+3\verb{[min,mean,max]})}
 
 \item{biome_names}{names of biomes}
 
@@ -25,7 +25,7 @@ plot_ecorisk_radial_panel(
 \item{eps}{write as eps or png}
 }
 \description{
-Function to plot an aggregated radial status of EcoRisk values \link{0-1}
+Function to plot an aggregated radial status of EcoRisk values \verb{[0-1]}
 for the different sub-categories to file
 }
 \examples{

@@ -229,6 +229,8 @@ classify_biomes <- function(path_reference = NULL,
   biome_names <- biome_mapping$id
   names(biome_names) <- biome_mapping$name
 
+  # please R CMD check for use of dplyr syntax
+  npft_proxy <- zone <- category <- type <- NULL
 
   pft_categories <- system.file("extdata",
     "pft_categories.csv",
@@ -652,6 +654,8 @@ classify_biomes <- function(path_reference = NULL,
 
 
 read_pft_categories <- function(file_path) {
+  # please R CMD check for use of dplyr syntax
+  category_natural <- NULL
   # read_delim, col_types = readr::cols(), delim = ";")to suppress messages
   readr::read_delim(file_path, col_types = readr::cols(), delim = ";") %>%
     # change 1, 0.5, 0 values to TRUE and NAs (NA's can be dropped)
@@ -664,7 +668,7 @@ read_pft_categories <- function(file_path) {
     # all binary zone columns (tropical, temperate, boreal) in one categorical
     #   zone column
     tidyr::pivot_longer(
-      cols = starts_with("zone_"),
+      cols = dplyr::starts_with("zone_"),
       names_to = "zone",
       names_prefix = "zone_",
       values_to = "zone_value",
@@ -673,7 +677,7 @@ read_pft_categories <- function(file_path) {
     # all binary category columns (natural, needle, evergreen) in one
     # category column
     tidyr::pivot_longer(
-      cols = starts_with("category_"),
+      cols = dplyr::starts_with("category_"),
       names_to = "category",
       names_prefix = "category_",
       values_to = "category_value",
@@ -683,7 +687,7 @@ read_pft_categories <- function(file_path) {
     dplyr::select(-c("category_value", "zone_value")) %>%
     # values to lpjml_index, names to length of npft (convert to numeric)
     tidyr::pivot_longer(
-      cols = starts_with("lpjml_index_npft_"),
+      cols = dplyr::starts_with("lpjml_index_npft_"),
       values_to = "lpjml_index",
       names_to = "npft_proxy",
       names_transform = list(

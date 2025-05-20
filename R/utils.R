@@ -14,9 +14,9 @@ get_major_file_ext <- function(path) {
     sapply(function(x) {
       y <- x[-1]
       if ("json" %in% y) {
-        return(paste(tail(strsplit(y, "\\."), 2), collapse = "."))
+        return(paste(utils::tail(strsplit(y, "\\."), 2), collapse = "."))
       } else {
-        return(tail(strsplit(y, "\\."), 1))
+        return(utils::tail(strsplit(y, "\\."), 1))
       }
     }) %>%
     unlist()
@@ -39,12 +39,12 @@ get_major_file_ext <- function(path) {
     y = all_files,
     z = all_file_types
   ) %>%
-    na.omit()
+    stats::na.omit()
 
   # Detect actual LPJmL data type
   types <- sapply(
     files_to_check,
-    lpjmlkit:::detect_io_type
+    lpjmlkit::detect_io_type
   ) %>%
     stats::setNames(names(.), .)
 

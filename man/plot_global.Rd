@@ -17,12 +17,14 @@ plot_global(
   col_pos = "GnBu",
   type = "exp",
   col_neg = "YlOrRd",
+  lat,
+  lon,
   legendtitle = "",
   leg_yes = TRUE,
   only_pos = FALSE,
   n_legend_ticks = 20,
   min_0 = 0.01,
-  extent = NULL,
+  extent = c(-180, 180, -60, 90),
   country_borders = TRUE,
   eps = FALSE,
   cex = 1
@@ -62,6 +64,10 @@ lin requires: parameters min and max defined}
 
 \item{col_neg}{color palette for the negatives}
 
+\item{lat}{latitude array}
+
+\item{lon}{longitude array}
+
 \item{legendtitle}{character string legend title}
 
 \item{leg_yes}{boolean whether to show legend (default: TRUE)}
@@ -72,7 +78,13 @@ lin requires: parameters min and max defined}
 
 \item{min_0}{(default: 0.01)}
 
+\item{extent}{extent for plot, default: c(-180, 180, -60, 90)}
+
+\item{country_borders}{boolean, whether to plot borders (default: TRUE)}
+
 \item{eps}{boolean whether to write eps file instead of PNG (default: FALSE)}
+
+\item{cex}{text scaling factor (default: 1)}
 }
 \description{
 Plot global LPJmL array to file (if file argument is given) or screen (else).

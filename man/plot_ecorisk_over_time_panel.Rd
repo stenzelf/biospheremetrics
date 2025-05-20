@@ -15,8 +15,8 @@ plot_ecorisk_over_time_panel(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c(4/19\link{biomes},\link{nEcoRiskcomponents},
-3\link{min,mean,max})}
+\item{data}{EcoRisk data array c(4/19\verb{[biomes]},\verb{[nEcoRiskcomponents]},
+3\verb{[min,mean,max]})}
 
 \item{biome_names}{names of biomes}
 
@@ -32,7 +32,7 @@ plot_ecorisk_over_time_panel(
 }
 \description{
 Function to plot a panel of 4/16 timelines per biome aggregated EcoRisk
-values \link{0-1}
+values \verb{[0-1]}
 to file
 }
 \examples{

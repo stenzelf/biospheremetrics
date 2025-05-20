@@ -8,12 +8,10 @@ plot_biomes(
   biome_data,
   file_name = NULL,
   display_area = FALSE,
-  to_robinson = TRUE,
   cellarea = NULL,
   order_legend = c(1, 2, 9, 10, 11, 3, 4, 5, 12, 13, 14, 6, 7, 8, 15, 16, 17, 18, 19),
-  bg_col = "white",
-  marg = c(4, 0, 0, 0),
-  omar = c(0, 0, 0, 0)
+  projection = "+proj=robin",
+  grid_path = NULL
 )
 }
 \arguments{
@@ -23,15 +21,15 @@ plot_biomes(
 
 \item{display_area}{boolean, adding occupied area per biome (default F)}
 
-\item{to_robinson}{logical to define if robinson projection should be used
-for plotting}
-
 \item{cellarea}{array with cellarea in m2 per gridcell (default NULL)}
 
 \item{order_legend}{in which order the biomes should be displayed
 default: c(1,2,9,10,11,3,4,5,12,13,14,6,7,8,15,16,17,18,19)}
 
-\item{bg_col}{character, specify background possible (\code{NA} for transparent)}
+\item{projection}{character string defining the projection,
+default: "+proj=robin", for mercator: "+proj=wgs84"}
+
+\item{grid_path}{character string providing the path to a grid file}
 }
 \description{
 Plots a map with the biome distribution as derived from a lpjml run based
@@ -39,9 +37,17 @@ on the "classify_biomes" function
 }
 \examples{
 \dontrun{
+
+biomes <- classify_biomes(
+ config_reference = path_reference,
+ time_span_reference = as.character(2008:2017),
+ savanna_proxy = list(vegc = 7500)
+)
+
 plot_biomes(
   biome_data = biomes,
   file_name = "/p/projects/open/Johanna/R/biomes.pfd"
+  grid_path = ".grid.bin.json"
 )
 }
 

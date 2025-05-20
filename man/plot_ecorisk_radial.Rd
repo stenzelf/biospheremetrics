@@ -14,8 +14,8 @@ plot_ecorisk_radial(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c(4/19\link{biomes},\link{nEcoRiskcomponents},
-3\link{min,mean,max})}
+\item{data}{EcoRisk data array c(4/19\verb{[biomes]},\verb{[nEcoRiskcomponents]},
+3\verb{[min,mean,max]})}
 
 \item{file}{to write into}
 
@@ -28,7 +28,7 @@ plot_ecorisk_radial(
 \item{use_quantile}{show quantiles or min,mean,max}
 }
 \description{
-Function to plot an aggregated radial status of EcoRisk values \link{0-1}
+Function to plot an aggregated radial status of EcoRisk values \verb{[0-1]}
 for the different sub-categories to file
 }
 \examples{

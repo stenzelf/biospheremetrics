@@ -101,10 +101,11 @@ plot_biome_internal_distribution <- function(
 
 #' Plot EcoRisk map to file
 #'
-#' Function to plot a global map of EcoRisk values [0-1] per grid cell to file
+#' Function to plot a global map of EcoRisk values `[0-1]` per grid cell to file
 #'
 #' @param ecorisk_object ecorisk object from which to plot
 #' @param plot_dimension which dimension from ecorisk object to plot
+#' @param year which year to plot (index or year-string), default: 1
 #' @param file to write into, if not supplied (default is NULL) write to screen
 #' @param focus_biome highlight the biome with this id and desaturate all other
 #'                    (default NULL -- no highlight)
@@ -223,11 +224,11 @@ plot_ecorisk_map <- function(
 
 #' Plot radial EcoRisk plot to screen
 #'
-#' Function to plot an aggregated radial status of EcoRisk values [0-1]
+#' Function to plot an aggregated radial status of EcoRisk values `[0-1]`
 #' for the different sub-categories to screen
 #'
-#' @param data EcoRisk data array c([nEcoRiskcomponents],
-#'             3[min,mean,max])
+#' @param data EcoRisk data array c(`[nEcoRiskcomponents]`,
+#'             3`[min,mean,max]`)
 #' @param title character string title for plot, default empty
 #' @param zoom scaling factor for circle plot. defaults to 1
 #' @param type plot type, 'legend1' for variable and color legend,
@@ -506,11 +507,11 @@ plot_ecorisk_radial_to_screen <- function(data, # nolint
 
 #' Plot radial EcoRisk plot to file
 #'
-#' Function to plot an aggregated radial status of EcoRisk values [0-1]
+#' Function to plot an aggregated radial status of EcoRisk values `[0-1]`
 #' for the different sub-categories to file
 #'
-#' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
-#'             3[min,mean,max])
+#' @param data EcoRisk data array c(4/19`[biomes]`,`[nEcoRiskcomponents]`,
+#'             3`[min,mean,max]`)
 #' @param file to write into
 #' @param title character string title for plot, default empty
 #' @param use_quantile show quantiles or min,mean,max
@@ -624,7 +625,7 @@ plot_ecorisk_maps <- function(ecorisk, out_folder, year = 1) {
 #' Function to plot timeline of EcoRisk variables to screen
 #'
 #' @param data EcoRisk data array
-#'        c(4/19[biomes],8/10[nEcoRiskcomponents],3[min,mean,max],timeslices)
+#'        c(4/19`[biomes]`,8/10`[nEcoRiskcomponents]`,3`[min,mean,max]`,timeslices)
 #' @param timerange of the data input
 #' @param yrange range for y axis default c(0,1)
 #' @param leg_yes plot legend (default TRUE)
@@ -709,11 +710,11 @@ plot_overtime_to_screen <- function(data,
 #' Plot timeline of EcoRisk variables as panel to file with 4/16 biomes
 #'
 #' Function to plot a panel of 4/16 timelines per biome aggregated EcoRisk
-#' values [0-1]
+#' values `[0-1]`
 #' to file
 #'
-#' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
-#'             3[min,mean,max])
+#' @param data EcoRisk data array c(4/19`[biomes]`,`[nEcoRiskcomponents]`,
+#'             3`[min,mean,max]`)
 #' @param biome_names names of biomes
 #' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param yrange range for y axis (default c(0,1))
@@ -833,11 +834,11 @@ plot_ecorisk_over_time_panel <- function(data,
 
 #' Plot radial EcoRisk panel to file with 4/16 biomes
 #'
-#' Function to plot an aggregated radial status of EcoRisk values [0-1]
+#' Function to plot an aggregated radial status of EcoRisk values `[0-1]`
 #' for the different sub-categories to file
 #'
-#' @param data EcoRisk data array c(4/19[biomes],[nEcoRiskcomponents],
-#'             3[min,mean,max])
+#' @param data EcoRisk data array c(4/19`[biomes]`,`[nEcoRiskcomponents]`,
+#'             3`[min,mean,max]`)
 #' @param biome_names names of biomes
 #' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param use_quantile is it quantiles or minmeanmax data? - text for whiskers
@@ -933,136 +934,14 @@ plot_ecorisk_radial_panel <- function(data,
 }
 
 
-#' Plot biomes with mercator projection
-#'
-#' Function to plot biomes to file (or screen) using mercator projection
-#'
-#' @param biome_ids biome id as given by classify_biomes
-#' @param biome_name_length length of biome names in legend: 1 - abbreviation,
-#'        2 - short name, 3 - full biome name
-#' @param order_legend legend order: either "plants" to first have forests, then
-#'        grasslands, then tundra ..., or "zones" to go from north to south
-#'        (default: "plants")
-#' @param file to write into (if not supplied - default NULL - prints to screen)
-#' @param title character string title for plot, default empty
-#' @param title_size size of title in cex units (defaukt: 2)
-#' @param leg_yes whether to plot legend (default: True)
-#' @param leg_scale size of legend in cex units (default 0.5)
-#' @param eps write as eps, replacing png in filename (default: True)
-#'
-#' @examples
-#' \dontrun{
-#' plot_biomes_mercator(
-#'   biome_ids = biome_classification$biome_id,
-#'   file = "./biomes.png"
-#' )
-#' }
-#'
-#' @md
-#' @export
-plot_biomes_mercator <- function(biome_ids,
-                                 biome_name_length = 1,
-                                 order_legend = "plants",
-                                 file = NULL,
-                                 title = "",
-                                 title_size = 2,
-                                 leg_yes = TRUE,
-                                 leg_scale = 1,
-                                 eps = FALSE) {
-  if (!is.null(file)) {
-    path_write <- dirname(file)
-    dir.create(file.path(path_write), showWarnings = FALSE, recursive = TRUE)
-
-    if (eps) {
-      file <- strsplit(file, ".", fixed = TRUE)[[1]]
-      file <- paste(c(file[seq_len(length(file) - 1)], "eps"), collapse = ".")
-      grDevices::ps.options(family = c("Helvetica"), pointsize = 18)
-      grDevices::postscript(file,
-        horizontal = FALSE, onefile = FALSE, width = 22,
-        height = 8.5, paper = "special"
-      )
-    } else {
-      grDevices::png(file,
-        width = 7.25, height = 3.5, units = "in", res = 300,
-        pointsize = 6, type = "cairo"
-      )
-    }
-  }
-  # setting up colors and biome names
-  colz <- c(
-    # warm
-    rev(RColorBrewer::brewer.pal(6, "YlOrBr")),
-    rev(RColorBrewer::brewer.pal(9, "YlGn")[c(3, 5, 7, 9)]),
-    # cold below forest
-    rev(RColorBrewer::brewer.pal(9, "GnBu"))[c(2:4, 6, 8, 9)],
-    # "lightblue" # Water
-    "white",
-    # Rocks & Ice
-    "lightgrey",
-    # montane Tundra/Grassland
-    "pink3"
-  )
-
-  if (order_legend == "plants") {
-    order_legend <- seq_len(19)
-  } else if (order_legend == "zones") {
-    order_legend <- c(
-      1, 2, 9, 10, 11, 3, 4, 5, 6, 12, 13, 14, 7, 8, 15, 16, 17, 18, 19
-    )
-  } else {
-    stop(
-      "Unknown value for parameter order_legend (plants or zones) - ",
-      "was given as: ", order_legend
-    )
-  }
-  biome_class_cols <- (
-    colz[c(1, 2, 7, 8, 9, 10, 13, 12, 3, 4, 5, 14, 15, 16, 19, 11, 6, 17, 18)]
-  )
-  biome_class_names <- get_biome_names(biome_name_length)
-
-  if (!(length(biome_class_names) == length(biome_class_cols))) {
-    stop("Size of biome class names and colors do not match -- should be 18.")
-  }
-
-  # plotting
-  brks <- seq(
-    min(biome_ids, na.rm = TRUE) - 0.5,
-    max(biome_ids, na.rm = TRUE) + 0.5,
-    1
-  )
-  ra <- terra::rast(ncols = 720, nrows = 360)
-  range <- range(biome_ids)
-  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- biome_ids
-  extent <- terra::ext(c(-180, 180, -60, 90))
-  withr::with_par(new = list(
-    mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0), bty = "n"
-  ), {
-    terra::plot(ra,
-      ext = extent, breaks = brks, col = biome_class_cols,
-      main = "", legend = FALSE, axes = FALSE
-    )
-    graphics::title(main = title, line = -2, cex.main = title_size)
-    if (leg_yes) {
-      graphics::legend(
-        x = -180, y = 27, legend = biome_class_names[order_legend],
-        fill = biome_class_cols[order_legend],
-        col = biome_class_cols[order_legend],
-        cex = leg_scale, bg = "white", bty = "o"
-      )
-    }
-    maps::map("world", add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60, 90))
-    if (!is.null(file)) grDevices::dev.off()
-  })
-}
-
 
 #' Plot radial EcoRisk with 4/16 biomes
 #'
 #' Function to plot to file (or screen) an aggregated radial status of EcoRisk
-#' values [0-1] for the different sub-categories to file
+#' values `[0-1]` for the different sub-categories to file
 #'
-#' @param data EcoRisk data array c(4[biomes],[nEcoRiskcomponents],
-#'             3[min,median,max])
+#' @param data EcoRisk data array c(4`[biomes]`,`[nEcoRiskcomponents]`,
+#'             3`[min,median,max]`)
 #' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param biome_class_names to write into
 #' @param title character string title for plot, default empty
@@ -1143,7 +1022,7 @@ plot_biome_averages <- function(data,
 #' between average biome pixels based on EcoRisk (former Gamma) metric from
 #' LPJmL simulations
 #'
-#' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
+#' @param data crosstable data as array with `[nbiomes,nbiomes]` and row/colnames
 #' @param file to write into (if not supplied - default NULL - prints to screen)
 #' @param lmar left margin for plot in lines (default: 3)
 #' @param eps write as eps or png

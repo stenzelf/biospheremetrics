@@ -83,6 +83,8 @@ plot_biocol <- function(
     legendtitle = "GtC",
     leg_yes = TRUE,
     only_pos = FALSE,
+    lat = lat,
+    lon = lon,
     eps = eps
   )
 
@@ -99,6 +101,8 @@ plot_biocol <- function(
     legendtitle = "GtC",
     leg_yes = TRUE,
     only_pos = FALSE,
+    lat = lat,
+    lon = lon,
     eps = eps
   )
 
@@ -115,6 +119,8 @@ plot_biocol <- function(
     legendtitle = "GtC",
     leg_yes = TRUE,
     only_pos = FALSE,
+    lat = lat,
+    lon = lon,
     eps = eps
   )
 
@@ -148,7 +154,9 @@ plot_biocol <- function(
     col_neg = "Blues",
     leg_yes = TRUE,
     eps = FALSE,
-    n_legend_ticks = 11
+    n_legend_ticks = 11,
+    lat = lat,
+    lon = lon
   )
 
   plot_global(
@@ -165,7 +173,9 @@ plot_biocol <- function(
     col_neg = "Blues",
     leg_yes = TRUE,
     eps = FALSE,
-    n_legend_ticks = 11
+    n_legend_ticks = 11,
+    lat = lat,
+    lon = lon
   )
 
   plot_global(
@@ -179,7 +189,9 @@ plot_biocol <- function(
     legendtitle = "gC/m2",
     leg_yes = TRUE,
     min = 0,
-    max = 1800
+    max = 1800,
+    lat = lat,
+    lon = lon
   )
 }
 
@@ -190,6 +202,8 @@ plot_biocol <- function(
 #' Haberl et al. 2007
 #'
 #' @param data array containing BioCol percentage value for each gridcell
+#' @param lat latitude array
+#' @param lon longitude array
 #' @param file to write into, if not supplied (default is NULL) write to screen
 #' @param title character string title for plot (default: "")
 #' @param legendtitle character string legend title (default: "")
@@ -210,6 +224,8 @@ plot_biocol <- function(
 #' @export
 plot_biocol_map <- function(
     data,
+    lon,
+    lat,
     file = NULL,
     title = "",
     legendtitle = "",

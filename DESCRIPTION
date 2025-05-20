@@ -1,7 +1,7 @@
 Package: biospheremetrics
 Type: Package
 Title: Biosphere integrity metrics for LPJmL
-Version: 1.0.3
+Version: 1.1.0
 Authors@R: c(
     person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-5109-0048")),
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = "aut", comment = c(ORCID = "0000-0002-9055-6904")),
@@ -10,7 +10,7 @@ Authors@R: c(
 Maintainer: Fabian Stenzel <stenzel@pik-potsdam.de>
 Description: Functions to compute Biosphere integrity metrics BioCol and EcoRisk
     based on output from LPJmL.
-License: GPL-3
+License: AGPL-3
 Encoding: UTF-8
 LazyData: true
 URL: https://github.com/stenzelf/biospheremetrics
@@ -20,6 +20,9 @@ Imports:
     rlang,
     tidyr,
     dplyr,
+    scales,
+    terra,
+    withr,
     readr,
     magrittr,
     yaml,
@@ -29,6 +32,9 @@ Imports:
     abind,
     fields,
     fBasics,
+    ggplot2,
+    rnaturalearth,
+    tidyterra,
     RColorBrewer,
     circlize,
     graphics,
@@ -39,4 +45,4 @@ Suggests:
     testthat (>= 3.0.0),
     knitr
 VignetteBuilder: knitr
-Date: 2024-02-23
+Date: 2025-05-20

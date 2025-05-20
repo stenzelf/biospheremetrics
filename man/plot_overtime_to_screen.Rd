@@ -15,7 +15,7 @@ plot_overtime_to_screen(
 }
 \arguments{
 \item{data}{EcoRisk data array
-c(4/19\link{biomes},8/10\link{nEcoRiskcomponents},3\link{min,mean,max},timeslices)}
+c(4/19\verb{[biomes]},8/10\verb{[nEcoRiskcomponents]},3\verb{[min,mean,max]},timeslices)}
 
 \item{timerange}{of the data input}
 

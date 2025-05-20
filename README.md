@@ -1,59 +1,63 @@
-# biospheremetrics
+# <a href=''><img src='inst/img/logo.png' align='right' alt='logo' height=139 /></a> Biosphere integrity metrics for LPJmL
 
+R package **biospheremetrics**, version **1.1.0**
 
-*The goal of biospheremetrics is to provide functions to calculate and plot 
-the biosphere integrity metrics BioCol and EcoRisk in an R package based on 
-outputs of [LPJmL](https://gitlab.pik-potsdam.de/lpjml/LPJmL_internal).
-biospheremetrics utilizes the read functions of the 
-[lpjmlkit package](https://gitlab.pik-potsdam.de/lpjml/lpjmlkit).*
+[![CRAN status](https://www.r-pkg.org/badges/version/biospheremetrics)](https://cran.r-project.org/package=biospheremetrics) [![R build status](https://github.com/stenzelf/biospheremetrics/workflows/check/badge.svg)](https://github.com/stenzelf/biospheremetrics/actions) [![codecov](https://codecov.io/gh/stenzelf/biospheremetrics/branch/master/graph/badge.svg)](https://app.codecov.io/gh/stenzelf/biospheremetrics) [![r-universe](https://pik-piam.r-universe.dev/badges/biospheremetrics)](https://pik-piam.r-universe.dev/builds)
 
-## Installation lpjmlkit
-The dependency package lpjmlkit is currently not available from CRAN, therefore it needs to be installed manually.
+## Purpose and Functionality
 
-Either install from PIK repository:
-```R
-install.packages('lpjmlkit', repos = c('https://pik-piam.r-universe.dev', 'https://cloud.r-project.org'))
+Functions to compute Biosphere integrity metrics BioCol and EcoRisk
+    based on output from LPJmL.
+inst/README.md
+
+## Installation
+
+For installation of the most recent package version an additional repository has to be added in R:
+
+```r
+options(repos = c(CRAN = "@CRAN@", pik = "https://rse.pik-potsdam.de/r/packages"))
+```
+The additional repository can be made available permanently by adding the line above to a file called `.Rprofile` stored in the home folder of your system (`Sys.glob("~")` in R returns the home directory).
+
+After that the most recent version of the package can be installed using `install.packages`:
+
+```r 
+install.packages("biospheremetrics")
 ```
 
-or checkout and install from github (https://github.com/PIK-LPJmL/lpjmlkit).
+Package updates can be installed using `update.packages` (make sure that the additional repository has been added before running that command):
 
-## Installation biospheremetrics
-
-The easiest way to install biospheremetrics is by directly loading it from github/gitlab depending on what you have access to:
-
-```R
-devtools::install_git("git@github.com:stenzelf/biospheremetrics.git")
-library(biospheremetrics)
-```
-or
-```R
-devtools::install_git("git@gitlab.pik-potsdam.de:stenzel/biospheremetrics.git")
-library(biospheremetrics)
+```r 
+update.packages()
 ```
 
-Alternatively, you can install `biospheremetrics` by git cloning this repository:
+## Tutorial
 
-```bash
-git clone https://gitlab.pik-potsdam.de/stenzel/biospheremetrics.git <path_to_biospheremetrics>
+The package comes with a vignette describing the basic functionality of the package and how to use it. You can load it with the following command (the package needs to be installed):
+
+```r
+vignette("biospheremetrics") # Computing biospheremetrics
 ```
 
-and install via  [`devtools`](https://rawgit.com/rstudio/cheatsheets/master/package-development.pdf):
+## Questions / Problems
 
-```R
-devtools::install("<path_to_biospheremetrics>")
-library("biospheremetrics")
+In case of questions / problems please contact Fabian Stenzel <stenzel@pik-potsdam.de>.
+
+## Citation
+
+To cite package **biospheremetrics** in publications use:
+
+Stenzel F, Breier J, Braun J (2025). "biospheremetrics: Biosphere integrity metrics for LPJmL." Version: 1.1.0, <https://github.com/stenzelf/biospheremetrics>.
+
+A BibTeX entry for LaTeX users is
+
+ ```latex
+@Misc{,
+  title = {biospheremetrics: Biosphere integrity metrics for LPJmL},
+  author = {Fabian Stenzel and Jannes Breier and Johanna Braun},
+  date = {2025-05-20},
+  year = {2025},
+  url = {https://github.com/stenzelf/biospheremetrics},
+  note = {Version: 1.1.0},
+}
 ```
-
-alternatively, you can also load it from source:
-
-```R
-devtools::load_all("<path_to_biospheremetrics>"")
-```
-
-## Scripts
-
-The `./scripts` folder contains scripts to be used on the PIK cluster to 
-compute longer timeseries with higher RAM demand.
-
-## Example
-For examples, see the vignette.

@@ -27,6 +27,8 @@
 #'            symmetrically between min and max, if onlypos = FALSE)
 #' @param col_pos color palette for the positives
 #' @param col_neg color palette for the negatives
+#' @param lat latitude array
+#' @param lon longitude array
 #' @param brks breaks for manual plotting type (type=man) default: NULL
 #' @param palette palette for manual plotting type (type=man) default: NULL
 #' @param type string indicating whether to plot manual (man),
@@ -38,8 +40,11 @@
 #' @param leg_yes boolean whether to show legend (default: TRUE)
 #' @param n_legend_ticks (default: 20)
 #' @param min_0 (default: 0.01)
+#' @param extent extent for plot, default: c(-180, 180, -60, 90)
+#' @param country_borders boolean, whether to plot borders (default: TRUE)
 #' @param only_pos boolean to show only positive half of legend (default: FALSE)
 #' @param eps boolean whether to write eps file instead of PNG (default: FALSE)
+#' @param cex text scaling factor (default: 1)
 #'
 #' @examples
 #' \dontrun{
@@ -70,12 +75,14 @@ plot_global <- function(data,
                         col_pos = "GnBu",
                         type = "exp",
                         col_neg = "YlOrRd",
+                        lat,
+                        lon,
                         legendtitle = "",
                         leg_yes = TRUE,
                         only_pos = FALSE,
                         n_legend_ticks = 20,
                         min_0 = 0.01,
-                        extent = NULL,
+                        extent = c(-180, 180, -60, 90),
                         country_borders = TRUE,
                         eps = FALSE,
                         cex = 1) {
@@ -176,7 +183,7 @@ plot_global <- function(data,
   ra <- terra::rast(ncols = 720, nrows = 360)
   range <- range(data)
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- c(data)
-  if (is.null(extent)) extent <- terra::ext(c(-180, 180, -60, 90))
+  extent <- terra::ext(extent)
 
   if (leg_yes) {
     oma_p <- c(0, 0, 0, 3)

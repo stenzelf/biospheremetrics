@@ -8,9 +8,9 @@ calc_roc_data(
   external_binary,
   internal_continuous,
   external_name,
+  cellArea,
   range_internal,
-  sampling_res = 0.01,
-  cellArea = cellarea
+  sampling_res = 0.01
 )
 }
 \arguments{
@@ -20,11 +20,11 @@ calc_roc_data(
 
 \item{external_name}{name of external indicator}
 
+\item{cellArea}{array with area for each cell of internal indicator}
+
 \item{range_internal}{range of internal data, e.g. c(0,1)}
 
 \item{sampling_res}{sampling rate for internal indicator. default: 0.01}
-
-\item{cellArea}{array with area for each cell of internal indicator}
 }
 \description{
 Calculate data for ROC curve comparison between binary external and

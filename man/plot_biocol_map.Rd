@@ -6,6 +6,8 @@
 \usage{
 plot_biocol_map(
   data,
+  lon,
+  lat,
   file = NULL,
   title = "",
   legendtitle = "",
@@ -16,6 +18,10 @@ plot_biocol_map(
 }
 \arguments{
 \item{data}{array containing BioCol percentage value for each gridcell}
+
+\item{lon}{longitude array}
+
+\item{lat}{latitude array}
 
 \item{file}{to write into, if not supplied (default is NULL) write to screen}
 

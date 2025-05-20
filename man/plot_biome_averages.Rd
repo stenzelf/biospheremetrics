@@ -16,8 +16,8 @@ plot_biome_averages(
 )
 }
 \arguments{
-\item{data}{EcoRisk data array c(4\link{biomes},\link{nEcoRiskcomponents},
-3\link{min,median,max})}
+\item{data}{EcoRisk data array c(4\verb{[biomes]},\verb{[nEcoRiskcomponents]},
+3\verb{[min,median,max]})}
 
 \item{file}{to write into (if not supplied - default NULL - prints to screen)}
 
@@ -36,7 +36,7 @@ color scheme white-blue-yellow-red}
 }
 \description{
 Function to plot to file (or screen) an aggregated radial status of EcoRisk
-values \link{0-1} for the different sub-categories to file
+values \verb{[0-1]} for the different sub-categories to file
 }
 \examples{
 \dontrun{

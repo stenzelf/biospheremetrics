@@ -25,7 +25,7 @@
 #'
 #' @return array with same amount of cells and months as x. 3rd dimension is
 #' defined by nyear_window, basically `dim(x)[3]/nyear_window` or equal to
-#' dim(x)[3] if `moving_average == TRUE` or `interpolate == TRUE`
+#' `dim(x)[3]` if `moving_average == TRUE` or `interpolate == TRUE`
 #'
 #' @importFrom magrittr %>%
 #' @md

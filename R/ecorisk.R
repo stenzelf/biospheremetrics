@@ -1854,29 +1854,6 @@ s_change_to_var_ratio <- function(x, s) {
   return(1 / (1 + exp(-4 * (x / s - 2))))
 }
 
-aggregate_ecorisk_data_to_lower_resolution <- function(ecorisk_data_file,
-                                                       new_resolution) {
-  ecorisk_data_file <- "/p/projects/open/Fabian/Metrics/data/ecorisk_202311_data.RData"
-  aggregation_factor <- 2 # 2 means from 0.5x0.5 to 1x1
-  load(ecorisk_data_file) # load ecorisk data objects:
-  # scenario data: state_scen,cft_scen,bft_scen,fpc_scen
-  # reference data: state_ref,cft_ref,bft_ref,fpc_ref,
-  # grid data: cell_area,lat,lon
-  str(state_ref)
-
-  state_scen <-
-    state_ref <-
-    fpc_scen <- fpc_ref
-  bft_scen <- bft_ref
-  cft_scen <- cft_ref
-
-  di_state <- dim(state_scen)
-  di_fpc <- dim(fpc_scen)
-  di_bft <- dim(bft_scen)
-  di_cft <- dim(cft_scen)
-}
-
-
 #' based on Heyder 2011 eq. 6-9; epsilon case handling from code
 #'   by Sebastian Ostberg (not documented in papers)
 #' @param ref mean reference state vector of dimension c(ncells,variables)
@@ -2117,7 +2094,9 @@ replace_ref_data_with_average_ref_biome_cell <- function(
     )
   }
 
-  load(data_file_in)
+  lat <- lon <- cell_area <- NULL
+  state_ref <- fpc_ref <- bft_ref <- cft_ref <- NULL
+  load(data_file_in)# contains
 
   ref_cells <- which(biome_classes_in$biome_id == ref_biom)
 
@@ -2380,11 +2359,18 @@ ecorisk_cross_table <- function(data_file_in,
 #'
 #' @export
 ecorisk_combine_hist_and_scen_data <- function(hist_file, scen_file, combined_file) {
+
+  # init variables
+  state_scen <- fpc_scen <- bft_scen <- cft_scen <- NULL
+  state_ref <- fpc_ref <- bft_ref <- cft_ref <- NULL
+  lat <- lon <- cell_area <- NULL
+
   load(hist_file)
   state_scen_hist <- state_scen
   fpc_scen_hist <- fpc_scen
   bft_scen_hist <- bft_scen
   cft_scen_hist <- cft_scen
+
   load(scen_file)
   state_scen_scen <- state_scen
   fpc_scen_scen <- fpc_scen

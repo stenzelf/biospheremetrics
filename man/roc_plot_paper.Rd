@@ -11,7 +11,7 @@ roc_plot_paper(filename = NULL, values)
 
 \item{values}{roc data object as obtained from calc_roc_data(), can be an array
 with dimensions = c(thresholds, internal_metric(s),
-external_indicator(s), 3\link{"TP","FP","slope"})}
+external_indicator(s), 3\verb{["TP","FP","slope"]})}
 }
 \description{
 Plot ROC curve(s) - paper version

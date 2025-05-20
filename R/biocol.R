@@ -93,7 +93,7 @@ read_calc_biocol <- function(
     external_wood_harvest_file = NULL,
     suppress_warnings = TRUE) {
   if (is.null(files_reference)) {
-    files_reference <- list(npp = baseline_npp_file)
+    files_reference <- list(npp = files_baseline$npp)
   }
   if (is.null(time_span_baseline)) {
     time_span_baseline <- time_span_scenario
@@ -119,6 +119,7 @@ read_calc_biocol <- function(
               does not exist in: ", external_fire_file)
     )
   }
+  start_year <- time_span_scenario[1]
   # reading required data
   if (read_saved_data) {
     if (file.exists(data_file)) {
@@ -231,6 +232,7 @@ read_calc_biocol <- function(
 
 
         if (external_fire) {
+          frac <- NULL
           load(external_fire_file) # frac = c(cell,month,year)
         }
 
@@ -277,6 +279,7 @@ read_calc_biocol <- function(
       }
 
       if (external_wood_harvest) {
+        wh_lpj <- NULL
         load(external_wood_harvest_file) # wh_lpj in kgC
 
         # from kgC to gC/m2
@@ -451,6 +454,7 @@ read_calc_biocol <- function(
   message("Calculating data")
 
   if (grass_scaling) {
+    grazing_data <- mapping_lpj67420_to_grazing_regions <- NULL
     load(grass_harvest_file)
 
     nregs <- length(grazing_data$name)

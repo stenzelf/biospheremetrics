@@ -24,6 +24,8 @@ plot_ecorisk_map(
 
 \item{plot_dimension}{which dimension from ecorisk object to plot}
 
+\item{year}{which year to plot (index or year-string), default: 1}
+
 \item{file}{to write into, if not supplied (default is NULL) write to screen}
 
 \item{focus_biome}{highlight the biome with this id and desaturate all other
@@ -45,7 +47,7 @@ plot_ecorisk_map(
 color scheme white-blue-yellow-red}
 }
 \description{
-Function to plot a global map of EcoRisk values \link{0-1} per grid cell to file
+Function to plot a global map of EcoRisk values \verb{[0-1]} per grid cell to file
 }
 \examples{
 \dontrun{

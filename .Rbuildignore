@@ -7,3 +7,4 @@
 ^.lintr$
 ^tests/.lintr$
 ^vignettes/.lintr$
+^.*CITATION.cff$

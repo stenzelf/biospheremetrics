@@ -13,7 +13,7 @@ plot_ecorisk_cross_table(
 )
 }
 \arguments{
-\item{data}{crosstable data as array with \link{nbiomes,nbiomes} and row/colnames}
+\item{data}{crosstable data as array with \verb{[nbiomes,nbiomes]} and row/colnames}
 
 \item{file}{to write into (if not supplied - default NULL - prints to screen)}
 
