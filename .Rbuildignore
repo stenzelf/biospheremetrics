@@ -7,4 +7,5 @@
 ^.lintr$
 ^tests/.lintr$
 ^vignettes/.lintr$
-^.*CITATION.cff$
+^\.git$
+^\.github$

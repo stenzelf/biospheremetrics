@@ -1096,11 +1096,11 @@ read_ecorisk_data <- function(
       package = "biospheremetrics"
     ) %>%
       yaml::read_yaml()
-    nclasses <- length(metric_files$metric$ecorisk_nitrogen$metric_class)
+    nclasses <- length(metric_files$metric$ecorisk_nitrogen$metric_class) # todo: check if this has to be changed for non-nitrogen calc.
     nstate_dimensions <- 0
     for (i in seq_len(nclasses)) {
       nstate_dimensions <- nstate_dimensions +
-        length(metric_files$metric$ecorisk_nitrogen$metric_class[[i]])
+        length(metric_files$metric$ecorisk_nitrogen$metric_class[[i]]) # todo: check if this has to be changed for non-nitrogen calc.
     }
     state_ref <- array(0, dim = c(ncells, nyears_ref, nstate_dimensions))
     state_scen <- array(0, dim = c(ncells, nyears, nstate_dimensions))

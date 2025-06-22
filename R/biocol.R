@@ -1,8 +1,6 @@
 # written by Fabian Stenzel
 # 2022-2023 - stenzel@pik-potsdam.de
 
-################# BioCol calc functions  ###################
-
 #' Calculate BioCol based on file lists from a PNV run and LU run of LPJmL.
 #' Do not use this function directly, unless you are instructed to do so, there
 #' is a wrapper called calc_biocol() which is for use of endusers.
@@ -91,6 +89,7 @@ read_calc_biocol <- function(
     grass_harvest_file = NULL,
     external_fire_file = NULL,
     external_wood_harvest_file = NULL,
+    model_type = "lpjml",
     suppress_warnings = TRUE) {
   if (is.null(files_reference)) {
     files_reference <- list(npp = files_baseline$npp)
@@ -148,7 +147,11 @@ read_calc_biocol <- function(
 
     file_type <- tools::file_ext(files_baseline$grid)
 
-    if (file_type %in% c("json", "clm")) {
+    if (model_type == "lpjml" && ( file_type %in% c("json", "clm") ||
+        ( file_type == "nc" &&
+          exists('read_cdf', where='package:lpjmlkit', mode='function') )
+        ) ) {
+      # first the required ones
       # read grid
       grid <- lpjmlkit::read_io(
         files_baseline$grid
@@ -182,14 +185,109 @@ read_calc_biocol <- function(
         npp_ref[npp_ref < epsilon] <- 0
       }
 
-      pftnpp <- lpjmlkit::read_io(
-        files_scenario$pft_npp,
-        subset = list(year = as.character(time_span_scenario))
+      pftnpp <- NULL
+      if (details) {
+        pftnpp <- lpjmlkit::read_io(
+          files_scenario$pft_npp,
+          subset = list(year = as.character(time_span_scenario))
+        ) %>%
+          lpjmlkit::transform(to = c("year_month_day")) %>%
+          lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+          suppressWarnings()
+        pftnpp[pftnpp < epsilon] <- 0
+
+        if (!gridbased) {
+          fpc <- lpjmlkit::read_io(
+            files_scenario$fpc,
+            subset = list(year = as.character(time_span_scenario))
+          ) %>%
+            lpjmlkit::transform(to = c("year_month_day")) %>%
+            lpjmlkit::as_array(subset = list(band = "natural stand fraction")) %>%
+            suppressWarnings()
+
+          pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
+        }
+      }
+
+      if (!gridbased) {
+        cftfrac <- lpjmlkit::read_io(
+          files_scenario$cftfrac,
+          subset = list(year = as.character(time_span_scenario))
+        ) %>%
+          lpjmlkit::transform(to = c("year_month_day")) %>%
+          lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+          suppressWarnings()
+      }
+      metric_files <- system.file(
+        "extdata",
+        "metric_files.yml",
+        package = "biospheremetrics"
       ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        suppressWarnings()
-      pftnpp[pftnpp < epsilon] <- 0
+        yaml::read_yaml()
+      classe <- metric_files$metric$biocol$metric_class[[c]]
+      nsubclasses <- length(classe)
+      # iterate over subclasses (vegetation carbon, soil water ...)
+      for (s in seq_len(nsubclasses)) {
+        subclass <- classe[s]
+        class_names[index] <- names(subclass)
+        vars <- split_sign(unlist(subclass))
+        for (v in seq_len(length(vars[, 1]))) {
+          path_scen_file <- files_scenario[[vars[v, "variable"]]]
+          if (file.exists(path_scen_file)) {
+            header_scen <- lpjmlkit::read_meta(filename = path_scen_file)
+            message(
+              "Reading in ", path_scen_file, " with unit ", header_scen$unit,
+              " -> as part of ", class_names[index]
+            )
+            var_scen <- lpjmlkit::read_io(
+              path_scen_file,
+              subset = list(year = as.character(time_span_scenario))
+            ) %>%
+              lpjmlkit::transform(to = c("year_month_day")) %>%
+              lpjmlkit::as_array(aggregate = list(month = sum, band = sum), ) %>%
+              drop() %>%
+              suppressWarnings()
+          } else {
+            stop(paste("Couldn't read in:", path_scen_file, " - stopping!"))
+          }
+          path_ref_file <- files_reference[[vars[v, "variable"]]]
+          if (file.exists(path_ref_file)) {
+            header_ref <- lpjmlkit::read_meta(path_ref_file)
+            message(
+              "Reading in ", path_ref_file, " with unit ", header_ref$unit,
+              " -> as part of ", class_names[index]
+            )
+            var_ref <- lpjmlkit::read_io(
+              path_ref_file,
+              subset = list(year = as.character(time_span_reference))
+            ) %>%
+              lpjmlkit::transform(to = c("year_month_day")) %>%
+              lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
+              drop() %>%
+              suppressWarnings()
+          } else {
+            stop(paste("Couldn't read in:", path_ref_file, " - stopping!"))
+          }
+          # if (window > 30){
+          #  if (vars[v,"sign"] == "+"){
+          #    state_scen[,,index,] <- state_scen[,,index,] + var_scen
+          #    state_ref[,,index,] <- state_ref[,,index,] + var_ref
+          #  } else { # vars[v,"sign"] == "-"
+          #    state_scen[,,index,] <- state_scen[,,index,] - var_scen
+          #    state_ref[,,index,] <- state_ref[,,index,] - var_ref
+          #  }
+          # }else{
+          if (vars[v, "sign"] == "+") {
+            state_scen[, , index] <- state_scen[, , index] + var_scen
+            state_ref[, , index] <- state_ref[, , index] + var_ref
+          } else { # vars[v,"sign"] == "-"
+            state_scen[, , index] <- state_scen[, , index] - var_scen
+            state_ref[, , index] <- state_ref[, , index] - var_ref
+          }
+          # }
+        }
+        index <- index + 1
+      }
 
 
       harvest <- lpjmlkit::read_io(
@@ -295,13 +393,7 @@ read_calc_biocol <- function(
         wood_harvest <- fire * 0
       }
 
-      cftfrac <- lpjmlkit::read_io(
-        files_scenario$cftfrac,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        suppressWarnings()
+
 
       npp_potential <- abind::adrop(lpjmlkit::read_io(
         files_baseline$npp,
@@ -313,16 +405,9 @@ read_calc_biocol <- function(
         suppressWarnings(), drop = "band") # gC/m2
       npp_potential[npp_potential < epsilon] <- 0
 
-      fpc <- lpjmlkit::read_io(
-        files_scenario$fpc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(subset = list(band = "natural stand fraction")) %>%
-        suppressWarnings()
 
-      pftbands <- lpjmlkit::read_meta(files_scenario$fpc)$nbands - 1
-    } else if (file_type == "nc") { # to be added
+
+    } else if ( model_type == "isimip" && file_type == "nc" ) { # to be added
       stop(
         "nc reading has not been updated to latest functionality.",
         " Please contact Fabian Stenzel"
