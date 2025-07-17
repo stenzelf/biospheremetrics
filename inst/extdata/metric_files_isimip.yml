@@ -207,30 +207,18 @@ metric:
             npp:
                 resolution: "annual"
                 optional: false
-            pft_npp:
+            fcropharvest:
                 resolution: "annual"
-                optional: true
-            pft_harvestc:
+                optional: false
+            fbioenergyharvest:
                 resolution: "annual"
-                optional: true
-            pft_rharvestc:
+                optional: false
+            fgrazing:
                 resolution: "annual"
-                optional: true
-            firec:
-                resolution: "annual"
-                optional: true
-            timber_harvestc:
-                resolution: "annual"
-                optional: true
-            cftfrac:
-                resolution: "annual"
-                optional: true
-            fpc:
-                resolution: "annual"
-                optional: true
+                optional: false
         metric_class: 
             npp_harvest:
-                harvest + rharvest + timber_harvestc + firec
+                fcropharvest #+ fgrazing
         # Called boundaries functions
         fun:
             []

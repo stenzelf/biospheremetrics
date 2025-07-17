@@ -40,7 +40,8 @@ plot_biomes <- function(biome_data,
                           6, 7, 8, 15, 16, 17, 18, 19
                         ),
                         projection = "+proj=robin",
-                        grid_path = NULL) {
+                        grid_path = NULL
+                        ) {
 
   biome_mapping <- system.file(
     "extdata",
@@ -108,12 +109,13 @@ plot_biomes <- function(biome_data,
     ggplot2::xlim(terra::ext(biomes_lpjml)[1], terra::ext(biomes_lpjml)[2]) +
     ggplot2::ylim(terra::ext(biomes_lpjml)[3], terra::ext(biomes_lpjml)[4]) +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 5, byrow = FALSE))
-
+  if (display_area) wd <- 23
+  else wd <- 21
   if (!is.null(file_name)) {
     ggplot2::ggsave(
       file_name,
       p,
-      width = 21,
+      width = wd,
       height = 12,
       dpi = 600,
       units = "cm",

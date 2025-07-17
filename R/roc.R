@@ -160,7 +160,7 @@ roc_plot <- function(filename = NULL,
                        values[1:(n - 1),ind,1])
   }
   graphics::legend("bottomright",legend = paste(indizes,round(auc,2)), col = colz,
-         cex = cex_perc, lwd = cex_perc)
+         cex = cex_perc, lwd = cex_perc, bg = "white")
   if (!is.null(filename)) grDevices::dev.off()
   return(list(
     auc = auc,
@@ -180,7 +180,10 @@ roc_plot <- function(filename = NULL,
 #' @md
 #' @export
 roc_plot_paper <- function(filename = NULL,
-                     values # both metric
+                     values, # both metric
+                     cex_perc = 2.5,
+                     cex_text = 2.5,
+                     cex_panel = 1.5
 ) {
   if (!is.null(filename)) {
     grDevices::png(filename, res = 300, width = 6, height = 7, units = "in",
@@ -202,18 +205,18 @@ roc_plot_paper <- function(filename = NULL,
   graphics::layout(mat = matrix(c(1,2,3,4,5,6), nrow = 2,  ncol = 3, byrow = FALSE),
          heights = c(2,2),    # Heights of the rows
          widths = c(1,0.4,0.4))     # Widths of the columns
-  graphics::layout.show(6)
-  cex_perc = 2.5
+  #graphics::layout.show(6)
+  cex_lines = 2
   colz <- RColorBrewer::brewer.pal(12,"Set3")[-c(2)]
 
   for (var in vars){
-    plot(NA, type = "n", xlab = "FP", ylab = "TP", main = "ROC curve", cex.main = cex_perc,
-         xlim = c(0,1), ylim = c(0,1), cex.lab = cex_perc, cex.axis = cex_perc, mgp = c(3, 2, 0))
+    plot(NA, type = "n", xlab = "FP", ylab = "TP", main = "ROC curve", cex.main = cex_text,
+         xlim = c(0,1), ylim = c(0,1), cex.lab = cex_text, cex.axis = cex_text, mgp = c(3, 2, 0))
     if (var == "BioCol") {
-      graphics::mtext(side = 3, at = -0.2, "A", xpd = NA, cex = 1.5, font = 2)
+      graphics::mtext(side = 3, at = -0.18, "A", xpd = NA, cex = cex_panel, font = 2)
       graphics::mtext(side = 2, at = 0.5, line = 6, expression("HANPP"^Hol), xpd = NA, cex = 2, font = 2, srt = 90)
     }else{ #var = "EcoRisk"
-      graphics::mtext(side = 3, at = -0.2, "B", xpd = NA, cex = 1.5, font = 2)
+      graphics::mtext(side = 3, at = -0.18, "B", xpd = NA, cex = cex_panel, font = 2)
       graphics::mtext(side = 2, at = 0.5, line = 6, "EcoRisk", xpd = NA, cex = 2, font = 2, srt = 90)
     }
     graphics::abline(a = 0, b = 1, lty = "dashed", col = "black")
@@ -237,38 +240,38 @@ roc_plot_paper <- function(filename = NULL,
       auc[ind,var] <- sum(abs(values[2:n,var,ind,2] - values[1:(n - 1),var,ind,2]) *
                             values[1:(n - 1),var,ind,1])
       graphics::legend("bottomright",legend = indicators, col = colz[indizes],
-             cex = cex_perc, lwd = cex_perc)
+             cex = cex_text, lwd = cex_perc, bg = "white")
     }
   }
 
   # optimal thresholds boxplots
-  biocol_threshold <- graphics::boxplot(as.numeric(best_fit[indizes,"BioCol",1]), ylim = c(0,1), cex.main = cex_perc,
-                              main = "optimal\nthreshold", cex.lab = cex_perc, cex.axis = cex_perc)
+  biocol_threshold <- graphics::boxplot(as.numeric(best_fit[indizes,"BioCol",1]), ylim = c(0,1), cex.main = cex_text,
+                              main = "optimal\nthreshold", cex.lab = cex_text, cex.axis = cex_text)
   graphics::points(x = rep(0.7, length(indizes)), y = as.numeric(best_fit[indizes,"BioCol",1]),
          col = scales::alpha(colz[indizes],1), lwd = 2)
-  graphics::text(x = 1, y = max(biocol_threshold$stats)+0.2, paste0("median:\n",stats::median(biocol_threshold$stats)), cex = cex_perc)
-  graphics::mtext(side = 3, at = 0, "C", xpd = NA, cex = 1.5, font = 2)
+  graphics::text(x = 1, y = max(biocol_threshold$stats)+0.2, paste0("median:\n",stats::median(biocol_threshold$stats)), cex = cex_text)
+  graphics::mtext(side = 3, at = 0, "C", xpd = NA, cex = cex_panel, font = 2)
 
   ecorisk_threshold <- graphics::boxplot(as.numeric(best_fit[indizes,"EcoRisk",1]),
-                               main = "optimal\nthreshold", cex.main = cex_perc,
-                               ylim = c(0,1), cex.lab = cex_perc, cex.axis = cex_perc)
+                               main = "optimal\nthreshold", cex.main = cex_text,
+                               ylim = c(0,1), cex.lab = cex_text, cex.axis = cex_text)
   graphics::points(x = rep(0.7, length(indizes)), y = as.numeric(best_fit[indizes,"EcoRisk",1]),
          col = scales::alpha(colz[indizes],1), lwd = 2)
-  graphics::text(x = 1, y = max(ecorisk_threshold$stats)+0.2, paste0("median:\n", stats::median(ecorisk_threshold$stats)), cex = cex_perc)
-  graphics::mtext(side = 3, at = 0, "D", xpd = NA, cex = 1.5, font = 2)
+  graphics::text(x = 1, y = max(ecorisk_threshold$stats)+0.2, paste0("median:\n", stats::median(ecorisk_threshold$stats)), cex = cex_text)
+  graphics::mtext(side = 3, at = 0, "D", xpd = NA, cex = cex_panel, font = 2)
 
   # AUC boxplots
-  biocol_auc <- graphics::boxplot(auc[indizes,"BioCol"], ylim = c(0,1), main = "AUC", cex.main = cex_perc,
-                        cex.lab = cex_perc, cex.axis = cex_perc)
+  biocol_auc <- graphics::boxplot(auc[indizes,"BioCol"], ylim = c(0,1), main = "AUC", cex.main = cex_text,
+                        cex.lab = cex_text, cex.axis = cex_text)
   graphics::points(x = rep(0.7, length(indizes)), y = auc[indizes,"BioCol"],
          col = scales::alpha(colz[indizes],1), lwd = 2)
-  graphics::mtext(side = 3, at = 0, "E", xpd = NA, cex = 1.5, font = 2)
+  graphics::mtext(side = 3, at = 0, "E", xpd = NA, cex = cex_panel, font = 2)
 
-  ecorisk_auc <- graphics::boxplot(auc[indizes,"EcoRisk"], main = "AUC", cex.main = cex_perc,
-                         ylim = c(0,1), cex.lab = cex_perc, cex.axis = cex_perc)
+  ecorisk_auc <- graphics::boxplot(auc[indizes,"EcoRisk"], main = "AUC", cex.main = cex_text,
+                         ylim = c(0,1), cex.lab = cex_text, cex.axis = cex_text)
   graphics::points(x = rep(0.7, length(indizes)), y = auc[indizes,"EcoRisk"],
          col = scales::alpha(colz[indizes],1), lwd = 2)
-  graphics::mtext(side = 3, at = 0, "F", xpd = NA, cex = 1.5, font = 2)
+  graphics::mtext(side = 3, at = 0, "F", xpd = NA, cex = cex_panel, font = 2)
 
   if (!is.null(filename)) grDevices::dev.off()
   return(list(

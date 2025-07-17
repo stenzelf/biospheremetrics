@@ -45,7 +45,9 @@
 #' @param only_pos boolean to show only positive half of legend (default: FALSE)
 #' @param eps boolean whether to write eps file instead of PNG (default: FALSE)
 #' @param cex text scaling factor (default: 1)
-#'
+#' @param mar (optional) set inner margin (default: NULL -> c(5.1,4.1,4.1,2.1)
+#' @param oma (optional) set outer margin (default: NULL) which translates to
+#'            c(0,0,0,0) for no legend, and c(0,0,0,3) with legend
 #' @examples
 #' \dontrun{
 #' plot_global(
@@ -85,7 +87,9 @@ plot_global <- function(data,
                         extent = c(-180, 180, -60, 90),
                         country_borders = TRUE,
                         eps = FALSE,
-                        cex = 1) {
+                        cex = 1,
+                        mar = NULL,
+                        oma = NULL) {
   if (!is.null(file)) {
     if (eps) {
       file <- strsplit(file, ".", fixed = TRUE)[[1]]
@@ -185,23 +189,33 @@ plot_global <- function(data,
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- c(data)
   extent <- terra::ext(extent)
 
-  if (leg_yes) {
-    oma_p <- c(0, 0, 0, 3)
-  } else {
-    oma_p <- c(0, 0, 0, 0)
+  if (is.null(oma)) {
+    if (leg_yes) {
+      oma_p <- c(0, 0, 0, 3)
+    } else {
+      oma_p <- c(0, 0, 0, 0)
+    }
+  }else {
+    oma_p <- oma
   }
+  if (is.null(mar)) {
+    mar_p <- c(5.1, 4.1, 4.1, 2.1)
+  }else {
+    mar_p <- mar
+  }
+  #par(oma = oma_p, mar = mar_p)
 
   if (leg_yes){
     terra::plot(ra,
       ext = extent, breaks = legendticks, col = palette, main = title,
       legend = TRUE, axes = FALSE, type = "continuous", cex.main = cex,
-      plg = list(cex = cex)
+      plg = list(cex = cex, size = c(0.9,0.9)), mar=mar_p
     )
   } else{
     terra::plot(ra,
       ext = extent, breaks = legendticks, col = palette, main = title,
-      legend = FALSE, axes = FALSE, type = "continuous", cex.main = cex,
-      plg = list(cex = cex)
+      legend = FALSE, axes = FALSE, box=FALSE, type = "continuous", cex.main = cex,
+      plg = list(cex = cex, size = c(0.9,0.9)), mar = mar_p, oma = oma_p, asp=NA,
     )
   }
 

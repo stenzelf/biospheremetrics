@@ -8,14 +8,13 @@
 #' Function to calculate BioCol based on a PNV run and LU run of LPJmL
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files are
-#' provided in XXX. E.g.: list(npp = "/temp/npp.bin.json")
+#' provided in XXX. E.g.: list(npp = "/temp/lu/npp.bin.json")
 #' @param files_baseline list with variable names and corresponding file paths
-#' (character string) of the baseline LPJmL run. All needed files are
-#' provided in XXX. E.g.: list(npp = "/temp/npp.bin.json"). If not
-#' needed for the applied method, set to NULL.
+#' (character string) of the potential natural baseline LPJmL run.
+#' E.g.: list(npp = "/temp/pnv/npp.bin.json").
 #' @param files_reference list with npp file path (character string) of the
 #' reference LPJmL run (usually Holocene/preindustrial).
-#' E.g.: list(npp = "/temp/npp.bin.json"). If NULL uses baseline npp.
+#' E.g.: list(npp = "/temp/hol/npp.bin.json"). If NULL uses baseline npp.
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #' as a character vector, e.g. `as.character(1982:2011)` (required)
 #' @param time_span_baseline time span to be used for the baseline run, defined
@@ -90,6 +89,7 @@ read_calc_biocol <- function(
     external_fire_file = NULL,
     external_wood_harvest_file = NULL,
     model_type = "lpjml",
+    details = FALSE,
     suppress_warnings = TRUE) {
   if (is.null(files_reference)) {
     files_reference <- list(npp = files_baseline$npp)
@@ -145,12 +145,13 @@ read_calc_biocol <- function(
   } else {
     message("Reading in data from outputs")
 
-    file_type <- tools::file_ext(files_baseline$grid)
+    file_type <- tools::file_ext(files_baseline$npp)
 
     if (model_type == "lpjml" && ( file_type %in% c("json", "clm") ||
         ( file_type == "nc" &&
           exists('read_cdf', where='package:lpjmlkit', mode='function') )
-        ) ) {
+        ) ||  model_type == "isimip" && file_type == "nc" &&
+        exists('read_cdf', where='package:lpjmlkit', mode='function') ) {
       # first the required ones
       # read grid
       grid <- lpjmlkit::read_io(
@@ -163,29 +164,86 @@ read_calc_biocol <- function(
       lat <- grid$data[, , 2]
       lon <- grid$data[, , 1]
 
-      npp <- abind::adrop(lpjmlkit::read_io(
-        files_scenario$npp,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        # drop() %>% suppressWarnings()
-        suppressWarnings(), drop = "band") # gC/m2
-      npp[npp < epsilon] <- 0
+      header <- lpjmlkit::read_meta(filename = files_scenario$npp)
+      if (header$unit == "gC/m2/month") {
+        conv_factor <- 1
+      } else if (header$unit == "kg m-2 s-1") {
+        conv_factor <- 1000 * 3600 * 24 * 365/12
+      } else{
+        stop("Unknown unit: ", header$unit)
+      }
+      if (file_type == "nc") {
+        npp <- abind::adrop(lpjmlkit::read_io(
+          files_scenario$npp,
+          subset = list(year = as.character(time_span_scenario))
+        ) %>%
+          lpjmlkit::add_grid("/p/projects/open/Fabian/LPJbox/grid.nc4") %>%
+          lpjmlkit::transform(to = c("year_month_day","cell")) %>%
+          lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+          suppressWarnings(), drop = "band") * conv_factor # gC/m2 or kg m-2 s-1
 
-      if (!is.null(files_reference)) {
-        npp_ref <- abind::adrop(lpjmlkit::read_io(
-          files_reference$npp,
-          subset = list(year = as.character(time_span_reference))
+        npp_potential <- abind::adrop(lpjmlkit::read_io(
+          files_baseline$npp,
+          subset = list(year = as.character(time_span_baseline))
+        ) %>%
+          lpjmlkit::add_grid("/p/projects/open/Fabian/LPJbox/grid.nc4") %>%
+          lpjmlkit::transform(to = c("year_month_day","cell")) %>%
+          lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+          # drop() %>% suppressWarnings()
+          suppressWarnings(), drop = "band") * conv_factor # gC/m2 or kg m-2 s-1
+
+        if (!is.null(files_reference)) {
+          npp_ref <- abind::adrop(lpjmlkit::read_io(
+            files_reference$npp,
+            subset = list(year = as.character(time_span_reference))
+          ) %>%
+            lpjmlkit::add_grid("/p/projects/open/Fabian/LPJbox/grid.nc4") %>%
+            lpjmlkit::transform(to = c("year_month_day","cell")) %>%
+            lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+            # drop() %>% suppressWarnings()
+            suppressWarnings(), drop = "band") * conv_factor # gC/m2 or kg m-2 s-1
+          npp_ref[npp_ref < epsilon] <- 0
+        } else {
+          # pick a PI window that excludes onset effects, but is reasonable early
+          pi_window <- 3:32
+          npp_ref <- lpjmlkit::asub(npp_potential, year = pi_window, drop = FALSE)
+        } # npp_ref
+      } else {
+        npp <- abind::adrop(lpjmlkit::read_io(
+          files_scenario$npp,
+          subset = list(year = as.character(time_span_scenario))
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-          # drop() %>% suppressWarnings()
-          suppressWarnings(), drop = "band")
-        npp_ref[npp_ref < epsilon] <- 0
-      }
+          suppressWarnings(), drop = "band") * conv_factor # gC/m2 or kg m-2 s-1
 
-      pftnpp <- NULL
+        npp_potential <- abind::adrop(lpjmlkit::read_io(
+          files_baseline$npp,
+          subset = list(year = as.character(time_span_baseline))
+        ) %>%
+          lpjmlkit::transform(to = c("year_month_day")) %>%
+          lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+          suppressWarnings(), drop = "band") * conv_factor # gC/m2 or kg m-2 s-1
+
+        if (!is.null(files_reference)) {
+          npp_ref <- abind::adrop(lpjmlkit::read_io(
+            files_reference$npp,
+            subset = list(year = as.character(time_span_reference))
+          ) %>%
+            lpjmlkit::transform(to = c("year_month_day")) %>%
+            lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+            suppressWarnings(), drop = "band") * conv_factor # gC/m2 or kg m-2 s-1
+        } else {
+          # pick a PI window that excludes onset effects, but is reasonable early
+          pi_window <- 3:32
+          npp_ref <- lpjmlkit::asub(npp_potential, year = pi_window, drop = FALSE)
+        } # npp_ref
+      }
+      npp_ref[npp_ref < epsilon] <- 0
+      npp[npp < epsilon] <- 0
+      npp_potential[npp_potential < epsilon] <- 0
+
+      pftnpp <- fpc <- pftbands <- NULL
       if (details) {
         pftnpp <- lpjmlkit::read_io(
           files_scenario$pft_npp,
@@ -193,7 +251,7 @@ read_calc_biocol <- function(
         ) %>%
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-          suppressWarnings()
+          suppressWarnings() * conv_factor # gC/m2 or kg m-2 s-1
         pftnpp[pftnpp < epsilon] <- 0
 
         if (!gridbased) {
@@ -209,6 +267,7 @@ read_calc_biocol <- function(
         }
       }
 
+      cftfrac <- NULL
       if (!gridbased) {
         cftfrac <- lpjmlkit::read_io(
           files_scenario$cftfrac,
@@ -220,100 +279,50 @@ read_calc_biocol <- function(
       }
       metric_files <- system.file(
         "extdata",
-        "metric_files.yml",
+        paste0("metric_files_",model_type,".yml"),
         package = "biospheremetrics"
       ) %>%
         yaml::read_yaml()
-      classe <- metric_files$metric$biocol$metric_class[[c]]
-      nsubclasses <- length(classe)
-      # iterate over subclasses (vegetation carbon, soil water ...)
-      for (s in seq_len(nsubclasses)) {
-        subclass <- classe[s]
-        class_names[index] <- names(subclass)
-        vars <- split_sign(unlist(subclass))
-        for (v in seq_len(length(vars[, 1]))) {
-          path_scen_file <- files_scenario[[vars[v, "variable"]]]
-          if (file.exists(path_scen_file)) {
-            header_scen <- lpjmlkit::read_meta(filename = path_scen_file)
-            message(
-              "Reading in ", path_scen_file, " with unit ", header_scen$unit,
-              " -> as part of ", class_names[index]
-            )
-            var_scen <- lpjmlkit::read_io(
-              path_scen_file,
-              subset = list(year = as.character(time_span_scenario))
-            ) %>%
+
+      classe <- metric_files$metric$biocol$metric_class
+      class_name <- names(classe)
+      vars <- split_sign(unlist(classe))
+      dims_npp <- dim(npp)
+      dimnames_npp <- dimnames(npp)
+      dimnames_npp[["components"]] <- vars[, 2]
+
+      npp_harvest <- array(0, dim = c(dims_npp,length(vars[, 1])),
+                           dimnames = dimnames_npp)
+      for (v in seq_len(length(vars[, 1]))) {
+        path_file <- files_scenario[[vars[v, "variable"]]]
+        if (file.exists(path_file)) {
+          header_scen <- lpjmlkit::read_meta(filename = path_file)
+          message(
+            "Reading in ", path_file, " with unit ", header_scen$unit,
+            " -> as part of ", class_name
+          )
+          if (file_type == "nc") {
+          npp_harvest[,,vars[v, "variable"]] <-
+            lpjmlkit::read_io(path_file,
+              subset = list(year = as.character(time_span_scenario)) ) %>%
+            lpjmlkit::add_grid("/p/projects/open/Fabian/LPJbox/grid.nc4") %>%
+            lpjmlkit::transform(to = c("year_month_day","cell")) %>%
+            lpjmlkit::as_array(aggregate = list(month = sum, band = sum), ) %>%
+            drop() %>%
+            suppressWarnings() * conv_factor # gC/m2 or kg m-2 s-1
+          } else {
+            npp_harvest[,,vars[v, "variable"]] <-
+              lpjmlkit::read_io(path_file,
+                                subset = list(year = as.character(time_span_scenario)) ) %>%
               lpjmlkit::transform(to = c("year_month_day")) %>%
               lpjmlkit::as_array(aggregate = list(month = sum, band = sum), ) %>%
               drop() %>%
-              suppressWarnings()
-          } else {
-            stop(paste("Couldn't read in:", path_scen_file, " - stopping!"))
+              suppressWarnings() * conv_factor # gC/m2 or kg m-2 s-1
           }
-          path_ref_file <- files_reference[[vars[v, "variable"]]]
-          if (file.exists(path_ref_file)) {
-            header_ref <- lpjmlkit::read_meta(path_ref_file)
-            message(
-              "Reading in ", path_ref_file, " with unit ", header_ref$unit,
-              " -> as part of ", class_names[index]
-            )
-            var_ref <- lpjmlkit::read_io(
-              path_ref_file,
-              subset = list(year = as.character(time_span_reference))
-            ) %>%
-              lpjmlkit::transform(to = c("year_month_day")) %>%
-              lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-              drop() %>%
-              suppressWarnings()
-          } else {
-            stop(paste("Couldn't read in:", path_ref_file, " - stopping!"))
-          }
-          # if (window > 30){
-          #  if (vars[v,"sign"] == "+"){
-          #    state_scen[,,index,] <- state_scen[,,index,] + var_scen
-          #    state_ref[,,index,] <- state_ref[,,index,] + var_ref
-          #  } else { # vars[v,"sign"] == "-"
-          #    state_scen[,,index,] <- state_scen[,,index,] - var_scen
-          #    state_ref[,,index,] <- state_ref[,,index,] - var_ref
-          #  }
-          # }else{
-          if (vars[v, "sign"] == "+") {
-            state_scen[, , index] <- state_scen[, , index] + var_scen
-            state_ref[, , index] <- state_ref[, , index] + var_ref
-          } else { # vars[v,"sign"] == "-"
-            state_scen[, , index] <- state_scen[, , index] - var_scen
-            state_ref[, , index] <- state_ref[, , index] - var_ref
-          }
-          # }
+        } else {
+          stop(paste("Couldn't read in:", path_file, " - stopping!"))
         }
-        index <- index + 1
       }
-
-
-      harvest <- lpjmlkit::read_io(
-        files_scenario$pft_harvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        suppressWarnings()
-
-      rharvest <- lpjmlkit::read_io(
-        files_scenario$pft_rharvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        suppressWarnings()
-
-      timber <- abind::adrop(lpjmlkit::read_io(
-        files_scenario$timber_harvestc,
-        subset = list(year = as.character(time_span_scenario))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        # drop() %>%
-        suppressWarnings(), drop = "band")
 
       if (include_fire) {
         # read fire in monthly res. if possible, then multiply with monthly
@@ -326,8 +335,7 @@ read_calc_biocol <- function(
           lpjmlkit::transform(to = c("year_month_day")) %>%
           lpjmlkit::as_array(aggregate = list(band = sum)) %>%
           # drop() %>%
-          suppressWarnings()
-
+          suppressWarnings() * conv_factor # gC/m2 or kg m-2 s-1
 
         if (external_fire) {
           frac <- NULL
@@ -373,7 +381,7 @@ read_calc_biocol <- function(
         }
         gc()
       } else {
-        fire <- timber * 0
+        fire <- npp * 0
       }
 
       if (external_wood_harvest) {
@@ -393,110 +401,93 @@ read_calc_biocol <- function(
         wood_harvest <- fire * 0
       }
 
-
-
-      npp_potential <- abind::adrop(lpjmlkit::read_io(
-        files_baseline$npp,
-        subset = list(year = as.character(time_span_baseline))
-      ) %>%
-        lpjmlkit::transform(to = c("year_month_day")) %>%
-        lpjmlkit::as_array(aggregate = list(month = sum)) %>%
-        # drop() %>% suppressWarnings()
-        suppressWarnings(), drop = "band") # gC/m2
-      npp_potential[npp_potential < epsilon] <- 0
-
-
-
-    } else if ( model_type == "isimip" && file_type == "nc" ) { # to be added
-      stop(
-        "nc reading has not been updated to latest functionality.",
-        " Please contact Fabian Stenzel"
-      )
     } else {
       stop(
         "Unrecognized file type (",
         file_type,
-        ")"
+        ") for model_type: ",
+        model_type
       )
     }
 
-    bp_bands <- c(15, 16, 31, 32)
-    grass_bands <- c(14, 30)
-    nat_bands <- seq_len(pftbands)
+    if (details) {
+      bp_bands <- c(15, 16, 31, 32)
+      grass_bands <- c(14, 30)
+      nat_bands <- seq_len(pftbands)
 
-    if (!gridbased) { # needs to be scaled with standfrac
-      pftnpp[, , nat_bands] <- lpjmlkit::asub(pftnpp,
-        band = nat_bands,
-        drop = FALSE
-      ) *
-        lpjmlkit::asub(fpc, band = rep(
-          "natural stand fraction",
-          pftbands
-        ), drop = FALSE)
-      pftnpp[, , -c(nat_bands)] <- lpjmlkit::asub(pftnpp,
-        band = -c(nat_bands),
-        drop = FALSE
-      ) * cftfrac
-      harvest <- harvest * cftfrac
-      rharvest <- rharvest * cftfrac
+      if (!gridbased) { # needs to be scaled with standfrac
+        pftnpp[, , nat_bands] <- lpjmlkit::asub(pftnpp,
+                                                band = nat_bands,
+                                                drop = FALSE
+        ) *
+          lpjmlkit::asub(fpc, band = rep(
+            "natural stand fraction",
+            pftbands
+          ), drop = FALSE)
+        pftnpp[, , -c(nat_bands)] <- lpjmlkit::asub(pftnpp,
+                                                    band = -c(nat_bands),
+                                                    drop = FALSE
+        ) * cftfrac
+        harvest <- harvest * cftfrac
+        rharvest <- rharvest * cftfrac
+      }
+
+      pftnpp_grasslands <- apply(
+        lpjmlkit::asub(pftnpp, band = (pftbands + grass_bands), drop = FALSE),
+        c("cell", "year"),
+        sum
+      ) # gC/m2 only from grassland bands
+
+      pftnpp_cft <- apply(
+        lpjmlkit::asub(pftnpp,
+                       band = -c(nat_bands, pftbands + grass_bands, pftbands + bp_bands),
+                       drop = FALSE
+        ),
+        c("cell", "year"),
+        sum
+      ) # gC/m2 not from grassland and bioenergy bands
+
+      pftnpp_bioenergy <- apply(
+        lpjmlkit::asub(pftnpp, band = pftbands + bp_bands, drop = FALSE),
+        c("cell", "year"),
+        sum
+      ) # gC/m2 only from bioenergy bands
+
+      pftnpp_nat <- apply(
+        lpjmlkit::asub(pftnpp, band = nat_bands, drop = FALSE),
+        c("cell", "year"),
+        sum
+      ) # gC/m2
+
+      # lpjmlkit::asub(INARRAY, band = BANDS, drop = FALSE)
+      harvest_grasslands <- apply(
+        lpjmlkit::asub(harvest, band = grass_bands, drop = FALSE),
+        c("cell", "year"),
+        sum
+      ) # gC/m2 only from grassland bands
+
+      harvest_bioenergy <- apply(
+        lpjmlkit::asub(harvest, band = bp_bands, drop = FALSE),
+        c("cell", "year"),
+        sum
+      ) # gC/m2 only from bioenergy bands
+
+      harvest_cft <- apply(
+        lpjmlkit::asub(harvest, band = -c(grass_bands, bp_bands), drop = FALSE),
+        c("cell", "year"),
+        sum
+      ) # gC/m2 not from grassland and bioenergy bands
+
+      rharvest_cft <- apply(
+        lpjmlkit::asub(rharvest, band = -c(grass_bands, bp_bands), drop = FALSE),
+        c("cell", "year"),
+        sum
+      ) # gC/m2 not from grassland and bioenergy bands
+    } else {
+      pftnpp_grasslands <- pftnpp_cft <- pftnpp_bioenergy <- pftnpp_nat <-
+        harvest_grasslands <- harvest_bioenergy <- harvest_cft <-
+        rharvest_cft <- timber <- NULL
     }
-
-    pftnpp_grasslands <- apply(
-      lpjmlkit::asub(pftnpp, band = (pftbands + grass_bands), drop = FALSE),
-      c("cell", "year"),
-      sum
-    ) # gC/m2 only from grassland bands
-
-    pftnpp_cft <- apply(
-      lpjmlkit::asub(pftnpp,
-        band = -c(nat_bands, pftbands + grass_bands, pftbands + bp_bands),
-        drop = FALSE
-      ),
-      c("cell", "year"),
-      sum
-    ) # gC/m2 not from grassland and bioenergy bands
-
-    pftnpp_bioenergy <- apply(
-      lpjmlkit::asub(pftnpp, band = pftbands + bp_bands, drop = FALSE),
-      c("cell", "year"),
-      sum
-    ) # gC/m2 only from bioenergy bands
-
-    pftnpp_nat <- apply(
-      lpjmlkit::asub(pftnpp, band = nat_bands, drop = FALSE),
-      c("cell", "year"),
-      sum
-    ) # gC/m2
-
-    if (is.null(files_reference)) {
-      pi_window <- 3:32
-      npp_ref <- lpjmlkit::asub(npp_potential, year = pi_window, drop = FALSE)
-    } # npp_ref
-
-    # lpjmlkit::asub(INARRAY, band = BANDS, drop = FALSE)
-    harvest_grasslands <- apply(
-      lpjmlkit::asub(harvest, band = grass_bands, drop = FALSE),
-      c("cell", "year"),
-      sum
-    ) # gC/m2 only from grassland bands
-
-    harvest_bioenergy <- apply(
-      lpjmlkit::asub(harvest, band = bp_bands, drop = FALSE),
-      c("cell", "year"),
-      sum
-    ) # gC/m2 only from bioenergy bands
-
-    harvest_cft <- apply(
-      lpjmlkit::asub(harvest, band = -c(grass_bands, bp_bands), drop = FALSE),
-      c("cell", "year"),
-      sum
-    ) # gC/m2 not from grassland and bioenergy bands
-
-    rharvest_cft <- apply(
-      lpjmlkit::asub(rharvest, band = -c(grass_bands, bp_bands), drop = FALSE),
-      c("cell", "year"),
-      sum
-    ) # gC/m2 not from grassland and bioenergy bands
 
     if (save_data) {
       if (!file.exists(data_file)) {
@@ -519,15 +510,16 @@ read_calc_biocol <- function(
         pftnpp_nat,
         pftnpp_grasslands,
         pftnpp_bioenergy,
+        npp_harvest,
         harvest_cft,
         rharvest_cft,
-        fire,
         timber,
+        fire,
+        wood_harvest,
         fpc,
         cftfrac,
         harvest_grasslands,
         harvest_bioenergy,
-        wood_harvest,
         lat,
         lon,
         cellarea,
@@ -575,41 +567,53 @@ read_calc_biocol <- function(
 
   npp_act_overtime <- colSums(npp * cellarea) / 10^15 # gC/m2 to GtC
   npp_pot_overtime <- colSums(npp_potential * cellarea) / 10^15 # gC/m2 to GtC
-  npp_eco_overtime <- colSums(pftnpp_nat * cellarea) / 10^15 # gC/m2 to GtC
+  if (details) {
+    npp_eco_overtime <- colSums(pftnpp_nat * cellarea) / 10^15 # gC/m2 to GtC
+  } else {
+    harvest_sum <- apply(npp_harvest,c(1,2),sum)
+    npp_harv_overtime <- colSums(harvest_sum * cellarea) / 10^15 # gC/m2 to GtC
+    npp_eco_overtime <- npp_act_overtime - npp_harv_overtime
+  }
   npp_luc_overtime <- npp_pot_overtime - npp_act_overtime
 
-  harvest_cft_overtime <- colSums(
-    harvest_cft * cellarea
-  ) / 10^15 # gC/m2 to GtC
-  rharvest_cft_overtime <- colSums(
-    rharvest_cft * cellarea
-  ) / 10^15 # gC/m2 to GtC
-  harvest_grasslands_overtime <- colSums(
-    harvest_grasslands * cellarea
-  ) / 10^15 # gC/m2 to GtC
-  harvest_bioenergy_overtime <- colSums(
-    harvest_bioenergy * cellarea
-  ) / 10^15 # gC/m2 to GtC
-
-  timber_harvest_overtime <- colSums(
-    timber * cellarea
-  ) / 10^15 # gC/m2 to GtC
-  fire_overtime <- colSums(
-    fire * cellarea
-  ) / 10^15 # gC/m2 to GtC
-  wood_harvest_overtime <- colSums(
-    wood_harvest * cellarea
-  ) / 10^15 # gC/m2 to GtC
-
-  if (include_fire) {
-    npp_harv_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
-      harvest_grasslands_overtime + harvest_bioenergy_overtime +
-      timber_harvest_overtime + fire_overtime + wood_harvest_overtime
+  if (details) {
+    harvest_cft_overtime <- colSums(
+      harvest_cft * cellarea
+    ) / 10^15 # gC/m2 to GtC
+    rharvest_cft_overtime <- colSums(
+      rharvest_cft * cellarea
+    ) / 10^15 # gC/m2 to GtC
+    harvest_grasslands_overtime <- colSums(
+      harvest_grasslands * cellarea
+    ) / 10^15 # gC/m2 to GtC
+    harvest_bioenergy_overtime <- colSums(
+      harvest_bioenergy * cellarea
+    ) / 10^15 # gC/m2 to GtC
+    timber_harvest_overtime <- colSums(
+      timber * cellarea
+    ) / 10^15 # gC/m2 to GtC
+    fire_overtime <- colSums(
+      fire * cellarea
+    ) / 10^15 # gC/m2 to GtC
+    wood_harvest_overtime <- colSums(
+      wood_harvest * cellarea
+    ) / 10^15 # gC/m2 to GtC
+    if (include_fire) {
+      npp_harv_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
+        harvest_grasslands_overtime + harvest_bioenergy_overtime +
+        timber_harvest_overtime + fire_overtime + wood_harvest_overtime
+    } else {
+      npp_harv_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
+        harvest_grasslands_overtime + harvest_bioenergy_overtime +
+        timber_harvest_overtime + wood_harvest_overtime
+    }
   } else {
-    npp_harv_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
-      harvest_grasslands_overtime + harvest_bioenergy_overtime +
-      timber_harvest_overtime + wood_harvest_overtime
+    harvest_cft_overtime <- rharvest_cft_overtime <-
+      harvest_grasslands_overtime <- harvest_bioenergy_overtime <-
+      timber_harvest_overtime <- fire_overtime <- wood_harvest_overtime <-
+      npp_act_overtime*0
   }
+
   biocol_overtime <- npp_harv_overtime + npp_luc_overtime
   biocol_overtime_frac_piref <- (
     biocol_overtime / mean(colSums(npp_ref * cellarea) / 10^15)
@@ -619,20 +623,22 @@ read_calc_biocol <- function(
   )
   biocol_luc <- npp_potential - npp
 
-
-  # pick a PI window that excludes onset effects, but is reasonable early
-
-  if (include_fire) {
-    biocol_harvest <- (
-      harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy +
-        timber + fire + wood_harvest
-    )
+  if (details) {
+    if (include_fire) {
+      biocol_harvest <- (
+        harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy +
+          timber + fire + wood_harvest
+      )
+    } else {
+      biocol_harvest <- (
+        harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy +
+          timber + wood_harvest
+      )
+    }
   } else {
-    biocol_harvest <- (
-      harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy +
-        timber + wood_harvest
-    )
+    biocol_harvest <- harvest_sum
   }
+
   biocol <- biocol_harvest + biocol_luc
   # set to 0 below lower threshold of NPP
   biocol[abs(npp_potential) < npp_threshold] <- 0
