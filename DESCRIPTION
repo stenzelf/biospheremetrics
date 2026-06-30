@@ -14,7 +14,7 @@ License: AGPL-3
 Encoding: UTF-8
 LazyData: true
 URL: https://github.com/stenzelf/biospheremetrics
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports:
     lpjmlkit,
     rlang,

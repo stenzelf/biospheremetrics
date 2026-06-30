@@ -22,7 +22,7 @@ plot_global(
   legendtitle = "",
   leg_yes = TRUE,
   only_pos = FALSE,
-  n_legend_ticks = 20,
+  n_legend_ticks = 11,
   min_0 = 0.01,
   extent = c(-180, 180, -60, 90),
   country_borders = TRUE,

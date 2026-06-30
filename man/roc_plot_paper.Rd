@@ -4,10 +4,12 @@
 \alias{roc_plot_paper}
 \title{Plot ROC curve}
 \usage{
-roc_plot_paper(filename = NULL, values)
+roc_plot_paper(filename = NULL, cex_perc = 2.5, values)
 }
 \arguments{
 \item{filename}{path to plot roc curve to. default: NULL -> plot to screen}
+
+\item{cex_perc}{cex parameter for plotting}
 
 \item{values}{roc data object as obtained from calc_roc_data(), can be an array
 with dimensions = c(thresholds, internal_metric(s),

@@ -8,3 +8,6 @@
 ^tests/.lintr$
 ^vignettes/.lintr$
 ^.*CITATION.cff$
+^\.claude$
+^doc$
+^Meta$

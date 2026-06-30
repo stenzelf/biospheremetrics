@@ -189,7 +189,7 @@ plot_global <- function(data,
   extent <- terra::ext(extent)
 
   if (leg_yes) {
-    par(oma = c(0, 0, 0, 3.5))
+    graphics::par(oma = c(0, 0, 0, 3.5))
   } #else {
     #oma_p <- c(0, 0, 0, 0)
   #}

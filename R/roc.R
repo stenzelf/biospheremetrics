@@ -173,6 +173,7 @@ roc_plot <- function(filename = NULL,
 #' Plot ROC curve(s) - paper version
 #'
 #' @param filename path to plot roc curve to. default: NULL -> plot to screen
+#' @param cex_perc cex parameter for plotting
 #' @param values roc data object as obtained from calc_roc_data(), can be an array
 #'               with dimensions = c(thresholds, internal_metric(s),
 #'                    external_indicator(s), 3`["TP","FP","slope"]`)
