@@ -180,6 +180,7 @@ roc_plot <- function(filename = NULL,
 #' @md
 #' @export
 roc_plot_paper <- function(filename = NULL,
+                     cex_perc = 2.5,
                      values # both metric
 ) {
   if (!is.null(filename)) {
@@ -202,8 +203,7 @@ roc_plot_paper <- function(filename = NULL,
   graphics::layout(mat = matrix(c(1,2,3,4,5,6), nrow = 2,  ncol = 3, byrow = FALSE),
          heights = c(2,2),    # Heights of the rows
          widths = c(1,0.4,0.4))     # Widths of the columns
-  graphics::layout.show(6)
-  cex_perc = 2.5
+  #graphics::layout.show(6)
   colz <- RColorBrewer::brewer.pal(12,"Set3")[-c(2)]
 
   for (var in vars){

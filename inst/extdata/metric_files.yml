@@ -117,7 +117,7 @@ metric:
                     gpp - npp + firec + harvestc + timber_harvestc # harvestc contains residues
             water_pools:
                 soil_water_pool:
-                    soilwater #swc + swc_in_mm + swe + litter.agtop_moist
+                    soilwater #swc + swe + litter.agtop_moist
             water_fluxes:
                 water_influx:
                     prec + irrig
@@ -273,6 +273,7 @@ file_name:
     soilc: ["soilc"]
     soilnh4: ["soilnh4"]
     soilno3: ["soilno3"]
+    swc: ["swc"]
     soilwater: ["soilwater", "msoilwater","swc_test"]
     temp: ["temp", "mtemp"]
     terr_area: ["terr_area"]

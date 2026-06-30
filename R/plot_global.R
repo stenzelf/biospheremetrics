@@ -80,7 +80,7 @@ plot_global <- function(data,
                         legendtitle = "",
                         leg_yes = TRUE,
                         only_pos = FALSE,
-                        n_legend_ticks = 20,
+                        n_legend_ticks = 11,
                         min_0 = 0.01,
                         extent = c(-180, 180, -60, 90),
                         country_borders = TRUE,
@@ -106,6 +106,10 @@ plot_global <- function(data,
   if (!is.null(min)) {
     if (min == 0) only_pos <- TRUE
   }
+  if (type == "man" && only_pos) {
+    stop("Manual breaks and palette, but conflicting parameter
+              only_pos == TRUE defined. Aborting.")
+  }
   if (only_pos) {
     if (type == "exp") {
       if (is.null(pow2max) | is.null(pow2min)) {
@@ -114,13 +118,13 @@ plot_global <- function(data,
       # actual brks and ticks
       legendticks <- c(0, 2^seq(pow2min, pow2max, 1))
       # just for displaying an equally sized legend
-      brks <- c(seq(pow2min, pow2max, length.out = length(legendticks)))
+      brks <- seq(0, 1, length.out = length(legendticks))
     } else if (type == "lin") {
       if (is.null(max) | is.null(min)) {
         stop("For linear legend, min and max need to be specified.")
       }
       legendticks <- seq(min, max, length.out = n_legend_ticks)
-      brks <- legendticks
+      brks <- seq(0, 1, length.out = length(legendticks))
     }
     palette <- c(
       "white",
@@ -137,7 +141,7 @@ plot_global <- function(data,
         legendticks <- c(
           -(2^seq(pow2max, pow2min, -1)), 2^seq(pow2min, pow2max, 1)
         )
-        brks <- seq(-pow2max, pow2max, length.out = length(legendticks))
+        brks <- seq(0, 1, length.out = length(legendticks))
       } else if (type == "lin") {
         if (is.null(max) | is.null(min)) {
           stop("For linear legend, min and max need to be specified.")
@@ -150,7 +154,7 @@ plot_global <- function(data,
           seq(0, max, length.out = n_legend_ticks)
         )
         legendticks[c(n_legend_ticks, (n_legend_ticks + 1))] <- c(-min_0, min_0)
-        brks <- legendticks
+        brks <- seq(0, 1, length.out = length(legendticks))
       }
       palette <- c(
         rev(
@@ -165,14 +169,13 @@ plot_global <- function(data,
       )
     } else { # type == man
       if (is.null(palette)) {
-        message("Manual breaks, but not palette given, using default.")
+        message("Manual breaks, but no palette given, using default.")
         palette <- grDevices::colorRampPalette(
           RColorBrewer::brewer.pal(9, col_pos)
         )(length(brks) - 1)
       }
-      if (only_pos) stop("Manual breaks and palette, but conflicting parameter
-              only_pos == TRUE defined. Aborting.")
       legendticks <- brks
+      brks <- c(seq(0, 1, length.out = length(legendticks)))
     }
   }
   data[data < legendticks[1]] <- legendticks[1]
@@ -186,47 +189,60 @@ plot_global <- function(data,
   extent <- terra::ext(extent)
 
   if (leg_yes) {
-    oma_p <- c(0, 0, 0, 3)
-  } else {
-    oma_p <- c(0, 0, 0, 0)
-  }
+    par(oma = c(0, 0, 0, 3.5))
+  } #else {
+    #oma_p <- c(0, 0, 0, 0)
+  #}
 
-  if (leg_yes){
+  #if (!leg_yes || type == "exp"){
+  #browser()
     terra::plot(ra,
-      ext = extent, breaks = legendticks, col = palette, main = title,
-      legend = TRUE, axes = FALSE, type = "continuous", cex.main = cex,
-      plg = list(cex = cex)
+                ext = extent, breaks = legendticks, col = palette, main = title,
+                legend = F, axes = FALSE, type = "continuous", cex.main = cex,
+                plg = list(cex = cex)
     )
-  } else{
-    terra::plot(ra,
-      ext = extent, breaks = legendticks, col = palette, main = title,
-      legend = FALSE, axes = FALSE, type = "continuous", cex.main = cex,
-      plg = list(cex = cex)
-    )
-  }
+  #} else{
+  #  terra::plot(ra,
+  #              ext = extent, breaks = legendticks, col = palette, main = title,
+  #              legend = TRUE, axes = FALSE, type = "continuous", cex.main = cex,
+  #              plg = list(cex = cex)
+  #  )
+  #}
 
   if (country_borders)
     maps::map("world", add = TRUE, resolution = 0, lwd = 0.1, ylim = c(-60, 90))
-  if (F) {
-    if (type == "exp") {
+
+  #if ( (type == "exp" || type == "man") && leg_yes) {
+  if (leg_yes) {
         fields::image.plot(
-          legend.only = TRUE, zlim = c(-pow2max, pow2max), col = palette,
-          useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
+          legend.only = TRUE, zlim = c(0, 1), col = palette,
+          useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 4),
           legend.shrink = 0.7,
           legend.args = list(legendtitle, side = 3, font = 2, line = 1),
           smallplot = c(0.975, 0.99, 0.1, 0.9)
         )
-    } else { # manual plotting
-        fields::image.plot(
-          legend.only = TRUE, zlim = range(brks), col = palette,
-          useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
-          legend.shrink = 0.7,
-          legend.args = list(legendtitle, side = 3, font = 2, line = 1)
-        )
-    }
-  }
+  } #else { # manual plotting
+      #  fields::image.plot(
+      #    legend.only = TRUE, zlim = range(brks), col = palette,
+      #    useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
+      #    legend.shrink = 0.7,
+      #    legend.args = list(legendtitle, side = 3, font = 2, line = 1)
+      #  )
+   #}
+
 
   if (!is.null(file)) {
     grDevices::dev.off()
   }
+}
+
+if(F){
+  log <- legendticks
+  lin <- seq(0,1200, length = length(legendticks))
+
+  terra::plot(ra,
+              ext = extent, breaks = log, main = title, #col = palette,
+              legend = T, axes = FALSE, cex.main = cex, type = "continuous",
+              plg = list(cex = cex)
+  )
 }
