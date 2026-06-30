@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: If you use this software, please cite it using the metadata from this file.
 type: software
 title: 'biospheremetrics: Biosphere integrity metrics for LPJmL'
-version: 1.1.0
-date-released: '2025-05-20'
+version: 1.1.1
+date-released: '2026-06-30'
 abstract: Functions to compute Biosphere integrity metrics BioCol and EcoRisk based
   on output from LPJmL.
 authors:

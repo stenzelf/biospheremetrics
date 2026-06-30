@@ -1,7 +1,7 @@
 Package: biospheremetrics
 Type: Package
 Title: Biosphere integrity metrics for LPJmL
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: c(
     person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-5109-0048")),
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = "aut", comment = c(ORCID = "0000-0002-9055-6904")),
@@ -43,6 +43,7 @@ Imports:
     methods
 Suggests:
     testthat (>= 3.0.0),
+    rmarkdown,
     knitr
 VignetteBuilder: knitr
-Date: 2025-05-20
+Date: 2026-06-30

@@ -1,4 +1,4 @@
-ValidationKey: '2225080'
+ValidationKey: '2290374'
 AutocreateReadme: yes
 AcceptedWarnings:
 - 'Warning: package ''.*'' was built under R version'
@@ -14,3 +14,4 @@ AddLogoReadme: inst/img/logo.png
 enforceVersionUpdate: no
 skipCoverage: no
 AutocreateCITATION: yes
+UsePkgDown: no

@@ -63,7 +63,7 @@
 #'
 #' @md
 #' @export
-plot_global <- function(data,
+plot_global <- function(data, # nolint
                         file = NULL,
                         title = "",
                         pow2min = NULL,
@@ -112,7 +112,7 @@ plot_global <- function(data,
   }
   if (only_pos) {
     if (type == "exp") {
-      if (is.null(pow2max) | is.null(pow2min)) {
+      if (is.null(pow2max) || is.null(pow2min)) {
         stop("For exponental legend, pow2min and pow2max need to be specified.")
       }
       # actual brks and ticks
@@ -120,7 +120,7 @@ plot_global <- function(data,
       # just for displaying an equally sized legend
       brks <- seq(0, 1, length.out = length(legendticks))
     } else if (type == "lin") {
-      if (is.null(max) | is.null(min)) {
+      if (is.null(max) || is.null(min)) {
         stop("For linear legend, min and max need to be specified.")
       }
       legendticks <- seq(min, max, length.out = n_legend_ticks)
@@ -135,7 +135,7 @@ plot_global <- function(data,
   } else {
     if (type == "exp" || type == "lin") {
       if (type == "exp") {
-        if (is.null(pow2max) | is.null(pow2min)) {
+        if (is.null(pow2max) || is.null(pow2min)) {
           stop("For exponental legend, pow2min and pow2max are required.")
         }
         legendticks <- c(
@@ -143,7 +143,7 @@ plot_global <- function(data,
         )
         brks <- seq(0, 1, length.out = length(legendticks))
       } else if (type == "lin") {
-        if (is.null(max) | is.null(min)) {
+        if (is.null(max) || is.null(min)) {
           stop("For linear legend, min and max need to be specified.")
         }
         if (n_legend_ticks %% 2 == 0) {
@@ -167,7 +167,7 @@ plot_global <- function(data,
           RColorBrewer::brewer.pal(9, col_pos)
         )(length(legendticks) / 2 - 1)
       )
-    } else { # type == man
+    } else { # type: man
       if (is.null(palette)) {
         message("Manual breaks, but no palette given, using default.")
         palette <- grDevices::colorRampPalette(
@@ -189,46 +189,45 @@ plot_global <- function(data,
   extent <- terra::ext(extent)
 
   if (leg_yes) {
-    graphics::par(oma = c(0, 0, 0, 3.5))
-  } #else {
-    #oma_p <- c(0, 0, 0, 0)
-  #}
-
-  #if (!leg_yes || type == "exp"){
-  #browser()
-    terra::plot(ra,
-                ext = extent, breaks = legendticks, col = palette, main = title,
-                legend = F, axes = FALSE, type = "continuous", cex.main = cex,
-                plg = list(cex = cex)
-    )
-  #} else{
-  #  terra::plot(ra,
-  #              ext = extent, breaks = legendticks, col = palette, main = title,
-  #              legend = TRUE, axes = FALSE, type = "continuous", cex.main = cex,
-  #              plg = list(cex = cex)
-  #  )
-  #}
+    graphics::par(oma = c(0, 0, 0, 3.5)) # nolint
+  } # else { # nolint
+  # oma_p <- c(0, 0, 0, 0) # nolint
+  # } # nolint
+  # if (!leg_yes || type == "exp"){ # nolint
+  # browser() # nolint
+  terra::plot(ra,
+    ext = extent, breaks = legendticks, col = palette, main = title,
+    legend = FALSE, axes = FALSE, type = "continuous", cex.main = cex,
+    plg = list(cex = cex)
+  )
+  # } else{ # nolint
+  #  terra::plot(ra, # nolint
+  #              ext = extent, breaks = legendticks, col = palette, main = title, # nolint
+  #              legend = TRUE, axes = FALSE, type = "continuous", cex.main = cex, # nolint
+  #              plg = list(cex = cex) # nolint
+  #  ) # nolint
+  # } # nolint
 
   if (country_borders)
     maps::map("world", add = TRUE, resolution = 0, lwd = 0.1, ylim = c(-60, 90))
 
-  #if ( (type == "exp" || type == "man") && leg_yes) {
+  # if ( (type == "exp" || type == "man") && leg_yes) { # nolint
   if (leg_yes) {
-        fields::image.plot(
-          legend.only = TRUE, zlim = c(0, 1), col = palette,
-          useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 4),
-          legend.shrink = 0.7,
-          legend.args = list(legendtitle, side = 3, font = 2, line = 1),
-          smallplot = c(0.975, 0.99, 0.1, 0.9)
-        )
-  } #else { # manual plotting
-      #  fields::image.plot(
-      #    legend.only = TRUE, zlim = range(brks), col = palette,
-      #    useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2),
-      #    legend.shrink = 0.7,
-      #    legend.args = list(legendtitle, side = 3, font = 2, line = 1)
-      #  )
-   #}
+    fields::image.plot(
+      legend.only = TRUE, zlim = c(0, 1), col = palette,
+      useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 4),
+      legend.shrink = 0.7,
+      legend.args = list(legendtitle, side = 3, font = 2, line = 1),
+      smallplot = c(0.975, 0.99, 0.1, 0.9)
+    )
+  } # else { # manual plotting # nolint
+  #  fields::image.plot( # nolint
+  #    legend.only = TRUE, zlim = range(brks), col = palette, # nolint
+  #    useRaster = FALSE, breaks = brks, lab.breaks = round(legendticks, 2), # nolint
+  #    legend.shrink = 0.7, # nolint
+  #    legend.args = list(legendtitle, side = 3, font = 2, line = 1) # nolint
+  #  ) # nolint
+  # } # nolint
 
 
   if (!is.null(file)) {
@@ -236,13 +235,13 @@ plot_global <- function(data,
   }
 }
 
-if(F){
+if (FALSE) {
   log <- legendticks
-  lin <- seq(0,1200, length = length(legendticks))
+  lin <- seq(0, 1200, length = length(legendticks))
 
   terra::plot(ra,
-              ext = extent, breaks = log, main = title, #col = palette,
-              legend = T, axes = FALSE, cex.main = cex, type = "continuous",
-              plg = list(cex = cex)
+    ext = extent, breaks = log, main = title,
+    legend = TRUE, axes = FALSE, cex.main = cex, type = "continuous",
+    plg = list(cex = cex)
   )
 }
